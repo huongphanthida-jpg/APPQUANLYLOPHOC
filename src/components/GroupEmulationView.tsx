@@ -235,10 +235,10 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-amber-100">
-                  Bảng Xếp Hạng Thi Đua Khối 12
+                  Bảng Xếp Hạng Thi Đua Khối {classInfo?.className?.match(/(10|11|12)/)?.[0] || '11'}
                 </span>
                 <span className="text-xs bg-black/20 text-white px-2 py-0.5 rounded-full font-medium">
-                  {classInfo?.className || 'Lớp 12A1'}
+                  {classInfo?.className || 'Lớp 11D5'}
                 </span>
               </div>
               <h2 className="text-xl font-black text-white">
