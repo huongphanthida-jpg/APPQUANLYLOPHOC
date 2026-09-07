@@ -222,6 +222,33 @@ export const saveRole = (role: UserRole) => {
   localStorage.setItem(KEYS.ROLE, role);
 };
 
+export const getStoredSystemAuth = (): boolean => {
+  try {
+    const sess = sessionStorage.getItem('gvcn_sys_auth_v1');
+    if (sess === 'true') return true;
+    const local = localStorage.getItem('gvcn_sys_auth_v1');
+    return local === 'true';
+  } catch {
+    return false;
+  }
+};
+
+export const saveSystemAuth = (authenticated: boolean, remember: boolean = true) => {
+  try {
+    if (authenticated) {
+      sessionStorage.setItem('gvcn_sys_auth_v1', 'true');
+      if (remember) {
+        localStorage.setItem('gvcn_sys_auth_v1', 'true');
+      }
+    } else {
+      sessionStorage.removeItem('gvcn_sys_auth_v1');
+      localStorage.removeItem('gvcn_sys_auth_v1');
+    }
+  } catch {
+    // ignore quota/security errors
+  }
+};
+
 export const getStoredClassInfo = (): ClassInfo => {
   try {
     const data = localStorage.getItem(KEYS.CLASS_INFO);
