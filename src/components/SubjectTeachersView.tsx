@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Users,
   Search,
@@ -20,7 +20,15 @@ import {
   School,
   X,
   UserCheck,
+  Camera,
+  UploadCloud,
+  Download,
+  RefreshCw,
+  FileSpreadsheet,
+  AlertCircle,
+  Image as ImageIcon,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { SubjectTeacher, UserRole, ClassInfo, TeacherInfo } from '../types';
 
 interface SubjectTeachersViewProps {
@@ -28,6 +36,9 @@ interface SubjectTeachersViewProps {
   onAddTeacher: (teacher: Omit<SubjectTeacher, 'id'>) => void;
   onUpdateTeacher: (teacher: SubjectTeacher) => void;
   onDeleteTeacher: (id: string) => void;
+  onClearAllTeachers: () => void;
+  onImportTeachers: (importedTeachers: SubjectTeacher[], mode: 'merge' | 'replace') => void;
+  onResetDefaultTeachers?: () => void;
   role: UserRole;
   classInfo?: ClassInfo;
   teacherInfo?: TeacherInfo;
@@ -38,6 +49,9 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
   onAddTeacher,
   onUpdateTeacher,
   onDeleteTeacher,
+  onClearAllTeachers,
+  onImportTeachers,
+  onResetDefaultTeachers,
   role,
   classInfo,
   teacherInfo,
@@ -50,8 +64,10 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<SubjectTeacher | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isConfirmClearModalOpen, setIsConfirmClearModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  // Form states
+  // Form states for Add/Edit
   const [subjectName, setSubjectName] = useState('');
   const [teacherName, setTeacherName] = useState('');
   const [phone, setPhone] = useState('');
@@ -60,13 +76,25 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
   const [notes, setNotes] = useState('');
   const [officeHours, setOfficeHours] = useState('');
   const [roleBadge, setRoleBadge] = useState('');
+  const [avatar, setAvatar] = useState('');
+
+  // File import states
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [parsedTeachers, setParsedTeachers] = useState<SubjectTeacher[]>([]);
+  const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge');
+  const [importError, setImportError] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
+
+  // Hidden File input ref for camera avatar upload
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const formAvatarInputRef = useRef<HTMLInputElement>(null);
+  const [targetAvatarTeacherId, setTargetAvatarTeacherId] = useState<string | null>(null);
 
   const className = classInfo?.className || 'LỚP 11D5';
   const gvcnName = teacherInfo?.name || 'Cô Phan Thị Dạ Hương';
-
   const canManage = role === 'gvcn' || role === 'bgh';
 
-  // Get unique list of subject names for filter
+  // Unique list of subject names for filtering
   const subjectList = Array.from(
     new Set(subjectTeachers.map((t) => t.subjectName.replace(/\s*\(.*\)/, '').trim()))
   );
@@ -87,6 +115,50 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
 
   const totalPeriods = subjectTeachers.reduce((sum, t) => sum + (t.periodsPerWeek || 0), 0);
 
+  // Camera button handler for direct card avatar update
+  const triggerCardAvatarUpload = (teacherId: string) => {
+    setTargetAvatarTeacherId(teacherId);
+    avatarInputRef.current?.click();
+  };
+
+  const handleCardAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !targetAvatarTeacherId) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target?.result as string;
+      if (base64Url) {
+        const targetTeacher = subjectTeachers.find((t) => t.id === targetAvatarTeacherId);
+        if (targetTeacher) {
+          onUpdateTeacher({
+            ...targetTeacher,
+            avatar: base64Url,
+          });
+        }
+      }
+      setTargetAvatarTeacherId(null);
+      if (e.target) e.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Avatar upload handler inside Add/Edit Form
+  const handleFormAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target?.result as string;
+      if (base64Url) {
+        setAvatar(base64Url);
+      }
+      if (e.target) e.target.value = '';
+    };
+    reader.readAsDataURL(file);
+  };
+
   const openAddModal = () => {
     setSubjectName('');
     setTeacherName('');
@@ -96,6 +168,7 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
     setNotes('');
     setOfficeHours('');
     setRoleBadge('');
+    setAvatar('');
     setIsAddModalOpen(true);
   };
 
@@ -109,6 +182,7 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
     setNotes(teacher.notes || '');
     setOfficeHours(teacher.officeHours || '');
     setRoleBadge(teacher.roleBadge || '');
+    setAvatar(teacher.avatar || '');
   };
 
   const handleSaveSubmit = (e: React.FormEvent) => {
@@ -126,6 +200,7 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
         notes: notes.trim(),
         officeHours: officeHours.trim(),
         roleBadge: roleBadge.trim(),
+        avatar: avatar.trim(),
       });
       setEditingTeacher(null);
     } else {
@@ -138,6 +213,7 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
         notes: notes.trim(),
         officeHours: officeHours.trim(),
         roleBadge: roleBadge.trim(),
+        avatar: avatar.trim(),
       });
       setIsAddModalOpen(false);
     }
@@ -148,6 +224,116 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
       onDeleteTeacher(deletingId);
       setDeletingId(null);
     }
+  };
+
+  // Excel / CSV Parse Logic
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportFile(file);
+    setImportError(null);
+    setIsParsing(true);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (rows.length < 2) {
+        setImportError('File không chứa dữ liệu hoặc sai định dạng!');
+        setIsParsing(false);
+        return;
+      }
+
+      // Identify header row
+      let headerIdx = 0;
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        const rowStr = rows[i].join(' ').toLowerCase();
+        if (rowStr.includes('môn') || rowStr.includes('tên') || rowStr.includes('giáo viên')) {
+          headerIdx = i;
+          break;
+        }
+      }
+
+      const headers = rows[headerIdx].map((h: any) => String(h || '').trim().toLowerCase());
+
+      const getCol = (keywords: string[]) => {
+        return headers.findIndex((h) => keywords.some((k) => h.includes(k)));
+      };
+
+      const subjectCol = getCol(['môn', 'subject']);
+      const nameCol = getCol(['tên', 'họ tên', 'giáo viên', 'teacher', 'thầy', 'cô']);
+      const phoneCol = getCol(['sđt', 'điện thoại', 'zalo', 'phone']);
+      const emailCol = getCol(['email', 'thư']);
+      const periodsCol = getCol(['tiết', 'số tiết', 'period']);
+      const notesCol = getCol(['ghi chú', 'nhiệm vụ', 'note']);
+
+      const parsed: SubjectTeacher[] = [];
+
+      for (let r = headerIdx + 1; r < rows.length; r++) {
+        const row = rows[r];
+        if (!row || row.length === 0) continue;
+
+        const subName = subjectCol >= 0 ? String(row[subjectCol] || '').trim() : '';
+        const tName = nameCol >= 0 ? String(row[nameCol] || '').trim() : '';
+
+        // If both subject and teacher name are empty, skip row
+        if (!subName && !tName) continue;
+
+        const tPhone = phoneCol >= 0 ? String(row[phoneCol] || '').trim() : '';
+        const tEmail = emailCol >= 0 ? String(row[emailCol] || '').trim() : '';
+        const tPeriods = periodsCol >= 0 ? parseInt(String(row[periodsCol]), 10) || 2 : 2;
+        const tNotes = notesCol >= 0 ? String(row[notesCol] || '').trim() : '';
+
+        parsed.push({
+          id: `st-imp-${Date.now()}-${r}`,
+          subjectName: subName || 'Bộ Môn',
+          teacherName: tName || 'Chưa cập nhật',
+          phone: tPhone,
+          email: tEmail,
+          periodsPerWeek: tPeriods,
+          notes: tNotes,
+        });
+      }
+
+      if (parsed.length === 0) {
+        setImportError('Không tìm thấy danh sách giáo viên hợp lệ trong file!');
+      } else {
+        setParsedTeachers(parsed);
+      }
+    } catch (err) {
+      setImportError('Lỗi đọc file Excel/CSV. Vui lòng kiểm tra lại định dạng file!');
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const handleConfirmImport = () => {
+    if (parsedTeachers.length === 0) return;
+    onImportTeachers(parsedTeachers, importMode);
+    setIsImportModalOpen(false);
+    setImportFile(null);
+    setParsedTeachers([]);
+  };
+
+  // Download Sample Excel Template
+  const downloadSampleTemplate = () => {
+    const data = [
+      ['Môn Học', 'Họ và Tên Giáo Viên', 'Số Điện Thoại (Zalo)', 'Email Liên Hệ', 'Số Tiết/Tuần', 'Ghi Chú Chuyên Môn'],
+      ['Toán Học', 'Thầy Nguyễn Văn An', '0912345678', 'nguyenvanan.gv@tnh.edu.vn', 5, 'Chủ nhiệm / Thạc sĩ Toán học'],
+      ['Ngữ Văn', 'Cô Phan Thị Dạ Hương', '0987654321', 'dahuong.gv@tnh.edu.vn', 4, 'GVCN 11D5 / Tổ phó Ngữ Văn'],
+      ['Tiếng Anh', 'Cô Trần Thị Quỳnh Mai', '0903112233', 'quynhmai.gv@tnh.edu.vn', 3, 'Chứng chỉ IELTS 8.0'],
+      ['Vật Lý', 'Thầy Lê Văn Hùng', '0915223344', 'hunglv.gv@tnh.edu.vn', 3, 'Bồi dưỡng học sinh giỏi Lý'],
+      ['Hóa Học', 'Cô Đỗ Thị Hoa', '0982334455', 'hoadt.gv@tnh.edu.vn', 2, 'Chuyên đề ôn thi Tốt nghiệp THPT'],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'DanhSach_GVBM');
+    XLSX.writeFile(wb, `Mau_Danh_Sach_Giao_Vien_Bo_Mon_${className.replace(/\s+/g, '_')}.xlsx`);
   };
 
   const getSubjectBadgeColor = (subject: string) => {
@@ -165,6 +351,15 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
 
   return (
     <div className="space-y-6 pb-12 animate-fadeIn">
+      {/* Hidden File Input for Direct Card Camera Upload */}
+      <input
+        type="file"
+        ref={avatarInputRef}
+        onChange={handleCardAvatarFileChange}
+        accept="image/*"
+        className="hidden"
+      />
+
       {/* Top Banner Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900 via-indigo-900 to-[#002244] p-6 sm:p-8 text-white shadow-xl">
         <div className="absolute right-0 top-0 -mt-10 -mr-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -184,13 +379,37 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
           </div>
 
           {canManage && (
-            <button
-              onClick={openAddModal}
-              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer flex-shrink-0"
-            >
-              <Plus className="w-4 h-4 stroke-[3]" />
-              <span>Thêm GVBM Mới</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+              <button
+                onClick={openAddModal}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+              >
+                <Plus className="w-4 h-4 stroke-[3]" />
+                <span>Thêm GVBM Mới</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setImportFile(null);
+                  setParsedTeachers([]);
+                  setImportError(null);
+                  setIsImportModalOpen(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer backdrop-blur-xs"
+              >
+                <UploadCloud className="w-4 h-4 text-cyan-300" />
+                <span>Tải Từ Máy Tính</span>
+              </button>
+
+              <button
+                onClick={() => setIsConfirmClearModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-bold text-xs border border-rose-400/30 transition-all cursor-pointer"
+                title="Xoá toàn bộ dữ liệu hoặc khôi phục mặc định"
+              >
+                <Trash2 className="w-4 h-4 text-rose-400" />
+                <span>Xoá Hết Dữ Liệu</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -323,21 +542,48 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
 
       {/* Teachers Display Section */}
       {filteredTeachers.length === 0 ? (
-        <div className="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 space-y-3">
+        <div className="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 space-y-4">
           <Users className="w-12 h-12 mx-auto text-slate-300 dark:text-slate-700" />
-          <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
-            Không tìm thấy Giáo viên bộ môn phù hợp
-          </h3>
-          <p className="text-xs text-slate-400">
-            Thử thay đổi từ khóa tìm kiếm hoặc chọn lọc môn học khác.
-          </p>
+          <div className="space-y-1">
+            <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">
+              Chưa có Giáo viên bộ môn nào trong danh sách
+            </h3>
+            <p className="text-xs text-slate-400">
+              Bạn có thể thêm từng Thầy/Cô mới, hoặc tải file Excel danh sách từ máy tính lên.
+            </p>
+          </div>
+          {canManage && (
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                onClick={openAddModal}
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white font-bold text-xs hover:bg-blue-700"
+              >
+                Thêm Thủ Công
+              </button>
+              <button
+                onClick={() => setIsImportModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 flex items-center gap-1.5"
+              >
+                <UploadCloud className="w-4 h-4" />
+                Tải File Từ Máy
+              </button>
+              {onResetDefaultTeachers && (
+                <button
+                  onClick={onResetDefaultTeachers}
+                  className="px-4 py-2 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-xs hover:bg-amber-500/30 flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Khôi Phục Mẫu 12 Môn
+                </button>
+              )}
+            </div>
+          )}
         </div>
       ) : viewMode === 'grid' ? (
         /* Grid View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredTeachers.map((teacher) => {
             const badgeColor = getSubjectBadgeColor(teacher.subjectName);
-            const isGvcn = teacher.subjectName.toLowerCase().includes('gvcn');
 
             return (
               <div
@@ -375,10 +621,32 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
                     </div>
                   </div>
 
-                  {/* Teacher Avatar & Info */}
+                  {/* Teacher Avatar & Camera Button */}
                   <div className="flex items-start gap-3.5 pt-1">
-                    <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-800 text-white font-black text-lg flex items-center justify-center shadow-md flex-shrink-0">
-                      {teacher.teacherName.split(' ').pop()?.[0] || 'T'}
+                    <div className="relative group/avatar">
+                      {teacher.avatar ? (
+                        <img
+                          src={teacher.avatar}
+                          alt={teacher.teacherName}
+                          className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-md flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-800 text-white font-black text-lg flex items-center justify-center shadow-md flex-shrink-0">
+                          {teacher.teacherName.split(' ').pop()?.[0] || 'T'}
+                        </div>
+                      )}
+
+                      {/* Camera Overlay Icon Button */}
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => triggerCardAvatarUpload(teacher.id)}
+                          className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-2 border-white dark:border-slate-900 transition-transform active:scale-90 cursor-pointer"
+                          title="Thay đổi ảnh đại diện Thầy/Cô"
+                        >
+                          <Camera className="w-3 h-3 stroke-[2.5]" />
+                        </button>
+                      )}
                     </div>
 
                     <div className="space-y-1 min-w-0 flex-1">
@@ -471,7 +739,7 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
               <thead>
                 <tr className="bg-slate-50 dark:bg-slate-800/80 text-[11px] font-black text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
                   <th className="p-4 pl-6">STT</th>
-                  <th className="p-4">Môn Giảng Dạy</th>
+                  <th className="p-4">Ảnh / Môn</th>
                   <th className="p-4">Họ và Tên Giáo Viên</th>
                   <th className="p-4">Số Tiết/Tuần</th>
                   <th className="p-4">Số Điện Thoại (Zalo)</th>
@@ -491,9 +759,34 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
                     >
                       <td className="p-4 pl-6 font-bold text-slate-400">{index + 1}</td>
                       <td className="p-4">
-                        <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black border ${badgeColor}`}>
-                          {teacher.subjectName}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <div className="relative group/tblavatar">
+                            {teacher.avatar ? (
+                              <img
+                                src={teacher.avatar}
+                                alt={teacher.teacherName}
+                                className="w-9 h-9 rounded-xl object-cover border border-slate-200 dark:border-slate-700"
+                              />
+                            ) : (
+                              <div className="w-9 h-9 rounded-xl bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                                {teacher.teacherName.split(' ').pop()?.[0] || 'T'}
+                              </div>
+                            )}
+                            {canManage && (
+                              <button
+                                type="button"
+                                onClick={() => triggerCardAvatarUpload(teacher.id)}
+                                className="absolute -bottom-1 -right-1 p-1 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                                title="Đổi ảnh"
+                              >
+                                <Camera className="w-2.5 h-2.5" />
+                              </button>
+                            )}
+                          </div>
+                          <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black border ${badgeColor}`}>
+                            {teacher.subjectName}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-4 font-black text-slate-900 dark:text-white">
                         {teacher.teacherName}
@@ -574,6 +867,63 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
             </div>
 
             <form onSubmit={handleSaveSubmit} className="p-6 space-y-4">
+              {/* Form Avatar Picker */}
+              <div className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700">
+                <div className="relative">
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt="Avatar"
+                      className="w-16 h-16 rounded-2xl object-cover border border-slate-300 dark:border-slate-600 shadow-md"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-black text-xl flex items-center justify-center shadow-md">
+                      {teacherName.split(' ').pop()?.[0] || 'GV'}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => formAvatarInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-md cursor-pointer"
+                    title="Chọn ảnh từ máy"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <input
+                  type="file"
+                  ref={formAvatarInputRef}
+                  onChange={handleFormAvatarFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+
+                <div className="flex-1 space-y-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Ảnh Đại Diện Thầy/Cô:
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => formAvatarInputRef.current?.click()}
+                      className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-300 text-xs font-bold border border-blue-200 dark:border-blue-900 hover:bg-blue-100 transition-all flex items-center gap-1.5"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      Tải ảnh từ máy
+                    </button>
+                    {avatar && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatar('')}
+                        className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-600 text-xs font-bold hover:bg-rose-100"
+                      >
+                        Gỡ ảnh
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
@@ -682,7 +1032,7 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
         </div>
       )}
 
-      {/* Confirm Delete Modal */}
+      {/* Confirm Delete Single Teacher Modal */}
       {deletingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fadeIn">
           <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-center space-y-4">
@@ -709,6 +1059,227 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
                 className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs"
               >
                 Xác Nhận Xoá
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Clear All Data / Reset Modal */}
+      {isConfirmClearModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 text-center space-y-5">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-rose-100 dark:bg-rose-950/80 text-rose-600 flex items-center justify-center shadow-inner">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                Xoá Dữ Liệu Giáo Viên Bộ Môn
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                Bạn đang lựa chọn xoá danh sách Giáo Viên Bộ Môn hiện tại ({subjectTeachers.length} Thầy/Cô). Hãy chọn thao tác bạn muốn thực hiện:
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                onClick={() => {
+                  onClearAllTeachers();
+                  setIsConfirmClearModalOpen(false);
+                }}
+                className="w-full py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>XOÁ HẾT VỀ TRỐNG (0 DỮ LIỆU)</span>
+              </button>
+
+              {onResetDefaultTeachers && (
+                <button
+                  onClick={() => {
+                    onResetDefaultTeachers();
+                    setIsConfirmClearModalOpen(false);
+                  }}
+                  className="w-full py-3 rounded-2xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  <span>KHÔI PHỤC MẶC ĐỊNH (12 MÔN)</span>
+                </button>
+              )}
+
+              <button
+                onClick={() => setIsConfirmClearModalOpen(false)}
+                className="w-full py-2.5 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200"
+              >
+                Hủy Bỏ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Import Teachers From Excel / CSV File */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden space-y-0">
+            {/* Header */}
+            <div className="p-6 bg-gradient-to-r from-blue-900 via-indigo-900 to-[#002244] text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  <UploadCloud className="w-5 h-5 text-cyan-300" />
+                  Tải Danh Sách GVBM Từ Máy Tính
+                </h3>
+                <p className="text-xs text-blue-200 mt-0.5">
+                  Hỗ trợ định dạng Excel (.xlsx, .xls) và CSV
+                </p>
+              </div>
+              <button
+                onClick={() => setIsImportModalOpen(false)}
+                className="text-white/70 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-5">
+              {/* File Dropzone */}
+              <div className="space-y-2">
+                <div className="p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-3xl bg-slate-50 dark:bg-slate-800/50 text-center space-y-3 transition-colors">
+                  <FileSpreadsheet className="w-10 h-10 mx-auto text-blue-500" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                      {importFile ? importFile.name : 'Kéo thả file Excel/CSV vào đây hoặc bấm tải lên'}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      Cột chấp nhận: Môn Học, Họ Tên Giáo Viên, SĐT, Email, Số Tiết, Ghi Chú
+                    </span>
+                  </div>
+
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer shadow-md">
+                    <UploadCloud className="w-4 h-4" />
+                    <span>Chọn File Từ Máy</span>
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls, .csv"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-400">Chưa có file chuẩn cấu trúc?</span>
+                  <button
+                    type="button"
+                    onClick={downloadSampleTemplate}
+                    className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Tải File Mẫu Excel (.xlsx)
+                  </button>
+                </div>
+              </div>
+
+              {/* Parsing status */}
+              {isParsing && (
+                <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Đang đọc dữ liệu từ file Excel...</span>
+                </div>
+              )}
+
+              {importError && (
+                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{importError}</span>
+                </div>
+              )}
+
+              {/* Parsed Preview Table */}
+              {parsedTeachers.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Đã trích xuất thành công {parsedTeachers.length} Thầy/Cô từ file
+                    </span>
+                  </div>
+
+                  {/* Mode selector */}
+                  <div className="p-3 rounded-2xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                      Chế Độ Nhập Dữ Liệu:
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setImportMode('merge')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                          importMode === 'merge'
+                            ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                            : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600'
+                        }`}
+                      >
+                        Thêm nối tiếp (+{parsedTeachers.length})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setImportMode('replace')}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                          importMode === 'replace'
+                            ? 'bg-rose-600 text-white border-rose-600 shadow-xs'
+                            : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600'
+                        }`}
+                      >
+                        Thay thế toàn bộ danh sách
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Table snippet */}
+                  <div className="max-h-48 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-100 dark:bg-slate-800 text-slate-500 font-bold sticky top-0">
+                        <tr>
+                          <th className="p-2.5 pl-3">Môn Học</th>
+                          <th className="p-2.5">Họ và Tên</th>
+                          <th className="p-2.5">SĐT</th>
+                          <th className="p-2.5">Số Tiết</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {parsedTeachers.map((t, idx) => (
+                          <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                            <td className="p-2.5 pl-3 font-bold text-blue-600">{t.subjectName}</td>
+                            <td className="p-2.5 font-bold text-slate-900 dark:text-white">{t.teacherName}</td>
+                            <td className="p-2.5">{t.phone || '-'}</td>
+                            <td className="p-2.5">{t.periodsPerWeek} tiết</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/80 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                disabled={parsedTeachers.length === 0}
+                onClick={handleConfirmImport}
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs shadow-md flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4" />
+                <span>XÁC NHẬN NHẬP ({parsedTeachers.length} GVBM)</span>
               </button>
             </div>
           </div>
