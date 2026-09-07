@@ -212,9 +212,9 @@ export const GoogleSheetSyncModal: React.FC<GoogleSheetSyncModalProps> = ({
               Hướng dẫn chia sẻ Google Sheet để app kết nối được:
             </p>
             <ol className="list-decimal list-inside space-y-0.5 text-[11px] text-slate-700 pl-1">
-              <li>Mở Google Sheet -> bấm nút <strong>Chia sẻ (Share)</strong> ở góc phải trên cùng.</li>
+              <li>Mở Google Sheet &rarr; bấm nút <strong>Chia sẻ (Share)</strong> ở góc phải trên cùng.</li>
               <li>Tại mục Quyền truy cập chung: chọn <strong>"Bất kỳ ai có liên kết đều có thể xem" (Anyone with the link can view)</strong>.</li>
-              <li>Sao chép liên kết (Copy Link) và dán vào ô bên trên -> Bấm <strong>"Tải Dữ Liệu"</strong>.</li>
+              <li>Sao chép liên kết (Copy Link) và dán vào ô bên trên &rarr; Bấm <strong>"Tải Dữ Liệu"</strong>.</li>
             </ol>
           </div>
 
