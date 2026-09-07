@@ -163,7 +163,11 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
 
   const eligibleStudents = students.filter((s) => {
     if (selectedGroup !== 'all' && s.group !== selectedGroup) return false;
-    if (selectedGender !== 'all' && s.gender !== selectedGender) return false;
+    if (selectedGender !== 'all') {
+      const studentGender = (s.gender || '').trim().toLowerCase();
+      const filterGender = selectedGender.trim().toLowerCase();
+      if (studentGender !== filterGender) return false;
+    }
     if (excludeAlreadyPicked && alreadyPickedIds.has(s.id)) return false;
     return true;
   });
@@ -190,15 +194,31 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
 
     ctx.clearRect(0, 0, width, height);
 
-    const candidates = eligibleStudents.length > 0 ? eligibleStudents : students;
+    const candidates = eligibleStudents;
     const numSlices = candidates.length;
 
     if (numSlices === 0) {
+      // Draw outer rim empty state
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = '#1E293B';
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = '#475569';
+      ctx.stroke();
+
       // Empty wheel message
-      ctx.fillStyle = '#64748B';
-      ctx.font = 'bold 16px system-ui, sans-serif';
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 14px system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Không có học sinh phù hợp bộ lọc', centerX, centerY);
+      ctx.textBaseline = 'middle';
+      const emptyMsg =
+        selectedGender === 'Nam'
+          ? 'Không có học sinh Nam phù hợp bộ lọc'
+          : selectedGender === 'Nữ'
+          ? 'Không có học sinh Nữ phù hợp bộ lọc'
+          : 'Không có học sinh phù hợp bộ lọc';
+      ctx.fillText(emptyMsg, centerX, centerY);
       return;
     }
 
@@ -273,7 +293,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
   // Handle Lucky Wheel Spin Action
   const handleSpinWheel = () => {
     if (isSpinning) return;
-    const candidates = eligibleStudents.length > 0 ? eligibleStudents : students;
+    const candidates = eligibleStudents;
     if (candidates.length === 0) return;
 
     setIsSpinning(true);
@@ -334,7 +354,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
   // Handle Flash Mode Spin Action
   const handleStartFlash = () => {
     if (isSpinning) return;
-    const candidates = eligibleStudents.length > 0 ? eligibleStudents : students;
+    const candidates = eligibleStudents;
     if (candidates.length === 0) return;
 
     setIsSpinning(true);
@@ -364,7 +384,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
   // Handle Mystery Box Pick
   const handleMysteryCardPick = () => {
     if (isSpinning) return;
-    const candidates = eligibleStudents.length > 0 ? eligibleStudents : students;
+    const candidates = eligibleStudents;
     if (candidates.length === 0) return;
 
     setIsSpinning(true);
@@ -382,7 +402,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
 
   // Handle Random Pair Pick
   const handlePairPick = () => {
-    const candidates = eligibleStudents.length >= 2 ? eligibleStudents : students;
+    const candidates = eligibleStudents;
     if (candidates.length < 2) return;
 
     setIsSpinning(true);
@@ -400,7 +420,8 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
 
   // Handle Team Generator
   const handleGenerateTeams = () => {
-    const candidates = eligibleStudents.length > 0 ? eligibleStudents : students;
+    const candidates = eligibleStudents;
+    if (candidates.length === 0) return;
     const shuffled = [...candidates].sort(() => 0.5 - Math.random());
     const teams: { id: number; name: string; members: Student[] }[] = [];
 
@@ -672,20 +693,37 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
                 <span className="font-semibold text-slate-700 dark:text-slate-300">{eligibleStudents.length}</span>
               </div>
               <div className="max-h-52 overflow-y-auto space-y-1 pr-1">
-                {eligibleStudents.map((s, idx) => (
-                  <div
-                    key={s.id}
-                    className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs border border-slate-100 dark:border-slate-800"
-                  >
-                    <div className="flex items-center space-x-2 truncate">
-                      <span className="w-4 text-[10px] text-slate-400 font-mono">{idx + 1}</span>
-                      <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{s.name}</span>
-                    </div>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-bold flex-shrink-0">
-                      Tổ {s.group}
-                    </span>
+                {eligibleStudents.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-slate-400 italic">
+                    Không có học sinh nào phù hợp bộ lọc được chọn
                   </div>
-                ))}
+                ) : (
+                  eligibleStudents.map((s, idx) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs border border-slate-100 dark:border-slate-800"
+                    >
+                      <div className="flex items-center space-x-2 truncate">
+                        <span className="w-4 text-[10px] text-slate-400 font-mono">{idx + 1}</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{s.name}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <span
+                          className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
+                            s.gender === 'Nam'
+                              ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300'
+                              : 'bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-300'
+                          }`}
+                        >
+                          {s.gender || 'N/A'}
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
+                          Tổ {s.group}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </div>
