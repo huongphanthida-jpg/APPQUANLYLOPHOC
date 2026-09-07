@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+@layer utilities {
+  /* Hide scrollbars while retaining scrolling functionality */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm 15mm 10mm;
+  }
+
+  body {
+    background-color: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide sidebar and headers during print */
+  header,
+  aside,
+  nav,
+  button,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .print-page-break {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* Ensure tables and borders render with sharp contrast */
+  table, tr, td, th {
+    page-break-inside: avoid !important;
+  }
+}
