@@ -561,15 +561,28 @@ export default function App() {
   };
 
   const handleSaveDuty = (duty: DutySchedule) => {
-    const exists = dutySchedule.some((d) => d.id === duty.id);
-    let updated: DutySchedule[];
-    if (exists) {
-      updated = dutySchedule.map((d) => (d.id === duty.id ? duty : d));
-    } else {
-      updated = [...dutySchedule, duty];
-    }
-    setDutySchedule(updated);
-    saveDutySchedule(updated);
+    setDutySchedule((prev) => {
+      const exists = prev.some((d) => d.id === duty.id);
+      const updated = exists ? prev.map((d) => (d.id === duty.id ? duty : d)) : [...prev, duty];
+      saveDutySchedule(updated);
+      return updated;
+    });
+  };
+
+  const handleBatchSaveDuty = (duties: DutySchedule[]) => {
+    setDutySchedule((prev) => {
+      let updated = [...prev];
+      duties.forEach((newDuty) => {
+        const idx = updated.findIndex((d) => d.id === newDuty.id);
+        if (idx >= 0) {
+          updated[idx] = newDuty;
+        } else {
+          updated.push(newDuty);
+        }
+      });
+      saveDutySchedule(updated);
+      return updated;
+    });
   };
 
   const handleDeleteDuty = (dutyId: string) => {
@@ -1225,6 +1238,7 @@ export default function App() {
               onDeleteTask={handleDeleteTask}
               onUpdateDutyStatus={handleUpdateDutyStatus}
               onSaveDuty={handleSaveDuty}
+              onBatchSaveDuty={handleBatchSaveDuty}
               onDeleteDuty={handleDeleteDuty}
               role={role}
             />
