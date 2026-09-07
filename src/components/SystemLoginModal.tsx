@@ -74,15 +74,8 @@ export const SystemLoginModal: React.FC<SystemLoginModalProps> = ({
     if (validPasses.includes(trimmedPass) || trimmedPass === '123456') {
       onLoginSuccess(selectedRole, rememberMe, selectedStudentId);
     } else {
-      setErrorMessage('Mật khẩu không chính xác! (Mật khẩu mặc định: 123456)');
+      setErrorMessage('Mật khẩu không chính xác! Vui lòng thử lại.');
     }
-  };
-
-  const handleQuickLogin = (role: UserRole) => {
-    setSelectedRole(role);
-    setPassword('123456');
-    setErrorMessage(null);
-    onLoginSuccess(role, rememberMe, selectedStudentId);
   };
 
   return (
@@ -239,9 +232,6 @@ export const SystemLoginModal: React.FC<SystemLoginModalProps> = ({
                 <KeyRound className="w-3.5 h-3.5 text-amber-500" />
                 Mật Khẩu Hệ Thống:
               </span>
-              <span className="text-[11px] text-slate-400 font-normal">
-                (Mật khẩu mặc định: <span className="font-bold text-blue-600">123456</span>)
-              </span>
             </label>
 
             <div className="relative">
@@ -293,29 +283,6 @@ export const SystemLoginModal: React.FC<SystemLoginModalProps> = ({
               <LogIn className="w-4 h-4 text-amber-300" />
               <span>ĐĂNG NHẬP KHỞI ĐỘNG HỆ THỐNG</span>
             </button>
-          </div>
-
-          {/* Quick preset account chips */}
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-            <span className="text-[11px] font-bold text-slate-400 block text-center mb-2">
-              Đăng nhập nhanh không cần nhập lại:
-            </span>
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('gvcn')}
-                className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[11px] font-bold hover:bg-blue-100 transition-all border border-blue-200 dark:border-blue-900 shadow-2xs"
-              >
-                Vào làm GVCN {teacherName}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('bgh')}
-                className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[11px] font-bold hover:bg-amber-100 transition-all border border-amber-200 dark:border-amber-900"
-              >
-                Vào làm Ban Giám Hiệu
-              </button>
-            </div>
           </div>
         </form>
       </div>
