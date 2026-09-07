@@ -117,6 +117,7 @@ import {
   saveSubjectTeachers,
 } from './lib/storage';
 import { INITIAL_SEATING_CHART, INITIAL_TIMETABLE } from './data/mockData';
+import { INITIAL_HOMEROOM_BOOK_DATA } from './data/homeroomBookData';
 import { fetchStudentsFromGoogleSheet, fetchOnlineClassesFromGoogleSheet } from './utils/googleSheetSync';
 
 export default function App() {
@@ -171,6 +172,31 @@ export default function App() {
     const updated = subjectTeachers.filter((t) => t.id !== id);
     setSubjectTeachers(updated);
     saveSubjectTeachers(updated);
+  };
+
+  const handleClearAllSubjectTeachers = () => {
+    setSubjectTeachers([]);
+    saveSubjectTeachers([]);
+  };
+
+  const handleResetDefaultSubjectTeachers = () => {
+    const defaultData = INITIAL_HOMEROOM_BOOK_DATA.subjectTeachers || [];
+    setSubjectTeachers(defaultData);
+    saveSubjectTeachers(defaultData);
+  };
+
+  const handleImportSubjectTeachers = (
+    importedTeachers: SubjectTeacher[],
+    mode: 'merge' | 'replace'
+  ) => {
+    if (mode === 'replace') {
+      setSubjectTeachers(importedTeachers);
+      saveSubjectTeachers(importedTeachers);
+    } else {
+      const merged = [...subjectTeachers, ...importedTeachers];
+      setSubjectTeachers(merged);
+      saveSubjectTeachers(merged);
+    }
   };
 
   // Modals state
@@ -1160,6 +1186,9 @@ export default function App() {
               onAddTeacher={handleAddSubjectTeacher}
               onUpdateTeacher={handleUpdateSubjectTeacher}
               onDeleteTeacher={handleDeleteSubjectTeacher}
+              onClearAllTeachers={handleClearAllSubjectTeachers}
+              onImportTeachers={handleImportSubjectTeachers}
+              onResetDefaultTeachers={handleResetDefaultSubjectTeachers}
               role={role}
               classInfo={classInfo}
               teacherInfo={teacherInfo}
