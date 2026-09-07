@@ -22,7 +22,7 @@ export const AddDisciplineModal: React.FC<AddDisciplineModalProps> = ({
   const [category, setCategory] = useState<DisciplineEntry['category']>('Học tập');
   const [points, setPoints] = useState<number>(3);
   const [reason, setReason] = useState<string>('');
-  const [recordedBy, setRecordedBy] = useState<string>('Thầy Nguyễn Văn An (GVCN)');
+  const [recordedBy, setRecordedBy] = useState<string>('Cô Phan Thị Dạ Hương (GVCN)');
   const [success, setSuccess] = useState(false);
 
   const selectedStudent = students.find((s) => s.id === studentId) || students[0];
