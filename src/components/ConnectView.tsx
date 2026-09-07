@@ -469,106 +469,107 @@ export const ConnectView: React.FC<ConnectViewProps> = ({
       )}
 
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-[#003366] via-[#004080] to-[#002244] text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-blue-900/40 relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[#003366] via-[#004080] to-[#002244] text-white p-5 sm:p-6 rounded-3xl shadow-xl border border-blue-900/40 relative overflow-hidden space-y-4">
         <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute -bottom-10 right-20 w-60 h-60 bg-sky-500/15 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
-              <span className="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-xl bg-white/15 text-[#98FF98] border border-white/20 flex items-center gap-1.5">
-                <HeartHandshake className="w-3.5 h-3.5" />
-                CỔNG KẾT NỐI ĐA CHIỀU • SỔ LIÊN LẠC ĐIỆN TỬ
-              </span>
-              <span className="text-xs text-slate-300">
-                {classInfo?.className || 'Lớp 12A1'} • {classInfo?.schoolName || 'THPT Trần Nguyên Hãn'}
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-              Kênh Kết Nối Giáo Viên - Phụ Huynh - Học Sinh
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-200 mt-1 max-w-2xl leading-relaxed">
-              Hệ thống kết nối trực tuyến 24/7, nhắn tin tương tác tức thì, đặt lịch trao đổi chuyên sâu, phân quyền quản lý và xóa dữ liệu cho Giáo viên chủ nhiệm.
-            </p>
+        {/* Top Header Information - Full Width Horizontal */}
+        <div className="relative z-10 flex flex-col gap-2 border-b border-white/10 pb-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs font-extrabold uppercase tracking-wider px-3 py-1 rounded-xl bg-white/15 text-[#98FF98] border border-white/20 flex items-center gap-1.5 shadow-xs">
+              <HeartHandshake className="w-3.5 h-3.5" />
+              CỔNG KẾT NỐI ĐA CHIỀU • SỔ LIÊN LẠC ĐIỆN TỬ
+            </span>
+            <span className="text-xs text-slate-300 font-semibold">
+              {classInfo?.className || 'Lớp 12A1'} • {classInfo?.schoolName || 'THPT Trần Nguyên Hãn'}
+            </span>
           </div>
 
-          {/* Action buttons on header */}
-          <div className="flex items-center gap-2.5 flex-wrap shrink-0">
-            {onNavigateToSeating && (
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-black tracking-tight text-white leading-tight">
+            Kênh Kết Nối Giáo Viên - Phụ Huynh - Học Sinh
+          </h1>
+
+          <p className="text-xs sm:text-sm text-slate-200 leading-relaxed max-w-5xl">
+            Hệ thống kết nối trực tuyến 24/7, nhắn tin tương tác tức thì, đặt lịch trao đổi chuyên sâu, phân quyền quản lý và xóa dữ liệu cho Giáo viên chủ nhiệm.
+          </p>
+        </div>
+
+        {/* Action buttons bar */}
+        <div className="relative z-10 flex items-center justify-start lg:justify-end gap-2.5 flex-wrap pt-0.5">
+          {onNavigateToSeating && (
+            <button
+              type="button"
+              onClick={onNavigateToSeating}
+              className="px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-xs"
+            >
+              <LayoutGrid className="w-4 h-4 text-[#98FF98]" />
+              <span>Xem Sơ Đồ Lớp (4 Dãy)</span>
+            </button>
+          )}
+
+          {isGVCN && (
+            <>
               <button
                 type="button"
-                onClick={onNavigateToSeating}
-                className="px-3.5 py-2 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-xs"
+                onClick={() => {
+                  exportPresentationPptx({
+                    type: 'parent_meeting',
+                    classInfo: classInfo || {
+                      className: '12A1',
+                      schoolName: 'THPT TRẦN NGUYÊN HÃN',
+                      academicYear: 'Niên khóa 2023 - 2026',
+                      avatar: '',
+                    },
+                    teacherInfo: teacherInfo || {
+                      name: 'Thầy Nguyễn Văn An',
+                      title: 'GVCN Lớp 12A1',
+                      avatar: '',
+                      phone: '0912.345.678',
+                      email: 'nguyenvanan@tnh.edu.vn',
+                      subject: 'Toán',
+                    },
+                    students,
+                  });
+                  showToast('Đã xuất thành công tệp Trình chiếu PowerPoint Họp Phụ Huynh (.pptx)!');
+                }}
+                className="px-3.5 py-2 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+                title="Xuất bài trình chiếu PowerPoint (.pptx) chuẩn Họp Phụ Huynh"
               >
-                <LayoutGrid className="w-4 h-4 text-[#98FF98]" />
-                <span>Xem Sơ Đồ Lớp (4 Dãy)</span>
+                <Share2 className="w-4 h-4 text-slate-950" />
+                <span>Xuất Slide PowerPoint (.pptx)</span>
               </button>
-            )}
 
-            {isGVCN && (
-              <>
+              <button
+                type="button"
+                onClick={() => setIsDataManagementOpen(true)}
+                className="px-3.5 py-2 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-100 text-xs font-bold flex items-center gap-2 transition-all shadow-xs cursor-pointer"
+                title="Quản lý và xóa dữ liệu kênh kết nối dành cho GVCN"
+              >
+                <Trash2 className="w-4 h-4 text-rose-300" />
+                <span>Quản Lý Xóa Dữ Liệu</span>
+              </button>
+
+              {onOpenOnlineClassModal && (
                 <button
                   type="button"
-                  onClick={() => {
-                    exportPresentationPptx({
-                      type: 'parent_meeting',
-                      classInfo: classInfo || {
-                        className: '12A1',
-                        schoolName: 'THPT TRẦN NGUYÊN HÃN',
-                        academicYear: 'Niên khóa 2023 - 2026',
-                        avatar: '',
-                      },
-                      teacherInfo: teacherInfo || {
-                        name: 'Thầy Nguyễn Văn An',
-                        title: 'GVCN Lớp 12A1',
-                        avatar: '',
-                        phone: '0912.345.678',
-                        email: 'nguyenvanan@tnh.edu.vn',
-                        subject: 'Toán',
-                      },
-                      students,
-                    });
-                    showToast('Đã xuất thành công tệp Trình chiếu PowerPoint Họp Phụ Huynh (.pptx)!');
-                  }}
-                  className="px-3.5 py-2 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
-                  title="Xuất bài trình chiếu PowerPoint (.pptx) chuẩn Họp Phụ Huynh"
+                  onClick={onOpenOnlineClassModal}
+                  className="px-4 py-2 rounded-2xl bg-[#98FF98] hover:bg-emerald-300 text-slate-950 text-xs font-black flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
                 >
-                  <Share2 className="w-4 h-4 text-slate-950" />
-                  <span>Xuất Slide PowerPoint (.pptx)</span>
+                  <Video className="w-4 h-4 text-slate-950" />
+                  <span>DB Lớp Trực Tuyến ({onlineClasses.length})</span>
                 </button>
+              )}
 
-                <button
-                  type="button"
-                  onClick={() => setIsDataManagementOpen(true)}
-                  className="px-3.5 py-2 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-100 text-xs font-bold flex items-center gap-2 transition-all shadow-xs"
-                  title="Quản lý và xóa dữ liệu kênh kết nối dành cho GVCN"
-                >
-                  <Trash2 className="w-4 h-4 text-rose-300" />
-                  <span>Quản Lý Xóa Dữ Liệu</span>
-                </button>
-
-                {onOpenOnlineClassModal && (
-                  <button
-                    type="button"
-                    onClick={onOpenOnlineClassModal}
-                    className="px-4 py-2 rounded-2xl bg-[#98FF98] hover:bg-emerald-300 text-slate-950 text-xs font-black flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
-                  >
-                    <Video className="w-4 h-4 text-slate-950" />
-                    <span>DB Lớp Trực Tuyến ({onlineClasses.length})</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setIsNewMeetingModalOpen(true)}
-                  className="px-4 py-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md active:scale-95"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>Đặt Lịch Hẹn PH</span>
-                </button>
-              </>
-            )}
-          </div>
+              <button
+                type="button"
+                onClick={() => setIsNewMeetingModalOpen(true)}
+                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold flex items-center gap-2 transition-all shadow-md active:scale-95 cursor-pointer"
+              >
+                <Calendar className="w-4 h-4" />
+                <span>Đặt Lịch Hẹn PH</span>
+              </button>
+            </>
+          )}
         </div>
 
         {/* Feature Sub-Navigation Tabs */}
