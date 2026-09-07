@@ -3,6 +3,7 @@ export type UserRole = 'gvcn' | 'bgh' | 'gvbm' | 'csl' | 'student' | 'parent';
 export type NavigationTab =
   | 'overview'
   | 'students'
+  | 'subject-teachers'
   | 'seating'
   | 'schedule'
   | 'connect'
@@ -15,6 +16,20 @@ export type NavigationTab =
   | 'leaves'
   | 'homeroom-book'
   | 'settings';
+
+export interface SubjectTeacher {
+  id: string;
+  subjectName: string;
+  teacherName: string;
+  phone: string;
+  email: string;
+  periodsPerWeek: number;
+  notes?: string;
+  avatar?: string;
+  zaloUrl?: string;
+  officeHours?: string;
+  roleBadge?: string;
+}
 
 export interface ChatMessage {
   id: string;
