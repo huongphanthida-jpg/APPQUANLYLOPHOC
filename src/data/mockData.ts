@@ -799,6 +799,70 @@ export const INITIAL_DUTY_SCHEDULE: DutySchedule[] = [
       },
     ],
   },
+  {
+    id: 'duty-09',
+    dayOfWeek: 'Thứ 5',
+    session: 'Chiều',
+    slotName: 'Chiều Thứ 5',
+    assignedGroup: 1,
+    leaderName: 'Nguyễn Hoàng Long',
+    tasks: ['Quét dọn phòng học', 'Lau bảng & bục giảng', 'Thay túi rác mới & vệ sinh góc lớp', 'Tắt thiết bị điện & khóa cửa'],
+    status: 'Chưa bắt đầu',
+    week: 1,
+    notes: 'Ca trực chiều thứ 5 sau buổi học phụ đạo & bồi dưỡng',
+    assignedStudents: [
+      {
+        studentId: 'hs-01',
+        studentName: 'Nguyễn Hoàng Long',
+        specificTask: 'Điều phối ca trực Chiều Thứ 5 & Kiểm tra khóa cửa',
+        isCompleted: false,
+      },
+      {
+        studentId: 'hs-02',
+        studentName: 'Trần Mai Phương',
+        specificTask: 'Lau sạch bảng đen, giặt giẻ & lau bàn GV',
+        isCompleted: false,
+      },
+      {
+        studentId: 'hs-06',
+        studentName: 'Đặng Thảo Nhi',
+        specificTask: 'Quét dọn toàn bộ lớp học & đổ rác',
+        isCompleted: false,
+      },
+    ],
+  },
+  {
+    id: 'duty-10',
+    dayOfWeek: 'Thứ 6',
+    session: 'Chiều',
+    slotName: 'Chiều Thứ 6',
+    assignedGroup: 1,
+    leaderName: 'Trần Mai Phương',
+    tasks: ['Tổng vệ sinh lớp học cuối tuần', 'Quét dọn hành lang & lau cửa sổ', 'Tưới cây cảnh & thu dọn đồ dùng', 'Tắt toàn bộ thiết bị điện & kiểm tra niêm phong khóa cửa'],
+    status: 'Chưa bắt đầu',
+    week: 1,
+    notes: 'Tổng vệ sinh chiều thứ 6 chuẩn bị nghỉ cuối tuần',
+    assignedStudents: [
+      {
+        studentId: 'hs-02',
+        studentName: 'Trần Mai Phương',
+        specificTask: 'Chỉ đạo tổng vệ sinh chiều Thứ 6 & Niêm phong cửa',
+        isCompleted: false,
+      },
+      {
+        studentId: 'hs-01',
+        studentName: 'Nguyễn Hoàng Long',
+        specificTask: 'Quét dọn lớp, kê bàn ghế & tắt hệ thống điện',
+        isCompleted: false,
+      },
+      {
+        studentId: 'hs-06',
+        studentName: 'Đặng Thảo Nhi',
+        specificTask: 'Quét hành lang, lau cửa kính & đổ rác tập kết',
+        isCompleted: false,
+      },
+    ],
+  },
 ];
 
 export const INITIAL_ANNOUNCEMENTS: Announcement[] = [
