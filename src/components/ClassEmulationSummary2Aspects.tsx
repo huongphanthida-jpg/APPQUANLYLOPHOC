@@ -543,7 +543,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
             </div>
             <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1 flex items-center gap-1">
               <Star className="w-3.5 h-3.5 text-amber-500 shrink-0 fill-amber-400" />
-              <span>Xếp loại chung: <strong>Lớp Xuất Sắc Khối 12</strong></span>
+              <span>Xếp loại chung: <strong>Lớp Tiên Tiến Xuất Sắc</strong></span>
             </p>
           </div>
           <div className="w-full bg-amber-100 dark:bg-amber-950/50 rounded-full h-1.5 overflow-hidden">
