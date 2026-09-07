@@ -152,14 +152,14 @@ export const EditTeacherModal: React.FC<EditTeacherModalProps> = ({
             <div className="flex-1 text-center sm:text-left overflow-hidden">
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                 <h3 className="text-lg font-black text-slate-900 truncate">
-                  {formData.name || 'Thầy Nguyễn Văn An'}
+                  {formData.name || 'Cô Phan Thị Dạ Hương'}
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                  {formData.subject || 'Toán Học'}
+                  {formData.subject || 'Chủ nhiệm / Ngữ Văn'}
                 </span>
               </div>
               <p className="text-xs text-slate-600 font-semibold mt-0.5">
-                {formData.title || 'Thạc sĩ Toán học - GVCN 12A1'}
+                {formData.title || 'Giáo viên Chủ nhiệm - Lớp 11D5'}
               </p>
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 text-[11px] text-slate-500 mt-1">
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 border border-blue-300">
