@@ -623,30 +623,33 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
 
                   {/* Teacher Avatar & Camera Button */}
                   <div className="flex items-start gap-3.5 pt-1">
-                    <div className="relative group/avatar">
+                    <div
+                      onClick={() => triggerCardAvatarUpload(teacher.id)}
+                      className="relative group/avatar cursor-pointer flex-shrink-0"
+                      title="Bấm để thay đổi ảnh đại diện Thầy/Cô"
+                    >
                       {teacher.avatar ? (
                         <img
                           src={teacher.avatar}
                           alt={teacher.teacherName}
-                          className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-md flex-shrink-0"
+                          className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-slate-700 shadow-md group-hover/avatar:opacity-85 transition-opacity"
                         />
                       ) : (
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-800 text-white font-black text-lg flex items-center justify-center shadow-md flex-shrink-0">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-800 text-white font-black text-lg flex items-center justify-center shadow-md group-hover/avatar:brightness-110 transition-all">
                           {teacher.teacherName.split(' ').pop()?.[0] || 'T'}
                         </div>
                       )}
 
-                      {/* Camera Overlay Icon Button */}
-                      {canManage && (
-                        <button
-                          type="button"
-                          onClick={() => triggerCardAvatarUpload(teacher.id)}
-                          className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-2 border-white dark:border-slate-900 transition-transform active:scale-90 cursor-pointer"
-                          title="Thay đổi ảnh đại diện Thầy/Cô"
-                        >
-                          <Camera className="w-3 h-3 stroke-[2.5]" />
-                        </button>
-                      )}
+                      {/* Always visible Camera Badge Icon */}
+                      <div className="absolute -bottom-1.5 -right-1.5 p-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg border-2 border-white dark:border-slate-900 transition-transform group-hover/avatar:scale-110 active:scale-95">
+                        <Camera className="w-3.5 h-3.5 stroke-[2.5]" />
+                      </div>
+
+                      {/* Hover Overlay Hint */}
+                      <div className="absolute inset-0 bg-slate-950/40 rounded-2xl opacity-0 group-hover/avatar:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] font-extrabold backdrop-blur-3xs">
+                        <Camera className="w-4 h-4 mb-0.5" />
+                        <span>Đổi ảnh</span>
+                      </div>
                     </div>
 
                     <div className="space-y-1 min-w-0 flex-1">
@@ -760,7 +763,11 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
                       <td className="p-4 pl-6 font-bold text-slate-400">{index + 1}</td>
                       <td className="p-4">
                         <div className="flex items-center gap-2">
-                          <div className="relative group/tblavatar">
+                          <div
+                            onClick={() => triggerCardAvatarUpload(teacher.id)}
+                            className="relative group/tblavatar cursor-pointer"
+                            title="Bấm để thay đổi ảnh đại diện Thầy/Cô"
+                          >
                             {teacher.avatar ? (
                               <img
                                 src={teacher.avatar}
@@ -772,16 +779,11 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
                                 {teacher.teacherName.split(' ').pop()?.[0] || 'T'}
                               </div>
                             )}
-                            {canManage && (
-                              <button
-                                type="button"
-                                onClick={() => triggerCardAvatarUpload(teacher.id)}
-                                className="absolute -bottom-1 -right-1 p-1 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
-                                title="Đổi ảnh"
-                              >
-                                <Camera className="w-2.5 h-2.5" />
-                              </button>
-                            )}
+                            <div
+                              className="absolute -bottom-1 -right-1 p-1 rounded-full bg-blue-600 text-white hover:bg-blue-700 shadow-sm border border-white dark:border-slate-900"
+                            >
+                              <Camera className="w-2.5 h-2.5" />
+                            </div>
                           </div>
                           <span className={`px-2.5 py-1 rounded-lg text-[11px] font-black border ${badgeColor}`}>
                             {teacher.subjectName}
