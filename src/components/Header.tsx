@@ -49,6 +49,7 @@ interface HeaderProps {
   onEditTeacher?: () => void;
   onEditBgh?: () => void;
   onOpenGeminiKeyModal?: () => void;
+  onLockSystem?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -72,6 +73,7 @@ export const Header: React.FC<HeaderProps> = ({
   onEditTeacher,
   onEditBgh,
   onOpenGeminiKeyModal,
+  onLockSystem,
 }) => {
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -607,10 +609,40 @@ export const Header: React.FC<HeaderProps> = ({
                       </p>
                     </div>
                   </button>
+
+                  {/* 7. Khóa hệ thống / Màn hình đăng nhập */}
+                  {onLockSystem && (
+                    <div className="p-2 border-t border-slate-100 bg-slate-50/50">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowRoleMenu(false);
+                          onLockSystem();
+                        }}
+                        className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer"
+                      >
+                        <Lock className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Khóa Màn Hình / Đăng Nhập Hệ Thống</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             )}
           </div>
+
+          {/* Lock System Quick Button */}
+          {onLockSystem && (
+            <button
+              id="btn-lock-system"
+              type="button"
+              onClick={onLockSystem}
+              title="Khóa hệ thống & quay lại màn hình đăng nhập"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+            >
+              <Lock className="w-4 h-4 text-amber-500" />
+            </button>
+          )}
 
           {/* Reset Mock Data button */}
           <button
