@@ -1055,24 +1055,24 @@ export const INITIAL_SUBMISSIONS: AssignmentSubmission[] = [
 ];
 
 export const INITIAL_CLASS_INFO: ClassInfo = {
-  className: 'LỚP 12A1 (KHTN)',
+  className: 'LỚP 11D5',
   schoolName: 'THPT TRẦN NGUYÊN HÃN',
-  academicYear: 'Niên khóa 2023 - 2026',
+  academicYear: 'Niên khóa 2024 - 2027',
   avatar: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=300',
-  roomName: 'Phòng 302 - Tầng 3 Nhà A',
-  slogan: 'Kỷ luật - Trí tuệ - Bứt phá kỳ thi Tốt nghiệp THPT 2026',
-  specialization: 'Chuyên ban Khoa học Tự nhiên (Toán - Lý - Hóa - Sinh)',
-  streamBadge: 'Chuyên ban KHTN',
+  roomName: 'Phòng 204 - Tầng 2 Nhà A',
+  slogan: 'Kỷ luật - Trí tuệ - Bứt phá học tập Lớp 11D5',
+  specialization: 'Lớp 11D5 - THPT Trần Nguyên Hãn',
+  streamBadge: 'Lớp 11D5',
 };
 
 export const INITIAL_TEACHER_INFO: TeacherInfo = {
-  name: 'Thầy Nguyễn Văn An',
-  title: 'Thạc sĩ Toán học - GVCN Lớp 12A1',
-  avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=300',
+  name: 'Cô Phan Thị Dạ Hương',
+  title: 'Giáo viên Chủ nhiệm - Lớp 11D5',
+  avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
   phone: '0912.345.678',
-  email: 'nguyenvanan.gv@tnh.edu.vn',
-  subject: 'Toán Học',
-  bio: 'Thạc sĩ Phương pháp Giảng dạy Toán học. Tổ phó chuyên môn Toán - Tin. 14 năm kinh nghiệm giảng dạy và luyện thi ĐH, bồi dưỡng HSG cấp Thành phố.',
+  email: 'dahuong.gv@tnh.edu.vn',
+  subject: 'Chủ nhiệm / Ngữ Văn',
+  bio: 'Giáo viên Chủ nhiệm Lớp 11D5. Nhiều năm kinh nghiệm giảng dạy, quản lý lớp học và đồng hành cùng học sinh THPT Trần Nguyên Hãn.',
   officeHours: 'Thứ 2 - Thứ 6 (16:30 - 17:45)',
   positionType: 'Chính Nhiệm',
 };
