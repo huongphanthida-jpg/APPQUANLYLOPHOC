@@ -25,6 +25,7 @@ import {
   GoogleSheetConfig,
   OnlineClass,
   OnlineClassSheetConfig,
+  SubjectTeacher,
 } from '../types';
 import {
   INITIAL_STUDENTS,
@@ -630,6 +631,22 @@ export const getStoredOnlineClassSheetConfig = (): OnlineClassSheetConfig | null
 
 export const saveOnlineClassSheetConfig = (config: OnlineClassSheetConfig) => {
   localStorage.setItem(ONLINE_CLASS_SHEET_CONFIG_STORAGE_KEY, JSON.stringify(config));
+};
+
+const SUBJECT_TEACHERS_STORAGE_KEY = 'tnh_gvcn_subject_teachers_v1';
+
+export const getStoredSubjectTeachers = (): SubjectTeacher[] => {
+  const stored = localStorage.getItem(SUBJECT_TEACHERS_STORAGE_KEY);
+  if (!stored) return INITIAL_HOMEROOM_BOOK_DATA.subjectTeachers || [];
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return INITIAL_HOMEROOM_BOOK_DATA.subjectTeachers || [];
+  }
+};
+
+export const saveSubjectTeachers = (teachers: SubjectTeacher[]) => {
+  localStorage.setItem(SUBJECT_TEACHERS_STORAGE_KEY, JSON.stringify(teachers));
 };
 
 
