@@ -225,7 +225,20 @@ export const saveRole = (role: UserRole) => {
 export const getStoredClassInfo = (): ClassInfo => {
   try {
     const data = localStorage.getItem(KEYS.CLASS_INFO);
-    return data ? JSON.parse(data) : INITIAL_CLASS_INFO;
+    if (!data) return INITIAL_CLASS_INFO;
+    const parsed: ClassInfo = JSON.parse(data);
+    if (parsed.className?.includes('12A1')) {
+      const updated = {
+        ...parsed,
+        className: 'LỚP 11D5',
+        academicYear: 'Niên khóa 2024 - 2027',
+        specialization: 'Lớp 11D5 - THPT Trần Nguyên Hãn',
+        streamBadge: 'Lớp 11D5',
+      };
+      saveClassInfo(updated);
+      return updated;
+    }
+    return parsed;
   } catch {
     return INITIAL_CLASS_INFO;
   }
@@ -237,7 +250,21 @@ export const saveClassInfo = (info: ClassInfo) => {
 export const getStoredTeacherInfo = (): TeacherInfo => {
   try {
     const data = localStorage.getItem(KEYS.TEACHER_INFO);
-    return data ? JSON.parse(data) : INITIAL_TEACHER_INFO;
+    if (!data) return INITIAL_TEACHER_INFO;
+    const parsed: TeacherInfo = JSON.parse(data);
+    if (parsed.name?.includes('Nguyễn Văn An')) {
+      const updated = {
+        ...parsed,
+        name: 'Cô Phan Thị Dạ Hương',
+        title: 'Giáo viên Chủ nhiệm - Lớp 11D5',
+        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
+        email: 'dahuong.gv@tnh.edu.vn',
+        subject: 'Chủ nhiệm / Ngữ Văn',
+      };
+      saveTeacherInfo(updated);
+      return updated;
+    }
+    return parsed;
   } catch {
     return INITIAL_TEACHER_INFO;
   }
