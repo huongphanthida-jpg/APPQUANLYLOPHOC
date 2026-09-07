@@ -22,6 +22,7 @@ import { EditTeacherModal } from './components/EditTeacherModal';
 import { EditBghModal } from './components/EditBghModal';
 import { SettingsView } from './components/SettingsView';
 import { HomeroomBookView } from './components/HomeroomBookView';
+import { SubjectTeachersView } from './components/SubjectTeachersView';
 import { ImportStudentsModal } from './components/ImportStudentsModal';
 import { ImportGradesModal } from './components/ImportGradesModal';
 import { VietnameseFontRepairModal } from './components/VietnameseFontRepairModal';
@@ -57,6 +58,7 @@ import {
   GoogleSheetConfig,
   OnlineClass,
   OnlineClassSheetConfig,
+  SubjectTeacher,
 } from './types';
 import {
   getStoredStudents,
@@ -111,6 +113,8 @@ import {
   saveGroupEmulationLogs,
   getStoredHomeroomBookData,
   saveHomeroomBookData,
+  getStoredSubjectTeachers,
+  saveSubjectTeachers,
 } from './lib/storage';
 import { INITIAL_SEATING_CHART, INITIAL_TIMETABLE } from './data/mockData';
 import { fetchStudentsFromGoogleSheet, fetchOnlineClassesFromGoogleSheet } from './utils/googleSheetSync';
@@ -144,7 +148,30 @@ export default function App() {
   const [randomPicks, setRandomPicks] = useState<RandomPickRecord[]>(getStoredRandomPicks());
   const [emulationLogs, setEmulationLogs] = useState<GroupEmulationLog[]>(getStoredGroupEmulationLogs());
   const [homeroomBookData, setHomeroomBookData] = useState<HomeroomBookData>(getStoredHomeroomBookData());
+  const [subjectTeachers, setSubjectTeachers] = useState<SubjectTeacher[]>(getStoredSubjectTeachers());
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const handleAddSubjectTeacher = (teacherData: Omit<SubjectTeacher, 'id'>) => {
+    const newTeacher: SubjectTeacher = {
+      ...teacherData,
+      id: `st-${Date.now()}`,
+    };
+    const updated = [newTeacher, ...subjectTeachers];
+    setSubjectTeachers(updated);
+    saveSubjectTeachers(updated);
+  };
+
+  const handleUpdateSubjectTeacher = (updatedTeacher: SubjectTeacher) => {
+    const updated = subjectTeachers.map((t) => (t.id === updatedTeacher.id ? updatedTeacher : t));
+    setSubjectTeachers(updated);
+    saveSubjectTeachers(updated);
+  };
+
+  const handleDeleteSubjectTeacher = (id: string) => {
+    const updated = subjectTeachers.filter((t) => t.id !== id);
+    setSubjectTeachers(updated);
+    saveSubjectTeachers(updated);
+  };
 
   // Modals state
   const [selectedStudentForModal, setSelectedStudentForModal] = useState<Student | null>(null);
@@ -1124,6 +1151,18 @@ export default function App() {
               teacherInfo={teacherInfo}
               onOpenGoogleSheetSync={() => setIsGoogleSheetModalOpen(true)}
               googleSheetConfig={googleSheetConfig}
+            />
+          )}
+
+          {currentTab === 'subject-teachers' && (
+            <SubjectTeachersView
+              subjectTeachers={subjectTeachers}
+              onAddTeacher={handleAddSubjectTeacher}
+              onUpdateTeacher={handleUpdateSubjectTeacher}
+              onDeleteTeacher={handleDeleteSubjectTeacher}
+              role={role}
+              classInfo={classInfo}
+              teacherInfo={teacherInfo}
             />
           )}
 
