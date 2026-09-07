@@ -39,6 +39,7 @@ interface TaskDutyViewProps {
   onDeleteTask?: (taskId: string) => void;
   onUpdateDutyStatus: (dutyId: string, status: DutySchedule['status']) => void;
   onSaveDuty?: (duty: DutySchedule) => void;
+  onBatchSaveDuty?: (duties: DutySchedule[]) => void;
   onDeleteDuty?: (dutyId: string) => void;
   role: UserRole;
 }
@@ -52,6 +53,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
   onDeleteTask,
   onUpdateDutyStatus,
   onSaveDuty,
+  onBatchSaveDuty,
   onDeleteDuty,
   role,
 }) => {
@@ -195,11 +197,12 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
     XLSX.writeFile(wb, `Lich_Phan_Cong_Truc_Nhat_8_Buoi_Tuan_${selectedDutyWeek}.xlsx`);
   };
 
-  // Auto-generate 8 standard slots for a group in the week
+  // Auto-generate standard slots for a group in the week
   const handleGenerate8SlotsForGroup = (targetGroup: 1 | 2 | 3 | 4) => {
-    if (!onSaveDuty) return;
+    if (!onSaveDuty && !onBatchSaveDuty) return;
     const groupMembers = students.filter((s) => s.group === targetGroup);
     const leader = groupMembers[0]?.name || `Tổ trưởng Tổ ${targetGroup}`;
+    const generatedDuties: DutySchedule[] = [];
 
     STANDARD_DUTY_SLOTS.forEach((slot, sIdx) => {
       const isAfternoon = slot.session === 'Chiều';
@@ -244,30 +247,48 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
             ? 'Tắt toàn bộ quạt trần, tắt điều hòa, đóng chặt cửa sổ & khóa cửa'
             : 'Bật quạt, đèn học, chuẩn bị micro & nước uống cho giáo viên';
         } else {
+          specificTask = isAfternoon
+            ? 'Hỗ trợ quét dọn hành lang, tưới cây xanh & sắp xếp dụng cụ'
+            : 'Quét hành lang trước lớp & lau sạch bệ cửa sổ';
+        }
+
         return {
           studentId: member.id,
           studentName: member.name,
-          specificTask: mIdx === 0 ? `Chỉ đạo ca trực ${slot.slotName}` : `Phụ trách vệ sinh ca ${slot.slotName}`,
+          specificTask,
+          note: mIdx === 0 ? 'Tổ trưởng phụ trách' : undefined,
           isCompleted: false,
         };
       });
 
+      const existingDuty = dutySchedule.find(
+        (d) =>
+          d.dayOfWeek === slot.dayOfWeek &&
+          (d.session === slot.session || d.slotName?.includes(slot.session))
+      );
+
       const newDuty: DutySchedule = {
-        id: `duty-slot-${targetGroup}-${slot.id}-${Date.now()}-${sIdx}`,
+        id: existingDuty ? existingDuty.id : `duty-slot-${targetGroup}-${slot.id}-${Date.now()}-${sIdx}`,
         dayOfWeek: slot.dayOfWeek,
         session: slot.session,
         slotName: slot.slotName,
         assignedGroup: targetGroup,
         leaderName: leader,
         tasks: defaultTasks,
-        status: 'Chưa bắt đầu',
+        status: existingDuty ? existingDuty.status : 'Chưa bắt đầu',
         week: selectedDutyWeek,
         notes: `Tự động khởi tạo ca ${slot.label}`,
         assignedStudents: assignedStudentsList,
       };
 
-      onSaveDuty(newDuty);
+      generatedDuties.push(newDuty);
     });
+
+    if (onBatchSaveDuty) {
+      onBatchSaveDuty(generatedDuties);
+    } else if (onSaveDuty) {
+      generatedDuties.forEach((d) => onSaveDuty(d));
+    }
   };
 
   // Filtered duty list
