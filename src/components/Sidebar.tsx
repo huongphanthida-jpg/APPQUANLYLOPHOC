@@ -97,6 +97,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const currentTeacher = teacherInfo || defaultTeacher;
   const currentBgh = bghInfo || defaultBgh;
 
+  const gradeNumber = currentClass.className.match(/(10|11|12)/)?.[0] || '11';
+  const gradeName = `Khối ${gradeNumber}`;
+
   const gvcnNavItems: NavItem[] = [
     { id: 'overview', label: 'Bảng Tổng Quan', icon: LayoutDashboard },
     { id: 'students', label: 'Hồ Sơ Học Sinh', icon: Users },
@@ -474,7 +477,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 mt-auto border-t border-white/10 bg-[#002244]/50 text-[11px] text-slate-300 space-y-1">
         <div className="flex justify-between">
           <span className="text-slate-300">Sĩ số: <strong>42 Học sinh</strong></span>
-          <span className="text-emerald-300 font-bold">Top 1 Khối 12</span>
+          <span className="text-emerald-300 font-bold">Top 1 {gradeName}</span>
         </div>
         <p className="text-slate-300 text-[10px]">Hệ thống Quản trị & Học liệu THPT</p>
       </div>
