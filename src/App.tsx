@@ -28,6 +28,7 @@ import { VietnameseFontRepairModal } from './components/VietnameseFontRepairModa
 import { GoogleSheetSyncModal } from './components/GoogleSheetSyncModal';
 import { GeminiApiKeyModal } from './components/GeminiApiKeyModal';
 import { OnlineClassDatabaseModal } from './components/OnlineClassDatabaseModal';
+import { SystemLoginModal } from './components/SystemLoginModal';
 import { getStoredGeminiApiKey } from './utils/geminiApiKeyManager';
 import {
   Student,
@@ -82,6 +83,8 @@ import {
   saveSubmissions,
   getStoredRole,
   saveRole,
+  getStoredSystemAuth,
+  saveSystemAuth,
   getStoredClassInfo,
   saveClassInfo,
   getStoredTeacherInfo,
@@ -114,6 +117,7 @@ import { fetchStudentsFromGoogleSheet, fetchOnlineClassesFromGoogleSheet } from 
 
 export default function App() {
   // State Initialization
+  const [isSystemAuthenticated, setIsSystemAuthenticated] = useState<boolean>(getStoredSystemAuth());
   const [role, setRole] = useState<UserRole>(getStoredRole());
   const [currentTab, setCurrentTab] = useState<NavigationTab>('overview');
   const [students, setStudents] = useState<Student[]>(getStoredStudents());
@@ -287,6 +291,20 @@ export default function App() {
   const handleRoleChange = (newRole: UserRole) => {
     setRole(newRole);
     saveRole(newRole);
+  };
+
+  const handleSystemLoginSuccess = (targetRole: UserRole, remember: boolean, targetStudentId?: string) => {
+    setIsSystemAuthenticated(true);
+    saveSystemAuth(true, remember);
+    handleRoleChange(targetRole);
+    if (targetStudentId) {
+      setSelectedStudentId(targetStudentId);
+    }
+  };
+
+  const handleLockSystem = () => {
+    setIsSystemAuthenticated(false);
+    saveSystemAuth(false);
   };
 
   const handleSaveStudent = (updatedStudent: Student) => {
@@ -1028,6 +1046,7 @@ export default function App() {
         onEditTeacher={() => setIsEditTeacherOpen(true)}
         onEditBgh={() => setIsEditBghOpen(true)}
         onOpenGeminiKeyModal={() => setIsGeminiKeyModalOpen(true)}
+        onLockSystem={handleLockSystem}
       />
 
       {/* Main Body Layout with Sidebar */}
@@ -1474,6 +1493,16 @@ export default function App() {
         onClose={() => setIsEditBghOpen(false)}
         bghInfo={bghInfo}
         onSave={handleSaveBghInfo}
+      />
+
+      {/* System Startup Password Login Modal */}
+      <SystemLoginModal
+        isOpen={!isSystemAuthenticated}
+        classInfo={classInfo}
+        teacherInfo={teacherInfo}
+        students={students}
+        currentRole={role}
+        onLoginSuccess={handleSystemLoginSuccess}
       />
     </div>
   );
