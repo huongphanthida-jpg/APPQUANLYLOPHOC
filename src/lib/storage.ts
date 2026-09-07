@@ -164,7 +164,7 @@ export const getStoredDutySchedule = (): DutySchedule[] => {
     const parsed: DutySchedule[] = JSON.parse(data);
     if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_DUTY_SCHEDULE;
     // Map existing records to ensure slotName and session exist
-    return parsed.map((item) => {
+    const normalized = parsed.map((item) => {
       const session = item.session || (item.slotName?.includes('Chiều') ? 'Chiều' : 'Sáng');
       const slotName = item.slotName || `${session} ${item.dayOfWeek}`;
       return {
@@ -173,6 +173,11 @@ export const getStoredDutySchedule = (): DutySchedule[] => {
         slotName,
       };
     });
+
+    // Merge missing initial items (e.g., duty-09, duty-10) if user has cached old localStorage data
+    const existingIds = new Set(normalized.map((item) => item.id));
+    const missingInitials = INITIAL_DUTY_SCHEDULE.filter((item) => !existingIds.has(item.id));
+    return missingInitials.length > 0 ? [...normalized, ...missingInitials] : normalized;
   } catch {
     return INITIAL_DUTY_SCHEDULE;
   }
