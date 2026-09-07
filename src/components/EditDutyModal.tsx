@@ -31,7 +31,7 @@ interface EditDutyModalProps {
   onSave: (duty: DutySchedule) => void;
 }
 
-// 8 standard slots of the week for 1 group
+// 12 standard slots of the week for 1 group
 export const STANDARD_DUTY_SLOTS = [
   { id: 'mon-morning', dayOfWeek: 'Thứ 2' as DutyDayOfWeek, session: 'Sáng' as DutySession, slotName: 'Sáng Thứ 2', label: 'Sáng Thứ 2 (Chào cờ đầu tuần)', timeHint: '06:45 - 11:30' },
   { id: 'mon-afternoon', dayOfWeek: 'Thứ 2' as DutyDayOfWeek, session: 'Chiều' as DutySession, slotName: 'Chiều Thứ 2', label: 'Chiều Thứ 2 (Sau giờ học chiều)', timeHint: '13:00 - 17:15' },
@@ -40,7 +40,11 @@ export const STANDARD_DUTY_SLOTS = [
   { id: 'wed-morning', dayOfWeek: 'Thứ 4' as DutyDayOfWeek, session: 'Sáng' as DutySession, slotName: 'Sáng Thứ 4', label: 'Sáng Thứ 4', timeHint: '06:45 - 11:30' },
   { id: 'wed-afternoon', dayOfWeek: 'Thứ 4' as DutyDayOfWeek, session: 'Chiều' as DutySession, slotName: 'Chiều Thứ 4', label: 'Chiều Thứ 4 (Sinh hoạt CLB/Bồi dưỡng)', timeHint: '13:00 - 17:15' },
   { id: 'thu-morning', dayOfWeek: 'Thứ 5' as DutyDayOfWeek, session: 'Sáng' as DutySession, slotName: 'Sáng Thứ 5', label: 'Sáng Thứ 5', timeHint: '06:45 - 11:30' },
+  { id: 'thu-afternoon', dayOfWeek: 'Thứ 5' as DutyDayOfWeek, session: 'Chiều' as DutySession, slotName: 'Chiều Thứ 5', label: 'Chiều Thứ 5 (Bồi dưỡng / Ôn luyện chiều)', timeHint: '13:00 - 17:15' },
   { id: 'fri-morning', dayOfWeek: 'Thứ 6' as DutyDayOfWeek, session: 'Sáng' as DutySession, slotName: 'Sáng Thứ 6', label: 'Sáng Thứ 6 (Tổng kết tuần)', timeHint: '06:45 - 11:30' },
+  { id: 'fri-afternoon', dayOfWeek: 'Thứ 6' as DutyDayOfWeek, session: 'Chiều' as DutySession, slotName: 'Chiều Thứ 6', label: 'Chiều Thứ 6 (Tổng vệ sinh cuối tuần & Khóa cửa)', timeHint: '13:00 - 17:15' },
+  { id: 'sat-morning', dayOfWeek: 'Thứ 7' as DutyDayOfWeek, session: 'Sáng' as DutySession, slotName: 'Sáng Thứ 7', label: 'Sáng Thứ 7 (Ngoại khóa / Sinh hoạt)', timeHint: '06:45 - 11:30' },
+  { id: 'sat-afternoon', dayOfWeek: 'Thứ 7' as DutyDayOfWeek, session: 'Chiều' as DutySession, slotName: 'Chiều Thứ 7', label: 'Chiều Thứ 7 (Bàn giao ca)', timeHint: '13:00 - 17:15' },
 ];
 
 // Main Task Definitions categorized by scope
