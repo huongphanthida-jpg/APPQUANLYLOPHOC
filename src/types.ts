@@ -218,7 +218,11 @@ export type DutyScheduleSlot =
   | 'Sáng Thứ 4'
   | 'Chiều Thứ 4'
   | 'Sáng Thứ 5'
-  | 'Sáng Thứ 6';
+  | 'Chiều Thứ 5'
+  | 'Sáng Thứ 6'
+  | 'Chiều Thứ 6'
+  | 'Sáng Thứ 7'
+  | 'Chiều Thứ 7';
 
 export interface DutySchedule {
   id: string;
