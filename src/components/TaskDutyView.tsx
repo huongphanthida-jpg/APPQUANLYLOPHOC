@@ -244,16 +244,10 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
             ? 'Tắt toàn bộ quạt trần, tắt điều hòa, đóng chặt cửa sổ & khóa cửa'
             : 'Bật quạt, đèn học, chuẩn bị micro & nước uống cho giáo viên';
         } else {
-          specificTask = isAfternoon
-            ? 'Hỗ trợ quét dọn hành lang, tưới cây xanh & sắp xếp dụng cụ'
-            : 'Quét hành lang trước lớp & lau sạch bệ cửa sổ';
-        }
-
         return {
           studentId: member.id,
           studentName: member.name,
-          specificTask,
-          note: mIdx === 0 ? 'Tổ trưởng phụ trách' : undefined,
+          specificTask: mIdx === 0 ? `Chỉ đạo ca trực ${slot.slotName}` : `Phụ trách vệ sinh ca ${slot.slotName}`,
           isCompleted: false,
         };
       });
@@ -267,9 +261,9 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
         leaderName: leader,
         tasks: defaultTasks,
         status: 'Chưa bắt đầu',
-        inspectedBy: 'GVCN Nguyễn Văn An',
-        assignedStudents: assignedStudentsList,
         week: selectedDutyWeek,
+        notes: `Tự động khởi tạo ca ${slot.label}`,
+        assignedStudents: assignedStudentsList,
       };
 
       onSaveDuty(newDuty);
@@ -289,14 +283,14 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
   });
 
   return (
-    <div id="task-duty-view" className="space-y-6 pb-12">
-      {/* 1. Header */}
+    <div className="space-y-6">
+      {/* Top Banner & Header controls */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-900 dark:bg-blue-950 dark:text-blue-300 font-black flex items-center gap-1">
               <Clock className="w-3 h-3 text-blue-600" />
-              LỊCH TRỰC NHẬT 8 BUỔI/TUẦN
+              LỊCH TRỰC NHẬT THEO CA / TUẦN
             </span>
             <span className="text-xs text-slate-400 font-medium">• 1 Tổ phụ trách toàn tuần</span>
           </div>
@@ -304,7 +298,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
             Quản Lý Hoạt Động & Phân Công Trực Nhật Lớp
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400">
-            Phân công 8 buổi chuẩn/tuần (Sáng & Chiều T2, T3, T4; Sáng T5, T6), chọn buổi chiều và gán nhiệm vụ theo đầu việc chính
+            Phân công các ca trực nhật chuẩn trong tuần (Thứ 2 - Thứ 6 & Thứ 7), gán nhiệm vụ chi tiết từng học sinh
           </p>
         </div>
 
@@ -320,7 +314,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
               }`}
             >
               <Clock className="w-3.5 h-3.5 text-amber-300" />
-              <span>Lịch Trực Nhật (8 Buổi)</span>
+              <span>Lịch Trực Nhật Theo Ca</span>
             </button>
 
             <button
@@ -568,18 +562,18 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
       ) : (
         /* Duty Schedule Table & Detailed Student Assignments */
         <div className="space-y-5">
-          {/* 8-Session Standard Overview & Fast Generator Bar */}
+          {/* Standard Overview & Fast Generator Bar */}
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-indigo-900 to-[#003366] text-white shadow-md space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div>
                 <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-400 text-slate-950 uppercase tracking-wide">
-                  Quy định 8 buổi trực/tuần
+                  Quy định các ca trực/tuần
                 </span>
                 <h3 className="text-base sm:text-lg font-black mt-1 text-white">
-                  Phân Công 8 Buổi Trong Tuần Cho 1 Tổ Phụ Trách
+                  Phân Công Trực Nhật Theo Ca Cho Tổ Phụ Trách
                 </h3>
                 <p className="text-xs text-blue-200">
-                  Thứ 2 (Sáng & Chiều) • Thứ 3 (Sáng & Chiều) • Thứ 4 (Sáng & Chiều) • Thứ 5 (Sáng) • Thứ 6 (Sáng)
+                  Thứ 2 đến Thứ 6 (Sáng & Chiều) • Thứ 7 (Sáng & Chiều)
                 </p>
               </div>
 
@@ -587,7 +581,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
               {(role === 'gvcn' || role === 'csl') && (
                 <div className="flex items-center gap-2 self-start md:self-auto bg-white/10 p-1.5 rounded-2xl border border-white/20">
                   <span className="text-xs font-bold text-blue-200 px-2 whitespace-nowrap">
-                    Khởi tạo 8 buổi cho:
+                    Khởi tạo ca trực cho:
                   </span>
                   {[1, 2, 3, 4].map((grp) => (
                     <button
@@ -595,7 +589,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
                       type="button"
                       onClick={() => handleGenerate8SlotsForGroup(grp as 1 | 2 | 3 | 4)}
                       className="px-2.5 py-1 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs transition-all shadow-xs cursor-pointer active:scale-95"
-                      title={`Tạo ngay trọn bộ 8 buổi trực nhật chuẩn cho Tổ ${grp} trong tuần này`}
+                      title={`Tạo ngay trọn bộ các buổi trực nhật chuẩn cho Tổ ${grp} trong tuần này`}
                     >
                       Tổ {grp}
                     </button>
@@ -604,8 +598,8 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
               )}
             </div>
 
-            {/* 8 Slots Quick Overview Pills */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 pt-2 border-t border-white/15">
+            {/* Quick Overview Pills */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-12 gap-2 pt-2 border-t border-white/15">
               {STANDARD_DUTY_SLOTS.map((stdSlot) => {
                 const isAfternoon = stdSlot.session === 'Chiều';
                 const matchingDuty = dutySchedule.find(
@@ -669,7 +663,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
                         : 'text-slate-600 dark:text-slate-400 hover:text-blue-600'
                     }`}
                   >
-                    Tất cả 8 Buổi
+                    Tất cả ca trực
                   </button>
                   <button
                     type="button"
@@ -760,7 +754,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
                 id="btn-export-duty-schedule"
                 onClick={handleExportDutyExcel}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold transition-all cursor-pointer shadow-2xs"
-                title="Xuất bảng phân công 8 buổi trực nhật ra tệp Excel"
+                title="Xuất bảng phân công các ca trực nhật ra tệp Excel"
               >
                 <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Xuất Excel</span>
@@ -787,7 +781,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
                 Chưa có lịch trực nhật nào phù hợp với bộ lọc.
               </h4>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
-                Nhấn vào nút "Thêm Ca Trực Nhật" hoặc chọn "Khởi tạo 8 buổi cho Tổ" ở thanh trên để tạo nhanh danh sách phân công.
+                Nhấn vào nút "Thêm Ca Trực Nhật" hoặc chọn "Khởi tạo ca trực cho Tổ" ở thanh trên để tạo nhanh danh sách phân công.
               </p>
             </div>
           ) : (
