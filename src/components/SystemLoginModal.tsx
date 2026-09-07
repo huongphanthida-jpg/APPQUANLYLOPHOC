@@ -304,9 +304,9 @@ export const SystemLoginModal: React.FC<SystemLoginModalProps> = ({
               <button
                 type="button"
                 onClick={() => handleQuickLogin('gvcn')}
-                className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[11px] font-bold hover:bg-blue-100 transition-all border border-blue-200 dark:border-blue-900"
+                className="px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-[11px] font-bold hover:bg-blue-100 transition-all border border-blue-200 dark:border-blue-900 shadow-2xs"
               >
-                Vào làm GVCN ({teacherName})
+                Vào làm GVCN {teacherName}
               </button>
               <button
                 type="button"
