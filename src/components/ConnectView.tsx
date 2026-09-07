@@ -517,16 +517,16 @@ export const ConnectView: React.FC<ConnectViewProps> = ({
                     classInfo: classInfo || {
                       className: '12A1',
                       schoolName: 'THPT TRẦN NGUYÊN HÃN',
-                      academicYear: 'Niên khóa 2023 - 2026',
+                      academicYear: 'Niên khóa 2024 - 2027',
                       avatar: '',
                     },
                     teacherInfo: teacherInfo || {
-                      name: 'Thầy Nguyễn Văn An',
-                      title: 'GVCN Lớp 12A1',
+                      name: 'Cô Phan Thị Dạ Hương',
+                      title: 'GVCN Lớp 11D5',
                       avatar: '',
                       phone: '0912.345.678',
-                      email: 'nguyenvanan@tnh.edu.vn',
-                      subject: 'Toán',
+                      email: 'dahuong.gv@tnh.edu.vn',
+                      subject: 'Chủ nhiệm / Ngữ Văn',
                     },
                     students,
                   });
