@@ -99,6 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const gvcnNavItems: NavItem[] = [
     { id: 'overview', label: 'Bảng Tổng Quan', icon: LayoutDashboard },
     { id: 'students', label: 'Hồ Sơ Học Sinh', icon: Users },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
     { id: 'seating', label: 'Sơ Đồ Lớp (4 Dãy)', icon: LayoutGrid },
     { id: 'schedule', label: 'Thời Khoá Biểu (2 Buổi)', icon: CalendarDays },
     { id: 'connect', label: 'Kênh Kết Nối PH & HS', icon: HeartHandshake },
@@ -117,6 +118,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const bghNavItems: NavItem[] = [
     { id: 'overview', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'students', label: 'Hồ Sơ Học Sinh', icon: Users },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
     { id: 'seating', label: 'Sơ Đồ Lớp', icon: LayoutGrid },
     { id: 'schedule', label: 'Thời Khoá Biểu Giảng Dạy', icon: CalendarDays },
     { id: 'connect', label: 'Cổng Kết Nối & Liên Lạc', icon: HeartHandshake },
@@ -134,6 +136,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const gvbmNavItems: NavItem[] = [
     { id: 'overview', label: 'Bảng Tổng Quan', icon: LayoutDashboard },
     { id: 'students', label: 'Hồ Sơ Học Sinh', icon: Users },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
     { id: 'seating', label: 'Sơ Đồ Lớp (4 Dãy)', icon: LayoutGrid },
     { id: 'schedule', label: 'Thời Khoá Biểu Tiết Dạy', icon: CalendarDays },
     { id: 'materials', label: 'Học Liệu & Đề Kiểm Tra', icon: FolderOpen },
@@ -151,6 +154,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'discipline', label: 'Điểm Danh & Sổ Đầu Bài', icon: Award },
     { id: 'tasks', label: 'Phân Công Trực Nhật & Nhiệm Vụ', icon: CheckSquare },
     { id: 'students', label: 'Sĩ Số & Hồ Sơ Lớp', icon: Users },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
     { id: 'seating', label: 'Sơ Đồ Lớp (4 Dãy)', icon: LayoutGrid },
     { id: 'schedule', label: 'Thời Khoá Biểu Lớp', icon: CalendarDays },
     { id: 'group-emulation', label: 'Chấm Điểm Thi Đua 4 Tổ', icon: Trophy },
@@ -164,6 +168,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const studentNavItems: NavItem[] = [
     { id: 'overview', label: 'Tổng Quan Của Tôi', icon: LayoutDashboard },
     { id: 'students', label: 'Hồ Sơ Cá Nhân', icon: User },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
     { id: 'seating', label: 'Vị Trí Chỗ Ngồi Của Tôi', icon: LayoutGrid },
     { id: 'schedule', label: 'Thời Khoá Biểu Tuần', icon: CalendarDays },
     { id: 'connect', label: 'Kênh Kết Nối & Bạn Học', icon: HeartHandshake },
@@ -179,6 +184,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const parentNavItems: NavItem[] = [
     { id: 'overview', label: 'Sổ Liên Lạc Điện Tử', icon: HeartHandshake },
     { id: 'students', label: 'Hồ Sơ & Sức Khỏe Con', icon: User },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
     { id: 'seating', label: 'Vị Trí Chỗ Ngồi Của Con', icon: LayoutGrid },
     { id: 'schedule', label: 'Thời Khoá Biểu Lớp', icon: CalendarDays },
     { id: 'connect', label: 'Kênh Kết Nối GVCN & Lớp', icon: HeartHandshake },
