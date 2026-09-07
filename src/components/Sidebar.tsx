@@ -67,19 +67,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onEditBgh,
 }) => {
   const defaultClass: ClassInfo = {
-    className: 'LỚP 12A1 (KHTN)',
+    className: 'LỚP 11D5',
     schoolName: 'THPT TRẦN NGUYÊN HÃN',
-    academicYear: 'Niên khóa 2023 - 2026',
+    academicYear: 'Niên khóa 2024 - 2027',
     avatar: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=300',
   };
 
   const defaultTeacher: TeacherInfo = {
-    name: 'Thầy Nguyễn Văn An',
-    title: 'Thạc sĩ Toán học - GVCN 12A1',
-    avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80&w=300',
+    name: 'Cô Phan Thị Dạ Hương',
+    title: 'GVCN Lớp 11D5',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
     phone: '0912.345.678',
-    email: 'nguyenvanan.gv@tnh.edu.vn',
-    subject: 'Toán Học',
+    email: 'dahuong.gv@tnh.edu.vn',
+    subject: 'Chủ nhiệm / Ngữ Văn',
   };
 
   const defaultBgh: BghInfo = {
