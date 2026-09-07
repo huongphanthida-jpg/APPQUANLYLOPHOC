@@ -825,6 +825,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
           <div className="w-12 h-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center">
             <FileText className="w-6 h-6" />
           </div>
+        </div>
       </div>
 
       {/* AI Early Warning System Widget (Cảnh Báo Sa Sút Sớm) */}
