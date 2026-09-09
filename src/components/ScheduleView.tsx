@@ -152,7 +152,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       if (day.dayKey !== dayKey) return day;
 
       const newSessionList = [...day[session]];
-      const pNum = newSessionList[periodIndex]?.period || (session === 'morning' ? periodIndex + 1 : periodIndex + 6);
       newSessionList[periodIndex] = {
         ...newSessionList[periodIndex],
         subject: '',
@@ -1014,4 +1013,3 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     </div>
   );
 };
-```,Description:
