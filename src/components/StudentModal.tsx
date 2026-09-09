@@ -31,6 +31,92 @@ interface StudentModalProps {
   onOpenAiEvaluation?: (student: Student) => void;
 }
 
+function buildSafeStudent(stu: Student | null): Student {
+  const defaultGrades = {
+    math: { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 },
+    physics: { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 },
+    chemistry: { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 },
+    biology: { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 },
+    literature: { tx1: 7.8, tx2: 7.8, gk: 7.8, ck: 7.8, avg: 7.8 },
+    english: { tx1: 8.2, tx2: 8.2, gk: 8.2, ck: 8.2, avg: 8.2 },
+    history: { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 },
+    geography: { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 },
+    informatics: { tx1: 8.2, tx2: 8.2, gk: 8.2, ck: 8.2, avg: 8.2 },
+    gpa: 8.0,
+  };
+
+  if (!stu) {
+    return {
+      id: '',
+      code: 'HS-00',
+      name: 'Học sinh',
+      gender: 'Nam',
+      dob: '2008-01-01',
+      group: 1,
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+      phone: '',
+      email: '',
+      address: '',
+      strengths: '',
+      careerAspiration: '',
+      healthNote: '',
+      emergencyContact: {
+        parentName: 'Phụ huynh học sinh',
+        relationship: 'Bố',
+        phone: '',
+        workplace: '',
+      },
+      conductScore: 95,
+      conductRating: 'Tốt',
+      grades: defaultGrades,
+      progressHistory: [],
+    };
+  }
+
+  const grades = stu.grades
+    ? {
+        math: stu.grades.math || defaultGrades.math,
+        physics: stu.grades.physics || defaultGrades.physics,
+        chemistry: stu.grades.chemistry || defaultGrades.chemistry,
+        biology: stu.grades.biology || defaultGrades.biology,
+        literature: stu.grades.literature || defaultGrades.literature,
+        english: stu.grades.english || defaultGrades.english,
+        history: stu.grades.history || defaultGrades.history,
+        geography: stu.grades.geography || defaultGrades.geography,
+        informatics: stu.grades.informatics || defaultGrades.informatics,
+        gpa: stu.grades.gpa ?? 8.0,
+      }
+    : defaultGrades;
+
+  const emergencyContact = {
+    parentName: stu.emergencyContact?.parentName || 'Phụ huynh học sinh',
+    relationship: stu.emergencyContact?.relationship || 'Bố',
+    phone: stu.emergencyContact?.phone || '',
+    workplace: stu.emergencyContact?.workplace || '',
+  };
+
+  return {
+    ...stu,
+    name: stu.name || '',
+    code: stu.code || '',
+    gender: stu.gender || 'Nam',
+    dob: stu.dob || '2008-01-01',
+    group: (stu.group && stu.group >= 1 && stu.group <= 4 ? stu.group : 1) as 1 | 2 | 3 | 4,
+    avatar: stu.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+    phone: stu.phone || '',
+    email: stu.email || '',
+    address: stu.address || '',
+    strengths: stu.strengths || '',
+    careerAspiration: stu.careerAspiration || '',
+    healthNote: stu.healthNote || '',
+    conductScore: stu.conductScore ?? 95,
+    conductRating: stu.conductRating || 'Tốt',
+    grades,
+    emergencyContact,
+    progressHistory: stu.progressHistory || [],
+  };
+}
+
 export const StudentModal: React.FC<StudentModalProps> = ({
   student,
   isOpen,
@@ -40,7 +126,12 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   isGVCN,
   onOpenAiEvaluation,
 }) => {
-  if (!isOpen || !student) return null;
+  const [formData, setFormData] = useState<Student>(() => buildSafeStudent(student));
+  const [activeTab, setActiveTab] = useState<'profile' | 'academic' | 'emergency'>('profile');
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [isEditingGrades, setIsEditingGrades] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const DEFAULT_SUBJECT_NAMES: Record<string, string> = {
     math: 'Toán học (Khối A)',
@@ -83,9 +174,11 @@ export const StudentModal: React.FC<StudentModalProps> = ({
 
   useEffect(() => {
     if (student) {
-      setFormData({ ...student });
+      setFormData(buildSafeStudent(student));
     }
   }, [student]);
+
+  if (!isOpen || !student) return null;
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -765,7 +858,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                 type="button"
                 id="btn-zalo-parent-notice"
                 onClick={() => {
-                  const parentMsg = `Kính gửi Phụ huynh em ${formData.name} (Lớp 12A1 - THPT Trần Nguyên Hãn),\n\nThầy/Cô GVCN xin gửi thông báo kết quả học tập & nề nếp mới nhất:\n- Điểm Trung Bình (ĐTB): ${formData.grades.gpa} / 10.0 (${formData.academicRating})\n- Hạnh kiểm: ${formData.conductRating} (${formData.conductScore} điểm thi đua)\n- Sở trường: ${formData.strengths || 'Học giỏi các môn khối Tự nhiên'}\n- Định hướng Đại học: ${formData.universityGoal || 'Khối A00 (Toán-Lý-Hóa)'}\n\nRất mong Quý phụ huynh tiếp tục phối hợp với GVCN nhắc nhở em duy trì giờ tự học tối tại nhà. Trân trọng!`;
+                  const parentMsg = `Kính gửi Phụ huynh em ${formData.name} (THPT Trần Nguyên Hãn),\n\nThầy/Cô GVCN xin gửi thông báo kết quả học tập & nề nếp mới nhất:\n- Điểm Trung Bình (ĐTB): ${formData.grades?.gpa || 8.0} / 10.0\n- Hạnh kiểm: ${formData.conductRating || 'Tốt'} (${formData.conductScore || 95} điểm thi đua)\n- Sở trường: ${formData.strengths || 'Học tập chăm chỉ, tích cực'}\n- Định hướng Đại học: ${formData.careerAspiration || 'Đại học Bách Khoa Hà Nội'}\n\nRất mong Quý phụ huynh tiếp tục phối hợp với GVCN nhắc nhở em duy trì giờ tự học tối tại nhà. Trân trọng!`;
                   navigator.clipboard.writeText(parentMsg);
                   setSaveSuccess(true);
                   setTimeout(() => setSaveSuccess(false), 3000);
