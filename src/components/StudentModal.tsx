@@ -312,7 +312,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                 {formData.name}
               </h2>
               <p className="text-xs text-slate-300">
-                THPT Trần Nguyên Hãn • Hải Phòng
+                THPT Trần Nguyên Hãn
               </p>
             </div>
           </div>
@@ -464,7 +464,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  Địa chỉ thường trú (Hải Phòng)
+                  Địa chỉ thường trú
                 </label>
                 <input
                   type="text"
