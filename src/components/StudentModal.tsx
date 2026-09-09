@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   User,
@@ -48,6 +48,12 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [isEditingGrades, setIsEditingGrades] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (student) {
+      setFormData({ ...student });
+    }
+  }, [student]);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -201,7 +207,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Điểm Số Khối Tự Nhiên
+            Điểm Số TB Các Môn
           </button>
         </div>
 
@@ -471,7 +477,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
             <div className="space-y-4">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-4">
-                  <span>Điểm trung bình Khối Tự Nhiên (ĐTB): <strong className="text-sm font-black text-[#003366]">{formData.grades.gpa}</strong></span>
+                  <span>Điểm trung bình các môn (ĐTB): <strong className="text-sm font-black text-[#003366]">{formData.grades.gpa}</strong></span>
                   <span>Hạnh kiểm: <strong className="text-emerald-700 font-bold">{formData.conductRating}</strong> ({formData.conductScore}đ)</span>
                 </div>
 
