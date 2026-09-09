@@ -66,6 +66,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
   const onSaveRandomPick = propSaveRandomPick || onSavePick || (() => {});
   const onDeleteRandomPick = propDeleteRandomPick || onDeletePick;
   const onClearRandomPicks = propClearRandomPicks || onClearPicks;
+
   // Mode selection: 'wheel' | 'mystery_box' | 'flash' | 'pair' | 'team'
   const [mode, setMode] = useState<'wheel' | 'mystery_box' | 'flash' | 'pair' | 'team'>('wheel');
 
@@ -98,36 +99,26 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
   const spinSpeedRef = useRef<number>(0);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Audio Synth via Web Audio API
-  const playSoundEffect = (type: 'tick' | 'win' | 'card' | 'countdown') => {
+  // Web Audio Synthesizer for sound effects
+  const playSoundEffect = (type: 'tick' | 'win' | 'card') => {
     if (!soundEnabled) return;
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioContextClass) return;
-      const ctx = new AudioContextClass();
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
 
       if (type === 'tick') {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(440 + Math.random() * 200, ctx.currentTime);
+        osc.frequency.setValueAtTime(800, ctx.currentTime);
         gain.gain.setValueAtTime(0.08, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.04);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start();
-        osc.stop(ctx.currentTime + 0.05);
+        osc.stop(ctx.currentTime + 0.04);
       } else if (type === 'win') {
-        try {
-          confetti({
-            particleCount: 120,
-            spread: 80,
-            origin: { y: 0.6 },
-          });
-        } catch {
-          // ignore confetti error if unmounted
-        }
-        // Fanfare chord
         [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
@@ -154,7 +145,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
         osc.stop(ctx.currentTime + 0.15);
       }
     } catch {
-      // Audio not supported or blocked by browser policy
+      // Audio not supported or blocked
     }
   };
 
@@ -162,7 +153,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
   const alreadyPickedIds = new Set(randomPicks.map((p) => p.studentId));
 
   const eligibleStudents = students.filter((s) => {
-    if (selectedGroup !== 'all' && s.group !== selectedGroup) return false;
+    if (selectedGroup !== 'all' && Number(s.group) !== Number(selectedGroup)) return false;
     if (selectedGender !== 'all') {
       const studentGender = (s.gender || '').trim().toLowerCase();
       const filterGender = selectedGender.trim().toLowerCase();
@@ -277,18 +268,20 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
     ctx.strokeStyle = '#F8FAFC';
     ctx.stroke();
 
+    // Synchronized Class Name inside Center Pin
+    const classBadgeText = (classInfo?.className || '11D3').replace(/^LỚP\s*/i, '').trim().toUpperCase() || '11D3';
     ctx.fillStyle = '#38BDF8';
-    ctx.font = 'black 11px system-ui, sans-serif';
+    ctx.font = classBadgeText.length > 5 ? 'bold 9px system-ui, sans-serif' : 'black 11px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('12A1', centerX, centerY);
+    ctx.fillText(classBadgeText, centerX, centerY);
   };
 
   useEffect(() => {
     if (mode === 'wheel') {
       drawWheel();
     }
-  }, [eligibleStudents, mode]);
+  }, [eligibleStudents, mode, classInfo]);
 
   // Handle Lucky Wheel Spin Action
   const handleSpinWheel = () => {
@@ -307,51 +300,50 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
     const numSlices = candidates.length;
     const anglePerSlice = (2 * Math.PI) / numSlices;
 
-    // Calculate final rotation so pointer (at top, angle = -PI/2) points to winner
-    // In Canvas: Pointer is at 3 * PI / 2 (or top)
     const targetSliceCenter = winnerIndex * anglePerSlice + anglePerSlice / 2;
     const pointerAngle = (3 * Math.PI) / 2;
-    
-    // Add multiple full spins (e.g. 6 to 9 full spins)
+
     const extraSpins = (6 + Math.floor(Math.random() * 3)) * (2 * Math.PI);
     const targetTotalAngle = extraSpins + (pointerAngle - targetSliceCenter);
 
     const startAngle = rotationAngleRef.current % (2 * Math.PI);
     const totalRotation = targetTotalAngle - startAngle;
-    const duration = 4200; // 4.2 seconds
+
+    const duration = 4500; // 4.5 seconds
     const startTime = performance.now();
 
-    let lastTickTime = 0;
-
-    const animateSpin = (now: number) => {
+    const animate = (now: number) => {
       const elapsed = now - startTime;
       const progress = Math.min(elapsed / duration, 1);
 
-      // Ease Out Cubic function
+      // Ease out cubic
       const easeOut = 1 - Math.pow(1 - progress, 3);
       rotationAngleRef.current = startAngle + totalRotation * easeOut;
 
       drawWheel();
 
-      // Sound tick triggers based on angular progression
-      if (now - lastTickTime > (30 + progress * 200)) {
+      if (elapsed % 120 < 16) {
         playSoundEffect('tick');
-        lastTickTime = now;
       }
 
       if (progress < 1) {
-        animationFrameRef.current = requestAnimationFrame(animateSpin);
+        animationFrameRef.current = requestAnimationFrame(animate);
       } else {
         setIsSpinning(false);
         setSelectedStudent(winner);
         playSoundEffect('win');
+        confetti({
+          particleCount: 80,
+          spread: 70,
+          origin: { y: 0.6 },
+        });
       }
     };
 
-    animationFrameRef.current = requestAnimationFrame(animateSpin);
+    animationFrameRef.current = requestAnimationFrame(animate);
   };
 
-  // Handle Flash Mode Spin Action
+  // Handle Flash Rapid Spin
   const handleStartFlash = () => {
     if (isSpinning) return;
     const candidates = eligibleStudents;
@@ -361,28 +353,27 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
     setSelectedStudent(null);
     setIsScoreSaved(false);
 
-    let count = 0;
-    const maxChanges = 35;
+    let counter = 0;
     const interval = setInterval(() => {
-      const randomIdx = Math.floor(Math.random() * candidates.length);
-      const tempStudent = candidates[randomIdx];
-      setFlashStudentName(`${tempStudent.name} (Tổ ${tempStudent.group})`);
+      const idx = Math.floor(Math.random() * candidates.length);
+      setFlashStudentName(candidates[idx].name);
       playSoundEffect('tick');
-      count++;
+      counter++;
 
-      if (count >= maxChanges) {
+      if (counter > 25) {
         clearInterval(interval);
         const finalWinner = candidates[Math.floor(Math.random() * candidates.length)];
-        setFlashStudentName(`${finalWinner.name} (Tổ ${finalWinner.group})`);
+        setFlashStudentName(finalWinner.name);
         setSelectedStudent(finalWinner);
         setIsSpinning(false);
         playSoundEffect('win');
+        confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
       }
-    }, 85);
+    }, 90);
   };
 
   // Handle Mystery Box Pick
-  const handleMysteryCardPick = () => {
+  const handlePickMysteryCard = () => {
     if (isSpinning) return;
     const candidates = eligibleStudents;
     if (candidates.length === 0) return;
@@ -397,80 +388,76 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
       setSelectedStudent(winner);
       setIsSpinning(false);
       playSoundEffect('win');
+      confetti({ particleCount: 70, spread: 60, origin: { y: 0.6 } });
     }, 1200);
   };
 
-  // Handle Random Pair Pick
-  const handlePairPick = () => {
+  // Handle Pair Picker (Bốc cặp đôi)
+  const handlePickPair = () => {
     const candidates = eligibleStudents;
     if (candidates.length < 2) return;
 
     setIsSpinning(true);
     setSelectedPair(null);
-    setSelectedStudent(null);
     playSoundEffect('card');
 
     setTimeout(() => {
-      const shuffled = [...candidates].sort(() => 0.5 - Math.random());
-      setSelectedPair([shuffled[0], shuffled[1]]);
+      const idx1 = Math.floor(Math.random() * candidates.length);
+      let idx2 = Math.floor(Math.random() * candidates.length);
+      while (idx2 === idx1) {
+        idx2 = Math.floor(Math.random() * candidates.length);
+      }
+      setSelectedPair([candidates[idx1], candidates[idx2]]);
       setIsSpinning(false);
       playSoundEffect('win');
-    }, 1000);
+      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+    }, 1200);
   };
 
-  // Handle Team Generator
+  // Handle Team Generator (Chia Nhóm)
   const handleGenerateTeams = () => {
-    const candidates = eligibleStudents;
+    const candidates = [...eligibleStudents];
     if (candidates.length === 0) return;
-    const shuffled = [...candidates].sort(() => 0.5 - Math.random());
-    const teams: { id: number; name: string; members: Student[] }[] = [];
 
-    const teamNames = [
-      'Đội Rồng Xanh (KHTN)',
-      'Đội Phượng Hoàng Lửa',
-      'Đội Sao Kim Bứt Phá',
-      'Đội Đại Bàng Thép',
-      'Đội Bách Khoa Vươn Xa',
-      'Đội Hải Mã Tiên Phong',
-    ];
-
-    for (let i = 0; i < teamCount; i++) {
-      teams.push({
-        id: i + 1,
-        name: teamNames[i] || `Nhóm ${i + 1}`,
-        members: [],
-      });
+    // Shuffle array (Fisher-Yates)
+    for (let i = candidates.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
     }
 
-    shuffled.forEach((student, index) => {
-      const teamIndex = index % teamCount;
-      teams[teamIndex].members.push(student);
+    const numTeams = Math.max(2, Math.min(teamCount, candidates.length));
+    const teams: { id: number; name: string; members: Student[] }[] = Array.from({ length: numTeams }, (_, i) => ({
+      id: i + 1,
+      name: `Nhóm ${i + 1}`,
+      members: [],
+    }));
+
+    candidates.forEach((student, idx) => {
+      teams[idx % numTeams].members.push(student);
     });
 
     setGeneratedTeams(teams);
     playSoundEffect('win');
+    confetti({ particleCount: 90, spread: 80, origin: { y: 0.6 } });
   };
 
-  // Save oral grade & Emulation Record
-  const handleSaveResult = () => {
+  // Save Oral Score / Emulation Log
+  const handleSaveOralScore = () => {
     if (!selectedStudent) return;
 
-    const record: RandomPickRecord = {
-      id: `rp-${Date.now()}`,
+    const newRecord: RandomPickRecord = {
+      id: `pick-${Date.now()}`,
       studentId: selectedStudent.id,
       studentName: selectedStudent.name,
-      studentCode: selectedStudent.code,
       group: selectedStudent.group,
-      mode: mode,
-      subject: classInfo?.className ? 'Toán Học (Khối 12)' : 'Khảo sát',
-      topic: subjectTopic.trim() || 'Kiểm tra miệng & vấn đáp chuyên đề',
-      oralGrade: oralGrade,
+      timestamp: new Date().toISOString(),
+      oralGrade: oralGrade > 0 ? oralGrade : undefined,
       emulationPointsAwarded: emulationPoints,
-      feedback: feedbackNote.trim() || 'Đã hoàn thành lượt gọi ngẫu nhiên.',
-      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      topic: subjectTopic.trim() || undefined,
+      feedback: feedbackNote.trim() || undefined,
     };
 
-    onSaveRandomPick(record);
+    onSaveRandomPick(newRecord);
     setIsScoreSaved(true);
   };
 
@@ -485,15 +472,18 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
               <Shuffle className="w-6 h-6 text-amber-300 animate-pulse" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-indigo-100">
                   Tiện Ích Lớp Học Thông Minh
+                </span>
+                <span className="text-xs bg-black/20 text-white px-2 py-0.5 rounded-full font-bold">
+                  {classInfo?.className || 'Lớp 11D3'}
                 </span>
                 <span className="text-xs bg-emerald-400/30 text-emerald-100 px-2 py-0.5 rounded-full font-medium">
                   {students.length} Học Sinh
                 </span>
               </div>
-              <h2 className="text-xl font-black text-white">
+              <h2 className="text-xl font-black text-white mt-0.5">
                 Gọi Tên Ngẫu Nhiên & Vấn Đáp Khảo Sát Bài Cũ
               </h2>
               <p className="text-xs text-indigo-100/90 max-w-2xl mt-0.5">
@@ -506,7 +496,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
           <div className="flex items-center gap-2 self-end sm:self-center">
             <button
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`p-2.5 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-semibold ${
+              className={`p-2.5 rounded-xl border transition-all flex items-center gap-1.5 text-xs font-semibold cursor-pointer ${
                 soundEnabled
                   ? 'bg-white/20 border-white/30 text-white hover:bg-white/30'
                   : 'bg-black/30 border-white/10 text-white/60 hover:bg-black/40'
@@ -528,7 +518,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
             setSelectedStudent(null);
             setSelectedPair(null);
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             mode === 'wheel'
               ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -544,7 +534,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
             setSelectedStudent(null);
             setSelectedPair(null);
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             mode === 'mystery_box'
               ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -560,7 +550,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
             setSelectedStudent(null);
             setSelectedPair(null);
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             mode === 'flash'
               ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -575,7 +565,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
             setMode('pair');
             setSelectedStudent(null);
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             mode === 'pair'
               ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
@@ -591,190 +581,180 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
             setSelectedStudent(null);
             setSelectedPair(null);
           }}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
             mode === 'team'
               ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm'
               : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <Layers className="w-4 h-4 text-emerald-500" />
-          <span>Chia Nhóm Tự Động</span>
+          <span>Chia Nhóm Thảo Luận</span>
         </button>
-
-        {onOpenQuizGame && (
-          <button
-            onClick={onOpenQuizGame}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black transition-all whitespace-nowrap bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 shadow-md cursor-pointer shrink-0"
-          >
-            <Trophy className="w-4 h-4 text-slate-950 animate-bounce" />
-            <span>🎮 Đấu Trường Quiz Game Show</span>
-          </button>
-        )}
       </div>
 
-      {/* Main Grid: Control Panel + Active Game Arena */}
+      {/* Main Content Area */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Filter & Candidate Pool (4 cols) */}
+        {/* Left Filters Panel (4 cols) */}
         <div className="lg:col-span-4 space-y-4">
-          <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
-              <span className="flex items-center gap-2">
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
                 <Filter className="w-4 h-4 text-indigo-600" />
                 Bộ Lọc Học Sinh
-              </span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+              </h3>
+              <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-2 py-0.5 rounded-full">
                 {eligibleStudents.length}/{students.length} HS
               </span>
-            </h3>
+            </div>
 
-            {/* Filter by Group */}
+            {/* Group Filter */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                 Phân Tổ Áp Dụng:
               </label>
               <div className="grid grid-cols-5 gap-1">
-                {(['all', 1, 2, 3, 4] as const).map((g) => (
+                {(['all', 1, 2, 3, 4] as const).map((grp) => (
                   <button
-                    key={g}
+                    key={grp}
                     type="button"
-                    onClick={() => setSelectedGroup(g)}
-                    className={`py-1.5 text-xs font-bold rounded-xl transition-all ${
-                      selectedGroup === g
+                    onClick={() => setSelectedGroup(grp)}
+                    className={`py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                      selectedGroup === grp
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                     }`}
                   >
-                    {g === 'all' ? 'Tất cả' : `Tổ ${g}`}
+                    {grp === 'all' ? 'Tất cả' : `Tổ ${grp}`}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Filter by Gender */}
+            {/* Gender Filter */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
                 Giới Tính:
               </label>
               <div className="grid grid-cols-3 gap-1.5">
-                {(['all', 'Nam', 'Nữ'] as const).map((gender) => (
+                {(['all', 'Nam', 'Nữ'] as const).map((gen) => (
                   <button
-                    key={gender}
+                    key={gen}
                     type="button"
-                    onClick={() => setSelectedGender(gender)}
-                    className={`py-1.5 text-xs font-bold rounded-xl transition-all ${
-                      selectedGender === gender
+                    onClick={() => setSelectedGender(gen)}
+                    className={`py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                      selectedGender === gen
                         ? 'bg-indigo-600 text-white shadow-sm'
                         : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                     }`}
                   >
-                    {gender === 'all' ? 'Cả Nam & Nữ' : gender}
+                    {gen === 'all' ? 'Cả Nam & Nữ' : gen}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Checkbox: Exclude already picked */}
-            <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
-              <label className="flex items-center space-x-2 text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={excludeAlreadyPicked}
-                  onChange={(e) => setExcludeAlreadyPicked(e.target.checked)}
-                  className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500"
-                />
-                <span>Không lặp lại học sinh đã gọi ({randomPicks.length} đã gọi)</span>
-              </label>
-            </div>
+            {/* Exclude picked checkbox */}
+            <label className="flex items-center gap-2 pt-1 text-xs text-slate-700 dark:text-slate-300 font-semibold cursor-pointer">
+              <input
+                type="checkbox"
+                checked={excludeAlreadyPicked}
+                onChange={(e) => setExcludeAlreadyPicked(e.target.checked)}
+                className="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500"
+              />
+              <span>Không lặp lại học sinh đã gọi ({alreadyPickedIds.size} đã gọi)</span>
+            </label>
 
-            {/* Quick Candidate List */}
-            <div className="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+            {/* Candidate List Preview */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
               <div className="flex items-center justify-between text-xs text-slate-500">
                 <span>Danh sách ứng viên trong vòng quay:</span>
-                <span className="font-semibold text-slate-700 dark:text-slate-300">{eligibleStudents.length}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{eligibleStudents.length}</span>
               </div>
-              <div className="max-h-52 overflow-y-auto space-y-1 pr-1">
-                {eligibleStudents.length === 0 ? (
-                  <div className="py-4 text-center text-xs text-slate-400 italic">
-                    Không có học sinh nào phù hợp bộ lọc được chọn
-                  </div>
-                ) : (
-                  eligibleStudents.map((s, idx) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center justify-between px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs border border-slate-100 dark:border-slate-800"
-                    >
-                      <div className="flex items-center space-x-2 truncate">
-                        <span className="w-4 text-[10px] text-slate-400 font-mono">{idx + 1}</span>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{s.name}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 flex-shrink-0">
-                        <span
-                          className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${
-                            s.gender === 'Nam'
-                              ? 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300'
-                              : 'bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-300'
-                          }`}
-                        >
-                          {s.gender || 'N/A'}
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold">
-                          Tổ {s.group}
-                        </span>
-                      </div>
+
+              <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                {eligibleStudents.map((st, idx) => (
+                  <div
+                    key={st.id}
+                    className="flex items-center justify-between p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 text-xs"
+                  >
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 truncate pr-2">
+                      <span className="text-slate-400 font-mono mr-1.5">{idx + 1}</span>
+                      {st.name}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0 text-[10px]">
+                      <span className="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                        {st.gender}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+                        Tổ {st.group}
+                      </span>
                     </div>
-                  ))
-                )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* History of Picks Today */}
-          <div className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-3">
+          {/* Recent Picks Log Card */}
+          <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-blue-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-500" />
                 Nhật Ký Gọi Tên Gần Đây ({randomPicks.length})
-              </h4>
+              </h3>
               {randomPicks.length > 0 && onClearRandomPicks && (
                 <button
-                  type="button"
                   onClick={onClearRandomPicks}
-                  className="text-[11px] text-red-500 hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-red-500 hover:underline flex items-center gap-1 cursor-pointer"
                 >
-                  <Trash2 className="w-3 h-3" /> Xóa
+                  <Trash2 className="w-3.5 h-3.5" /> Xóa
                 </button>
               )}
             </div>
 
             {randomPicks.length === 0 ? (
-              <p className="text-xs text-slate-400 py-3 text-center italic">
-                Chưa có học sinh nào được gọi trong phiên này.
+              <p className="text-xs text-slate-400 py-4 text-center italic">
+                Chưa có lượt quay / gọi tên nào trong tiết học này.
               </p>
             ) : (
-              <div className="max-h-48 overflow-y-auto space-y-2 pr-1">
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                 {randomPicks.map((pick) => (
                   <div
                     key={pick.id}
-                    className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200 dark:border-slate-700/60 text-xs space-y-1"
+                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 text-xs flex items-center justify-between"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-800 dark:text-slate-200">{pick.studentName}</span>
-                      <div className="flex items-center gap-1">
-                        {pick.oralGrade !== undefined && (
-                          <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-black text-[10px]">
-                            {pick.oralGrade} đ
-                          </span>
-                        )}
-                        {pick.emulationPointsAwarded ? (
-                          <span className="px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-bold text-[10px]">
-                            +{pick.emulationPointsAwarded} đ Tổ
-                          </span>
-                        ) : null}
+                    <div>
+                      <div className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                        <span>{pick.studentName}</span>
+                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-bold">
+                          Tổ {pick.group}
+                        </span>
+                      </div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
+                        {pick.topic ? `Bài: ${pick.topic} • ` : ''}
+                        {new Date(pick.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
-                    <div className="flex items-center justify-between text-[10px] text-slate-500">
-                      <span>Tổ {pick.group} • {pick.topic || 'Vấn đáp'}</span>
-                      <span>{pick.timestamp.slice(11, 16)}</span>
+
+                    <div className="flex items-center gap-1.5">
+                      {pick.oralGrade !== undefined && (
+                        <span className="px-2 py-0.5 rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 font-black text-xs">
+                          {pick.oralGrade} đ
+                        </span>
+                      )}
+                      {pick.emulationPointsAwarded ? (
+                        <span className="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-black text-xs">
+                          +{pick.emulationPointsAwarded} đ Tổ
+                        </span>
+                      ) : null}
+                      {onDeleteRandomPick && (
+                        <button
+                          onClick={() => onDeleteRandomPick(pick.id)}
+                          className="text-slate-400 hover:text-red-500 p-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -783,193 +763,159 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Active Interactive Arena (8 cols) */}
+        {/* Right Active Picker Display (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
           {/* MODE 1: LUCKY WHEEL */}
           {mode === 'wheel' && (
-            <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col items-center justify-center space-y-6">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col items-center justify-center space-y-6 relative min-h-[460px]">
               <div className="relative flex items-center justify-center">
-                {/* Pointer Indicator Arrow */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-20 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-red-600 drop-shadow-md" />
+                {/* Pointer indicator at top */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-3 z-20 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[24px] border-t-red-600 drop-shadow-md" />
 
-                {/* Canvas Lucky Wheel */}
+                {/* Canvas Wheel */}
                 <canvas
                   ref={canvasRef}
-                  width={420}
-                  height={420}
-                  className="rounded-full shadow-2xl transition-transform max-w-full"
+                  width={380}
+                  height={380}
+                  className="rounded-full shadow-2xl border-4 border-slate-900/10 dark:border-slate-800 max-w-full h-auto"
                 />
               </div>
 
-              {/* Action Button */}
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  disabled={isSpinning || eligibleStudents.length === 0}
-                  onClick={handleSpinWheel}
-                  className={`px-8 py-3.5 rounded-2xl font-black text-sm text-white flex items-center gap-2 shadow-xl transition-all ${
-                    isSpinning || eligibleStudents.length === 0
-                      ? 'bg-slate-400 cursor-not-allowed opacity-80'
-                      : 'bg-gradient-to-r from-amber-500 via-red-500 to-indigo-600 hover:from-amber-600 hover:to-indigo-700 active:scale-95 shadow-red-500/20'
-                  }`}
-                >
-                  <RotateCcw className={`w-5 h-5 ${isSpinning ? 'animate-spin' : ''}`} />
-                  <span>{isSpinning ? 'Đang Quay Vòng May Mắn...' : 'Quay Vòng Gọi Tên Ngay!'}</span>
-                </button>
-              </div>
+              {/* Action Spin Button */}
+              <button
+                type="button"
+                disabled={isSpinning || eligibleStudents.length === 0}
+                onClick={handleSpinWheel}
+                className={`px-8 py-3.5 rounded-2xl font-black text-base shadow-xl flex items-center gap-2.5 transition-all transform active:scale-95 cursor-pointer ${
+                  isSpinning || eligibleStudents.length === 0
+                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 hover:from-amber-600 hover:to-red-700 text-white shadow-orange-500/25 hover:shadow-orange-500/40'
+                }`}
+              >
+                <Shuffle className={`w-5 h-5 ${isSpinning ? 'animate-spin' : ''}`} />
+                <span>{isSpinning ? 'ĐANG QUAY MAY MẮN...' : 'QUAY NGAY KẾT QUẢ'}</span>
+              </button>
             </div>
           )}
 
           {/* MODE 2: MYSTERY BOX */}
           {mode === 'mystery_box' && (
-            <div className="p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-b from-purple-50/50 via-white to-indigo-50/40 dark:from-slate-900 dark:to-slate-800/80 shadow-sm flex flex-col items-center justify-center space-y-6 min-h-[380px]">
-              <div className="text-center space-y-1">
-                <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">
-                  🎁 Hộp Bốc Thăm Thẻ Tên Bí Mật
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Bốc ngẫu nhiên một thẻ bài bí mật trong số {eligibleStudents.length} học sinh sẵn sàng.
-                </p>
+            <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col items-center justify-center space-y-6 text-center min-h-[460px]">
+              <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30 animate-bounce">
+                <Sparkles className="w-12 h-12 text-white" />
               </div>
 
-              {/* 3D Mystery Box Representation */}
-              <div
-                onClick={handleMysteryCardPick}
-                className={`w-44 h-56 rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 text-white shadow-2xl flex flex-col items-center justify-center p-4 cursor-pointer transform transition-all duration-300 hover:scale-105 hover:rotate-1 active:scale-95 relative group ${
-                  isSpinning ? 'animate-bounce' : ''
-                }`}
-              >
-                <div className="w-16 h-16 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                  <Sparkles className="w-8 h-8 text-amber-300 animate-pulse" />
-                </div>
-                <span className="text-xs font-black uppercase tracking-widest text-indigo-100">LỚP 12A1</span>
-                <span className="text-base font-black text-center mt-1">Bốc Thăm</span>
-                <div className="absolute inset-0 rounded-3xl border-2 border-white/30 pointer-events-none" />
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white">
+                  Hộp Bốc Thăm Thẻ Bí Mật
+                </h3>
+                <p className="text-xs text-slate-500 max-w-md mt-1">
+                  Bốc ngẫu nhiên 1 lá thăm may mắn từ danh sách {eligibleStudents.length} học sinh đủ điều kiện!
+                </p>
               </div>
 
               <button
                 type="button"
                 disabled={isSpinning || eligibleStudents.length === 0}
-                onClick={handleMysteryCardPick}
-                className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-lg transition-all"
+                onClick={handlePickMysteryCard}
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-black text-base shadow-xl shadow-purple-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
-                {isSpinning ? 'Đang Mở Hộp Thăm...' : 'Bốc Ngẫu Nhiên 1 Thẻ Bài'}
+                <Sparkles className="w-5 h-5" />
+                <span>BỐC THĂM BÍ MẬT</span>
               </button>
             </div>
           )}
 
-          {/* MODE 3: FLASH SLOT MACHINE */}
+          {/* MODE 3: RAPID FLASH */}
           {mode === 'flash' && (
-            <div className="p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-900 text-white shadow-xl flex flex-col items-center justify-center space-y-6 min-h-[380px]">
-              <div className="text-center space-y-1">
-                <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest">
-                  FLASH SLOT MACHINE
+            <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col items-center justify-center space-y-6 text-center min-h-[460px]">
+              <div className="w-full max-w-lg p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 text-white shadow-2xl space-y-2">
+                <span className="text-[10px] uppercase tracking-widest text-amber-400 font-bold">
+                  Rút Siêu Tốc
                 </span>
-                <h3 className="text-xl font-black text-white">Rút Ngẫu Nhiên Siêu Tốc</h3>
-              </div>
-
-              {/* Slot Counter Display */}
-              <div className="w-full max-w-md p-6 rounded-2xl bg-slate-800/90 border-2 border-indigo-500/60 shadow-inner flex items-center justify-center text-center">
-                <span className="text-2xl font-black text-amber-300 font-mono tracking-wide drop-shadow-md">
+                <h2 className="text-2xl sm:text-3xl font-black text-amber-300 font-mono tracking-wide truncate">
                   {flashStudentName}
-                </span>
+                </h2>
               </div>
 
               <button
                 type="button"
                 disabled={isSpinning || eligibleStudents.length === 0}
                 onClick={handleStartFlash}
-                className={`px-8 py-3.5 rounded-2xl font-black text-sm text-white flex items-center gap-2 shadow-xl transition-all ${
-                  isSpinning
-                    ? 'bg-slate-700 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-600 hover:to-red-700 active:scale-95 shadow-amber-500/20'
-                }`}
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-black text-base shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Zap className="w-5 h-5" />
-                <span>{isSpinning ? 'Đang Xáo Tên Siêu Tốc...' : 'Bắt Đầu Chạy Ngẫu Nhiên'}</span>
+                <span>BẮT ĐẦU RÚT SIÊU TỐC</span>
               </button>
             </div>
           )}
 
-          {/* MODE 4: RANDOM PAIR UP */}
+          {/* MODE 4: PAIR PICKER */}
           {mode === 'pair' && (
-            <div className="p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <Users className="w-5 h-5 text-blue-600" />
-                    Bốc Cặp Đôi Học Tập / Vấn Đáp Đối Kháng
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Chọn ngẫu nhiên 2 học sinh cùng vấn đáp, phản biện chéo hoặc thi đố vui nhanh.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={isSpinning}
-                  onClick={handlePairPick}
-                  className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
-                >
-                  <Shuffle className="w-4 h-4" />
-                  <span>Bốc Cặp Đôi Mới</span>
-                </button>
-              </div>
-
+            <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md flex flex-col items-center justify-center space-y-6 text-center min-h-[460px]">
               {selectedPair ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="p-4 rounded-2xl border-2 border-blue-500/40 bg-blue-50/50 dark:bg-blue-950/30 space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={selectedPair[0].avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
-                        alt={selectedPair[0].name}
-                        className="w-12 h-12 rounded-xl object-cover border border-blue-200"
-                      />
-                      <div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-200 text-blue-800">
-                          Thí Sinh 1 (Tổ {selectedPair[0].group})
-                        </span>
-                        <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">{selectedPair[0].name}</h4>
-                        <p className="text-[11px] text-slate-500">{selectedPair[0].code}</p>
-                      </div>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
+                  <div className="p-5 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-center space-y-2">
+                    <span className="px-2.5 py-1 rounded-full bg-blue-600 text-white font-black text-[10px]">
+                      HỌC SINH A
+                    </span>
+                    <h4 className="text-lg font-black text-slate-900 dark:text-white">
+                      {selectedPair[0].name}
+                    </h4>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-bold">
+                      Tổ {selectedPair[0].group} • Mã: {selectedPair[0].code}
+                    </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl border-2 border-indigo-500/40 bg-indigo-50/50 dark:bg-indigo-950/30 space-y-3">
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={selectedPair[1].avatar || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100'}
-                        alt={selectedPair[1].name}
-                        className="w-12 h-12 rounded-xl object-cover border border-indigo-200"
-                      />
-                      <div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-800">
-                          Thí Sinh 2 (Tổ {selectedPair[1].group})
-                        </span>
-                        <h4 className="text-sm font-black text-slate-900 dark:text-slate-100">{selectedPair[1].name}</h4>
-                        <p className="text-[11px] text-slate-500">{selectedPair[1].code}</p>
-                      </div>
-                    </div>
+                  <div className="p-5 rounded-2xl bg-pink-50 dark:bg-pink-950/40 border border-pink-200 dark:border-pink-800 text-center space-y-2">
+                    <span className="px-2.5 py-1 rounded-full bg-pink-600 text-white font-black text-[10px]">
+                      HỌC SINH B
+                    </span>
+                    <h4 className="text-lg font-black text-slate-900 dark:text-white">
+                      {selectedPair[1].name}
+                    </h4>
+                    <p className="text-xs text-pink-600 dark:text-pink-400 font-bold">
+                      Tổ {selectedPair[1].group} • Mã: {selectedPair[1].code}
+                    </p>
                   </div>
                 </div>
               ) : (
-                <div className="py-12 text-center text-slate-400 text-xs italic bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed">
-                  Nhấp vào nút "Bốc Cặp Đôi Mới" để chọn 2 học sinh.
+                <div className="space-y-2">
+                  <div className="w-16 h-16 rounded-2xl bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+                    <Users className="w-8 h-8" />
+                  </div>
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white">
+                    Bốc Cặp Đôi Ngẫu Nhiên
+                  </h3>
+                  <p className="text-xs text-slate-500 max-w-sm">
+                    Tự động ghép 2 học sinh bất kỳ để khảo sát hoặc thi đấu vấn đáp cặp đôi!
+                  </p>
                 </div>
               )}
+
+              <button
+                type="button"
+                disabled={isSpinning || eligibleStudents.length < 2}
+                onClick={handlePickPair}
+                className="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-base shadow-xl shadow-blue-500/25 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Users className="w-5 h-5" />
+                <span>BỐC CẶP ĐÔI NGAY</span>
+              </button>
             </div>
           )}
 
           {/* MODE 5: TEAM GENERATOR */}
           {mode === 'team' && (
-            <div className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-md space-y-4 min-h-[460px]">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
                 <div>
-                  <h3 className="text-base font-black text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                    <Layers className="w-5 h-5 text-emerald-600" />
-                    Chia Nhóm Thảo Luận & Làm Bài Tự Động
+                  <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-emerald-500" />
+                    Chia Nhóm Thảo Luận Ngẫu Nhiên
                   </h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Hệ thống tự động xáo trộn và phân bổ đều {eligibleStudents.length} học sinh thành các nhóm cân đối.
+                  <p className="text-xs text-slate-500">
+                    Phân chia đều {eligibleStudents.length} học sinh thành các nhóm ngẫu nhiên
                   </p>
                 </div>
 
@@ -992,7 +938,7 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
                   <button
                     type="button"
                     onClick={handleGenerateTeams}
-                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
                   >
                     <Shuffle className="w-4 h-4" />
                     <span>Tạo Nhóm Ngay</span>
@@ -1014,21 +960,26 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
                           </span>
                           <span>{t.name}</span>
                         </h4>
-                        <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300">
-                          {t.members.length} thành viên
+                        <span className="text-[10px] font-bold text-slate-500 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700">
+                          {t.members.length} Học sinh
                         </span>
                       </div>
 
-                      <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
-                        {t.members.map((m, mIdx) => (
+                      <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                        {t.members.map((m, idx) => (
                           <div
                             key={m.id}
-                            className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800"
+                            className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300"
                           >
-                            <span className="text-slate-800 dark:text-slate-200 font-medium">
-                              {mIdx + 1}. {m.name}
+                            <span className="truncate pr-2">
+                              <span className="text-slate-400 font-mono text-[11px] mr-1">
+                                {idx + 1}.
+                              </span>
+                              {m.name}
                             </span>
-                            <span className="text-[10px] text-slate-500">Tổ {m.group}</span>
+                            <span className="text-[10px] font-bold text-slate-400 shrink-0">
+                              Tổ {m.group}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -1036,145 +987,122 @@ export const RandomPickerView: React.FC<RandomPickerViewProps> = ({
                   ))}
                 </div>
               ) : (
-                <div className="py-8 text-center text-slate-400 text-xs italic bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-dashed">
-                  Nhấp vào nút "Tạo Nhóm Ngay" để chia danh sách học sinh.
-                </div>
+                <p className="text-xs text-slate-400 py-12 text-center italic">
+                  Bấm "Tạo Nhóm Ngay" để chia danh sách học sinh ngẫu nhiên vào các nhóm thảo luận!
+                </p>
               )}
             </div>
           )}
 
-          {/* SELECTED WINNER BANNER & DIRECT ORAL EVALUATION */}
+          {/* SELECTED WINNER & ORAL GRADING FORM (When student is selected) */}
           {selectedStudent && (
-            <div className="p-6 rounded-2xl border-2 border-amber-400 bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-yellow-500/10 dark:from-slate-900 dark:to-slate-800 shadow-xl space-y-4 animate-in fade-in zoom-in-95">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-amber-300/40 dark:border-slate-700 pb-4">
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <img
-                      src={selectedStudent.avatar || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100'}
-                      alt={selectedStudent.name}
-                      className="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
-                    />
-                    <div className="absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center shadow">
-                      <Trophy className="w-3.5 h-3.5" />
-                    </div>
-                  </div>
-
+            <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-950 text-white border border-indigo-500/30 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div className="flex items-center space-x-3">
+                  <img
+                    src={selectedStudent.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100'}
+                    alt={selectedStudent.name}
+                    className="w-14 h-14 rounded-2xl object-cover border-2 border-amber-400 shadow-md"
+                  />
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-950 text-amber-900 dark:text-amber-300">
-                        🎉 ĐÃ ĐƯỢC CHỌN VẤN ĐÁP
-                      </span>
-                      <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
-                        Tổ {selectedStudent.group}
-                      </span>
-                    </div>
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white mt-1">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-black text-[10px] uppercase tracking-wider">
+                      Học Sinh Được Chọn Vấn Đáp
+                    </span>
+                    <h3 className="text-xl font-black text-white mt-0.5">
                       {selectedStudent.name}
                     </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-300">
-                      Mã HS: <strong className="font-mono">{selectedStudent.code}</strong> • Điểm TB: <strong>{selectedStudent.grades.gpa}</strong>
+                    <p className="text-xs text-slate-300">
+                      Mã HS: <span className="font-mono text-amber-300 font-bold">{selectedStudent.code}</span> • Tổ{' '}
+                      <span className="font-bold text-amber-300">{selectedStudent.group}</span>
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 self-end sm:self-center">
-                  <span className="text-xs text-slate-500">
-                    Thế mạnh: <span className="font-semibold text-slate-800 dark:text-slate-200">{selectedStudent.strengths?.slice(0, 35)}...</span>
+                {isScoreSaved ? (
+                  <span className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-4 h-4" /> Đã Lưu Điểm & Thi Đua
                   </span>
-                </div>
+                ) : null}
               </div>
 
-              {/* Oral Grade & Emulation Points Awarding Form */}
-              <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                  <Award className="w-4 h-4 text-emerald-600" />
-                  Đánh Giá Câu Trả Lời & Ghi Nhận Điểm Thi Đua Vào Tổ {selectedStudent.group}
-                </h4>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Điểm Miệng / Vấn Đáp (Thang 10):
-                    </label>
-                    <select
-                      value={oralGrade}
-                      onChange={(e) => setOralGrade(Number(e.target.value))}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold"
-                    >
-                      <option value={10}>10.0 Điểm (Xuất Sắc)</option>
-                      <option value={9.5}>9.5 Điểm (Rất Tốt)</option>
-                      <option value={9}>9.0 Điểm (Tốt)</option>
-                      <option value={8.5}>8.5 Điểm (Khá Tốt)</option>
-                      <option value={8}>8.0 Điểm (Khá)</option>
-                      <option value={7}>7.0 Điểm (Đạt Yêu Cầu)</option>
-                      <option value={5}>5.0 Điểm (Cần Cố Gắng Thêm)</option>
-                      <option value={0}>0.0 Điểm (Chưa Thuộc Bài)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Cộng Điểm Thi Đua Tổ {selectedStudent.group}:
-                    </label>
-                    <select
-                      value={emulationPoints}
-                      onChange={(e) => setEmulationPoints(Number(e.target.value))}
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 font-bold text-indigo-600"
-                    >
-                      <option value={10}>+10 Điểm (Giải Bài Xuất Sắc)</option>
-                      <option value={5}>+5 Điểm (Thuộc Bài & Tự Tin)</option>
-                      <option value={3}>+3 Điểm (Đạt Yêu Cầu)</option>
-                      <option value={0}>0 Điểm (Bình Thường)</option>
-                      <option value={-5}>-5 Điểm (Chưa Chuẩn Bị Bài)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                      Nội Dung / Chuyên Đề Kiểm Tra:
-                    </label>
-                    <input
-                      type="text"
-                      value={subjectTopic}
-                      onChange={(e) => setSubjectTopic(e.target.value)}
-                      placeholder="Ví dụ: Tích phân đổi biến / Este..."
-                      className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
-                    />
-                  </div>
+              {/* Form Input for Oral Score & Emulation Points */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label className="block font-bold text-indigo-200 mb-1">
+                    Điểm Miệng / Khảo Sát (1 - 10):
+                  </label>
+                  <select
+                    value={oralGrade}
+                    onChange={(e) => setOralGrade(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  >
+                    {[10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6, 5, 4, 3, 0].map((sc) => (
+                      <option key={sc} value={sc} className="text-slate-900">
+                        {sc === 0 ? 'Không cho điểm' : `${sc} Điểm`}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+                <div>
+                  <label className="block font-bold text-indigo-200 mb-1">
+                    Cộng Điểm Thi Đua Phong Trào (Cho Tổ {selectedStudent.group}):
+                  </label>
+                  <select
+                    value={emulationPoints}
+                    onChange={(e) => setEmulationPoints(Number(e.target.value))}
+                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-emerald-300 font-black focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  >
+                    <option value={10} className="text-slate-900">+10 Điểm (Trả lời xuất sắc)</option>
+                    <option value={5} className="text-slate-900">+5 Điểm (Trả lời tốt)</option>
+                    <option value={2} className="text-slate-900">+2 Điểm (Tích cực tham gia)</option>
+                    <option value={0} className="text-slate-900">0 Điểm (Không cộng)</option>
+                    <option value={-5} className="text-slate-900">-5 Điểm (Không thuộc bài cũ)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-indigo-200 mb-1">
+                    Chuyên Đề / Bài Khảo Sát:
+                  </label>
+                  <input
+                    type="text"
+                    value={subjectTopic}
+                    onChange={(e) => setSubjectTopic(e.target.value)}
+                    placeholder="Ví dụ: Kiểm tra bài cũ Tiết 4..."
+                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-indigo-200 mb-1">
+                    Ghi Chú Nhận Xét Nhanh:
+                  </label>
                   <input
                     type="text"
                     value={feedbackNote}
                     onChange={(e) => setFeedbackNote(e.target.value)}
-                    placeholder="Nhận xét ngắn cho học sinh (ví dụ: Trả lời tự tin, cần rèn thêm bấm casio)..."
-                    className="w-full sm:flex-1 px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    placeholder="Ví dụ: Nắm vững kiến thức, phản xạ nhanh..."
+                    className="w-full px-3 py-2 rounded-xl bg-black/40 border border-white/20 text-white focus:outline-none"
                   />
-
-                  <button
-                    type="button"
-                    disabled={isScoreSaved}
-                    onClick={handleSaveResult}
-                    className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-1.5 flex-shrink-0 shadow-sm ${
-                      isScoreSaved
-                        ? 'bg-emerald-600 cursor-default'
-                        : 'bg-indigo-600 hover:bg-indigo-700 active:scale-95'
-                    }`}
-                  >
-                    {isScoreSaved ? (
-                      <>
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Đã Lưu & Cộng Điểm Tổ</span>
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4" />
-                        <span>Lưu Đánh Giá & Điểm</span>
-                      </>
-                    )}
-                  </button>
                 </div>
+              </div>
+
+              {/* Submit Save Button */}
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+                <button
+                  type="button"
+                  onClick={handleSaveOralScore}
+                  disabled={isScoreSaved}
+                  className={`px-5 py-2.5 rounded-xl font-black text-xs shadow-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                    isScoreSaved
+                      ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-amber-500/30'
+                  }`}
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isScoreSaved ? 'Đã Lưu Điểm' : 'Lưu Điểm & Cộng Thi Đua Tổ'}</span>
+                </button>
               </div>
             </div>
           )}
