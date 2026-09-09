@@ -76,15 +76,15 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
   const [sortBy, setSortBy] = useState<'overall_desc' | 'overall_asc' | 'attendance_desc' | 'conduct_desc' | 'name_asc' | 'code_asc'>('overall_desc');
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<Student | null>(null);
 
-  // Custom initial base scores (Default 100, configurable)
+  // Custom initial base scores (Allow starting from 0, 100, etc.)
   const [initialAttendanceBaseScore, setInitialAttendanceBaseScore] = useState<number>(() => {
     const saved = localStorage.getItem('emulation_attendance_base_score');
-    return saved ? Math.max(1, Number(saved)) : 100;
+    return saved !== null ? Math.max(0, Number(saved)) : 0;
   });
 
   const [initialConductBaseScore, setInitialConductBaseScore] = useState<number>(() => {
     const saved = localStorage.getItem('emulation_conduct_base_score');
-    return saved ? Math.max(1, Number(saved)) : 100;
+    return saved !== null ? Math.max(0, Number(saved)) : 0;
   });
 
   const [showBaseScoreModal, setShowBaseScoreModal] = useState<boolean>(false);
@@ -1246,16 +1246,16 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     max={1000}
                     value={tempAttBase}
-                    onChange={(e) => setTempAttBase(Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) => setTempAttBase(Math.max(0, Number(e.target.value) || 0))}
                     className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono font-bold text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
                   />
                   <span className="font-bold text-slate-500 shrink-0">điểm gốc</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {[50, 80, 100, 120, 150].map((preset) => (
+                  {[0, 50, 80, 100, 120, 150].map((preset) => (
                     <button
                       key={`att-${preset}`}
                       type="button"
@@ -1266,12 +1266,12 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                       }`}
                     >
-                      {preset}đ {preset === 100 ? '(Mặc định)' : ''}
+                      {preset}đ {preset === 0 ? '(Gốc 0)' : preset === 100 ? '(Gốc 100)' : ''}
                     </button>
                   ))}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
-                  * Điểm chuyên cần của học sinh sẽ trừ dần từ mốc {tempAttBase}đ này khi vắng học hoặc đi muộn.
+                  * Điểm chuyên cần của học sinh sẽ tính từ mốc {tempAttBase}đ này (trừ khi vắng học hoặc đi muộn).
                 </p>
               </div>
 
@@ -1283,16 +1283,16 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
-                    min={1}
+                    min={0}
                     max={1000}
                     value={tempCondBase}
-                    onChange={(e) => setTempCondBase(Math.max(1, Number(e.target.value) || 1))}
+                    onChange={(e) => setTempCondBase(Math.max(0, Number(e.target.value) || 0))}
                     className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono font-bold text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                   <span className="font-bold text-slate-500 shrink-0">điểm gốc</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {[50, 80, 100, 120, 150].map((preset) => (
+                  {[0, 50, 80, 100, 120, 150].map((preset) => (
                     <button
                       key={`cond-${preset}`}
                       type="button"
@@ -1303,7 +1303,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
                       }`}
                     >
-                      {preset}đ {preset === 100 ? '(Mặc định)' : ''}
+                      {preset}đ {preset === 0 ? '(Gốc 0)' : preset === 100 ? '(Gốc 100)' : ''}
                     </button>
                   ))}
                 </div>
@@ -1321,17 +1321,29 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
               </div>
 
               {/* Actions */}
-              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTempAttBase(100);
-                    setTempCondBase(100);
-                  }}
-                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-xs cursor-pointer"
-                >
-                  Khôi phục 100đ
-                </button>
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempAttBase(0);
+                      setTempCondBase(0);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 dark:bg-purple-950 dark:text-purple-300 font-bold text-[11px] cursor-pointer"
+                  >
+                    Đặt lại 0đ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempAttBase(100);
+                      setTempCondBase(100);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-[11px] cursor-pointer"
+                  >
+                    Khôi phục 100đ
+                  </button>
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
