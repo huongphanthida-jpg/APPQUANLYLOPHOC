@@ -1034,6 +1034,11 @@ export default function App() {
     saveGroupEmulationLogs(updated);
   };
 
+  const handleClearAllEmulationLogs = () => {
+    setEmulationLogs([]);
+    saveGroupEmulationLogs([]);
+  };
+
   const handleImportStudents = (newStudents: Student[]) => {
     setStudents(newStudents);
     saveStudents(newStudents);
@@ -1357,6 +1362,7 @@ export default function App() {
               emulationLogs={emulationLogs}
               onAddEmulationLog={handleAddEmulationLog}
               onDeleteEmulationLog={handleDeleteEmulationLog}
+              onClearAllEmulationLogs={handleClearAllEmulationLogs}
               disciplineLogs={disciplineLogs}
               dutySchedule={dutySchedule}
               examAttempts={examAttempts}
