@@ -1372,6 +1372,7 @@ export default function App() {
                 saveStudents(newStudents);
               }}
               homeroomBookData={homeroomBookData}
+              leaveRequests={leaveRequests}
             />
           )}
 
