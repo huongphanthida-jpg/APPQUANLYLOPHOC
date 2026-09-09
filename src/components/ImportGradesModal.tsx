@@ -722,7 +722,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
             avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
             phone: '0901234567',
             email: `${r.studentCode.toLowerCase().replace(/[^a-z0-9]/g, '')}@tnh.edu.vn`,
-            address: 'Hải Phòng',
+            address: '',
             strengths: 'Chăm chỉ, tích cực học tập',
             careerAspiration: 'Đại học Bách Khoa Hà Nội',
             healthNote: 'Sức khỏe tốt',
@@ -730,7 +730,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
               parentName: `Phụ huynh ${r.studentName}`,
               relationship: 'Bố',
               phone: '0912345678',
-              workplace: 'Hải Phòng',
+              workplace: '',
             },
             grades: {
               math: r.math,
