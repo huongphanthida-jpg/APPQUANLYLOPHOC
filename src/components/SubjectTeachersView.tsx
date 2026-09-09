@@ -402,6 +402,15 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
               </button>
 
               <button
+                onClick={downloadSampleTemplate}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 font-bold text-xs border border-emerald-400/40 transition-all cursor-pointer backdrop-blur-xs"
+                title="Tải file Excel mẫu (.xlsx) để điền thông tin và cập nhật lên hệ thống"
+              >
+                <Download className="w-4 h-4 text-emerald-300" />
+                <span>Tải File Mẫu Excel</span>
+              </button>
+
+              <button
                 onClick={() => setIsConfirmClearModalOpen(true)}
                 className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-bold text-xs border border-rose-400/30 transition-all cursor-pointer"
                 title="Xoá toàn bộ dữ liệu hoặc khôi phục mặc định"
