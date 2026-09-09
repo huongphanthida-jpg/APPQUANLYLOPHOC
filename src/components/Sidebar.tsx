@@ -513,7 +513,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span className="text-slate-300 font-medium">
                 Sĩ số: <strong className="text-[#98FF98] font-bold">{studentsCount} Học sinh</strong>
               </span>
-              <span className="text-[10px] font-semibold text-[#98FF98]">Top 1 Khối 12</span>
+              <span className="text-[10px] font-semibold text-[#98FF98] truncate max-w-[100px] inline-block text-right">
+                {currentClass.className}
+              </span>
             </div>
             <p className="text-slate-400 text-[10px]">Hệ thống Quản trị & Học liệu THPT</p>
           </div>
@@ -528,6 +530,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onCloseMobile}
           />
           <aside className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200 bg-[#003366] text-white flex flex-col">
+            {/* Class Badge Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between bg-[#002850]/50">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="relative group/avatar w-11 h-11 rounded-2xl overflow-hidden bg-white/15 border border-white/20 flex items-center justify-center shrink-0">
@@ -555,6 +558,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </div>
 
+            {/* Nav Menu */}
             <nav className="p-3 space-y-1 overflow-y-auto flex-1 custom-scrollbar">
               {navItems.map((item) => {
                 const Icon = item.icon;
