@@ -474,6 +474,8 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
             <option value="Tháng 12">Tháng 12/2026</option>
           </select>
         </div>
+      </div>
+
       {/* Quy định mốc điểm GPA thưởng học tập banner */}
       <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/80 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200/80 dark:border-blue-800/80 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
         <div className="flex items-center gap-2.5">
