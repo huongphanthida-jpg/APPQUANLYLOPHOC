@@ -29,7 +29,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
   const canEdit = role === 'gvcn' || role === 'gvbm';
 
   // Calculate stats
-  const stats最为 = useMemo(() => {
+  const stats = useMemo(() => {
     let totalGPA = 0;
     let excellentCount = 0; // >= 9.0
     let goodCount = 0; // >= 8.0 & < 9.0
@@ -37,7 +37,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
     let avgCount = 0; // < 6.5
 
     let conductGood = 0;
-    let conductFair最为 = 0;
+    let conductFair = 0;
 
     (students || []).forEach((s) => {
       const gpa = s.grades?.gpa || 0;
@@ -49,7 +49,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
 
       const cond = s.conductRating || (s.conductScore >= 90 ? 'Tốt' : 'Khá');
       if (cond === 'Tốt') conductGood++;
-      else conductFair最为++;
+      else conductFair++;
     });
 
     const totalCount = (students || []).length || 1;
@@ -63,7 +63,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
       fairCount,
       avgCount,
       conductGood,
-      conductFair: conductFair最为,
+      conductFair,
       excellentPercent,
     };
   }, [students]);
@@ -101,28 +101,28 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="p-4 rounded-2xl bg-white border border-blue-200 shadow-sm">
           <span className="text-xs font-bold text-blue-700 block">Điểm Trung Bình Cả Lớp</span>
-          <span className="text-2xl font-black text-[#003366]">{stats最为.avgGPA}</span>
+          <span className="text-2xl font-black text-[#003366]">{stats.avgGPA}</span>
           <span className="text-[10px] text-blue-600 block mt-0.5">Xếp thứ 1 / Toàn Khối</span>
         </div>
         <div className="p-4 rounded-2xl bg-white border border-emerald-200 shadow-sm">
           <span className="text-xs font-bold text-emerald-700 block">Học Lực Giỏi & Xuất Sắc</span>
-          <span className="text-2xl font-black text-emerald-600">{stats最为.excellentCount + stats最为.goodCount} HS</span>
+          <span className="text-2xl font-black text-emerald-600">{stats.excellentCount + stats.goodCount} HS</span>
           <span className="text-[10px] text-emerald-700 block font-semibold mt-0.5">
-            Tỷ lệ: {stats最为.excellentPercent}%
+            Tỷ lệ: {stats.excellentPercent}%
           </span>
         </div>
         <div className="p-4 rounded-2xl bg-white border border-indigo-200 shadow-sm">
           <span className="text-xs font-bold text-indigo-700 block">Học Lực Khá</span>
-          <span className="text-2xl font-black text-indigo-600">{stats最为.fairCount} HS</span>
+          <span className="text-2xl font-black text-indigo-600">{stats.fairCount} HS</span>
           <span className="text-[10px] text-indigo-600 block mt-0.5">
-            Tỷ lệ: {(((stats最为.fairCount) / (students.length || 1)) * 100).toFixed(1)}%
+            Tỷ lệ: {(((stats.fairCount) / (students.length || 1)) * 100).toFixed(1)}%
           </span>
         </div>
         <div className="p-4 rounded-2xl bg-white border border-purple-200 shadow-sm">
           <span className="text-xs font-bold text-purple-700 block">Hạnh Kiểm Loại Tốt</span>
-          <span className="text-2xl font-black text-purple-600">{stats最为.conductGood} HS</span>
+          <span className="text-2xl font-black text-purple-600">{stats.conductGood} HS</span>
           <span className="text-[10px] text-purple-600 block mt-0.5">
-            Tỷ lệ: {(((stats最为.conductGood) / (students.length || 1)) * 100).toFixed(1)}%
+            Tỷ lệ: {(((stats.conductGood) / (students.length || 1)) * 100).toFixed(1)}%
           </span>
         </div>
       </div>
@@ -155,17 +155,17 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
                   Tốt (90 - 100đ)
                 </td>
                 <td className="py-2 px-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">
-                  {stats最为.excellentCount} HS
+                  {stats.excellentCount} HS
                 </td>
                 <td className="py-2 px-3 border border-slate-200 font-black text-blue-700">
-                  {stats最为.goodCount} HS
+                  {stats.goodCount} HS
                 </td>
                 <td className="py-2 px-3 border border-slate-200 font-black text-indigo-700">
-                  {Math.max(0, stats最为.fairCount - 1)} HS
+                  {Math.max(0, stats.fairCount - 1)} HS
                 </td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
                 <td className="py-2 px-3 border border-slate-200 font-black text-[#003366] bg-blue-50">
-                  {stats最为.conductGood} HS (97.2%)
+                  {stats.conductGood} HS (97.2%)
                 </td>
               </tr>
               <tr>
@@ -179,14 +179,14 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
                 </td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
                 <td className="py-2 px-3 border border-slate-200 font-black text-[#003366] bg-blue-50">
-                  {stats最为.conductFair} HS (2.8%)
+                  {stats.conductFair} HS (2.8%)
                 </td>
               </tr>
               <tr className="bg-slate-100 font-black text-slate-900">
                 <td className="py-2 px-3 border border-slate-200 text-left uppercase">Tổng Cộng</td>
-                <td className="py-2 px-3 border border-slate-200 text-emerald-700">{stats最为.excellentCount} HS</td>
-                <td className="py-2 px-3 border border-slate-200 text-blue-700">{stats最为.goodCount} HS</td>
-                <td className="py-2 px-3 border border-slate-200 text-indigo-700">{stats最为.fairCount} HS</td>
+                <td className="py-2 px-3 border border-slate-200 text-emerald-700">{stats.excellentCount} HS</td>
+                <td className="py-2 px-3 border border-slate-200 text-blue-700">{stats.goodCount} HS</td>
+                <td className="py-2 px-3 border border-slate-200 text-indigo-700">{stats.fairCount} HS</td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
                 <td className="py-2 px-3 border border-slate-200 text-[#003366] bg-blue-100">
                   {(students || []).length} HS (100%)
