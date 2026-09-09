@@ -211,11 +211,26 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       const groupStudents = students.filter((s) => getStudentGroupNumber(s.group) === groupNum);
       const studentIds = new Set(groupStudents.map((s) => s.id));
 
-      // 1. Academic Score
+      // 1. Academic Score (Cộng/trừ điểm theo quy định mốc GPA mới: 9.0-10.0 => +10đ; 8.0-8.9 => +5đ; 5.0-7.9 => 0đ; <5.0 => -2đ)
+      const countGpa9to10 = groupStudents.filter((s) => (s.grades?.gpa !== undefined ? s.grades.gpa : 8.0) >= 9.0).length;
+      const countGpa8to89 = groupStudents.filter((s) => {
+        const g = s.grades?.gpa !== undefined ? s.grades.gpa : 8.0;
+        return g >= 8.0 && g < 9.0;
+      }).length;
+      const countGpa5to79 = groupStudents.filter((s) => {
+        const g = s.grades?.gpa !== undefined ? s.grades.gpa : 8.0;
+        return g >= 5.0 && g < 8.0;
+      }).length;
+      const countGpaBelow5 = groupStudents.filter((s) => {
+        const g = s.grades?.gpa !== undefined ? s.grades.gpa : 8.0;
+        return g < 5.0;
+      }).length;
+      
+      const academicGpaBonus = countGpa9to10 * 10 + countGpa8to89 * 5 - countGpaBelow5 * 2;
+
       const avgGpa = groupStudents.length > 0
         ? groupStudents.reduce((acc, s) => acc + (s.grades?.gpa || 8.0), 0) / groupStudents.length
         : 8.0;
-      const academicGpaBonus = Math.round((avgGpa - 7.5) * 10);
 
       const groupAttempts = examAttempts.filter((a) => studentIds.has(a.studentId) && a.status === 'completed');
       const examBonus = groupAttempts.reduce((sum, a) => sum + (a.score >= 8 ? 3 : 1), 0);
@@ -285,6 +300,11 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
         leader,
         studentCount: groupStudents.length,
         avgGpa: avgGpa.toFixed(2),
+        countGpa9to10,
+        countGpa8to89,
+        countGpa5to79,
+        countGpaBelow5,
+        academicGpaBonus,
         baseScore,
         totalAcademic,
         totalDiscipline,
@@ -453,6 +473,35 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
             <option value="Tháng 11">Tháng 11/2026</option>
             <option value="Tháng 12">Tháng 12/2026</option>
           </select>
+        </div>
+      {/* Quy định mốc điểm GPA thưởng học tập banner */}
+      <div className="bg-gradient-to-r from-blue-50/90 to-indigo-50/80 dark:from-blue-950/40 dark:to-indigo-950/40 border border-blue-200/80 dark:border-blue-800/80 rounded-2xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-2xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-xs shrink-0">
+            <GraduationCap className="w-4 h-4" />
+          </div>
+          <div>
+            <span className="font-extrabold text-[#003366] dark:text-blue-300 block">
+              Quy Định Cộng Điểm Thi Đua Học Tập Theo Mốc GPA:
+            </span>
+            <span className="text-slate-600 dark:text-slate-400 text-[11px]">
+              Tự động cộng điểm thi đua vào Tổ & Lớp cho từng học sinh đạt mốc kết quả GPA:
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 font-bold text-[11px]">
+          <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 px-2.5 py-1 rounded-xl border border-amber-300 dark:border-amber-700 flex items-center gap-1 shadow-2xs">
+            🌟 <strong>GPA 9.0 – 10.0:</strong> <strong className="text-amber-700 dark:text-amber-400 font-black">+10đ / HS</strong> (Khen thưởng)
+          </span>
+          <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-xl border border-emerald-300 dark:border-emerald-700 flex items-center gap-1 shadow-2xs">
+            🥇 <strong>GPA 8.0 – 8.9:</strong> <strong className="text-emerald-700 dark:text-emerald-400 font-black">+5đ / HS</strong> (HS Giỏi)
+          </span>
+          <span className="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-xl border border-slate-300 dark:border-slate-700 flex items-center gap-1 shadow-2xs">
+            📘 <strong>GPA 5.0 – 7.9:</strong> <strong className="text-slate-700 dark:text-slate-300 font-black">+0đ / HS</strong> (Đạt chuẩn)
+          </span>
+          <span className="bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 px-2.5 py-1 rounded-xl border border-rose-300 dark:border-rose-700 flex items-center gap-1 shadow-2xs">
+            ⚠️ <strong>GPA &lt; 5.0:</strong> <strong className="text-rose-700 dark:text-rose-400 font-black">-2đ / HS</strong> (Phụ đạo)
+          </span>
         </div>
       </div>
 
@@ -803,6 +852,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                       <th className="p-3">Mã HS</th>
                       <th className="p-3 text-center">Tổ Hiện Tại</th>
                       <th className="p-3 text-center">GPA</th>
+                      <th className="p-3 text-center">Thưởng GPA</th>
                       <th className="p-3 text-center">Hạnh Kiểm</th>
                       <th className="p-3 text-center">Nề Nếp / Vi Phạm</th>
                     </tr>
@@ -846,7 +896,37 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                             )}
                           </td>
                           <td className="p-3 text-center font-bold text-blue-600">
-                            {student.grades?.gpa || 8.5}
+                            {student.grades?.gpa !== undefined ? student.grades.gpa.toFixed(1) : '8.5'}
+                          </td>
+                          <td className="p-3 text-center">
+                            {(() => {
+                              const gpa = student.grades?.gpa !== undefined ? student.grades.gpa : 8.0;
+                              if (gpa >= 9.0) {
+                                return (
+                                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 font-bold text-[10px] inline-flex items-center gap-1">
+                                    <Award className="w-3 h-3 text-amber-600" /> +10đ (Khen thưởng)
+                                  </span>
+                                );
+                              } else if (gpa >= 8.0) {
+                                return (
+                                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px] inline-flex items-center gap-1">
+                                    <Award className="w-3 h-3 text-emerald-600" /> +5đ (Giỏi)
+                                  </span>
+                                );
+                              } else if (gpa >= 5.0) {
+                                return (
+                                  <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 font-medium text-[10px]">
+                                    0đ (Đạt)
+                                  </span>
+                                );
+                              } else {
+                                return (
+                                  <span className="px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 font-bold text-[10px] inline-flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3 text-rose-600" /> -2đ (Phụ đạo)
+                                  </span>
+                                );
+                              }
+                            })()}
                           </td>
                           <td className="p-3 text-center">
                             <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px]">
@@ -863,7 +943,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
 
                     {students.filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal).length === 0 && (
                       <tr>
-                        <td colSpan={7} className="p-6 text-center text-slate-400 italic">
+                        <td colSpan={8} className="p-6 text-center text-slate-400 italic">
                           Chưa có học sinh nào được phân công vào Tổ {selectedGroupModal}.
                         </td>
                       </tr>
