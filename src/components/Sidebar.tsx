@@ -215,252 +215,138 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ? studentNavItems
       : parentNavItems;
 
-  const handleItemClick = (item: NavItem) => {
-    if (item.id === 'ai-advisor') {
-      if (onOpenAiAdvisor) onOpenAiAdvisor();
-    } else {
-      onTabChange(item.id as NavigationTab);
-    }
-    if (onCloseMobile) onCloseMobile();
-  };
-
-  const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#003366] text-white">
-      {/* School Badge Header */}
-      <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-[#002850]/50 group">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="relative w-11 h-11 rounded-2xl overflow-hidden bg-white/15 border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
-            {currentClass.avatar ? (
-              <img
-                src={currentClass.avatar}
-                alt={currentClass.className}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = defaultClass.avatar;
-                }}
-              />
-            ) : (
-              <School className="w-5 h-5 text-[#98FF98]" />
+  const renderNavContent = () => (
+    <div className="flex flex-col h-full bg-gradient-to-b from-blue-900 via-indigo-950 to-[#001833] text-white">
+      {/* Header Info */}
+      <div className="p-5 border-b border-white/10 space-y-4">
+        {/* Class Info Box */}
+        <div className="flex items-center gap-3">
+          <div className="relative group">
+            <img
+              src={currentClass.avatar}
+              alt={currentClass.className}
+              className="w-12 h-12 rounded-2xl object-cover border-2 border-white/20 shadow-md"
+            />
+            {role === 'gvcn' && onEditClass && (
+              <button
+                onClick={onEditClass}
+                className="absolute -bottom-1 -right-1 p-1 bg-amber-500 hover:bg-amber-600 rounded-full text-slate-900 shadow-md transition-transform hover:scale-110"
+                title="Chỉnh sửa thông tin lớp"
+              >
+                <Edit2 className="w-2.5 h-2.5 stroke-[3]" />
+              </button>
             )}
           </div>
-          <div className="overflow-hidden min-w-0">
-            <span className="text-[9px] font-bold uppercase tracking-wider text-[#98FF98] bg-[#98FF98]/15 px-2 py-0.5 rounded truncate block">
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/20 uppercase block truncate max-w-fit">
               {currentClass.schoolName}
             </span>
-            <h2 className="text-sm font-black text-white truncate mt-0.5">
+            <h2 className="text-base font-black text-white truncate mt-0.5">
               {currentClass.className}
             </h2>
-            <p className="text-[11px] text-slate-300 truncate">{currentClass.academicYear}</p>
+            <p className="text-[11px] text-blue-200 font-medium truncate">
+              {currentClass.academicYear}
+            </p>
           </div>
         </div>
 
-        {/* Quick Edit Class button for GVCN */}
-        {role === 'gvcn' && onEditClass && (
-          <button
-            id="btn-sidebar-edit-class"
-            type="button"
-            onClick={onEditClass}
-            title="Chỉnh sửa thông tin & hình đại diện Lớp"
-            className="p-1.5 rounded-xl bg-white/10 hover:bg-[#98FF98] text-slate-300 hover:text-[#003366] transition-all opacity-80 hover:opacity-100 shrink-0 ml-1"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-          </button>
+        {/* User Card */}
+        {role === 'bgh' ? (
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-400/25 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src={currentBgh.avatar}
+                alt={currentBgh.name}
+                className="w-9 h-9 rounded-xl object-cover border border-amber-400/30"
+              />
+              <div className="min-w-0">
+                <span className="text-[9px] font-black tracking-widest text-amber-300 uppercase block">
+                  BAN GIÁM HIỆU
+                </span>
+                <h3 className="text-xs font-bold text-white truncate">{currentBgh.name}</h3>
+              </div>
+            </div>
+            {onEditBgh && (
+              <button
+                onClick={onEditBgh}
+                className="p-1.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 transition-colors"
+                title="Chỉnh sửa thông tin BGH"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="p-3 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="relative">
+                <img
+                  src={currentTeacher.avatar}
+                  alt={currentTeacher.name}
+                  className="w-9 h-9 rounded-xl object-cover border border-white/20"
+                />
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 absolute -bottom-1 -right-1 bg-slate-900 rounded-full" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[9px] font-black tracking-widest text-blue-300 uppercase block">
+                  GIÁO VIÊN CHỦ NHIỆM
+                </span>
+                <h3 className="text-xs font-bold text-white truncate">{currentTeacher.name}</h3>
+              </div>
+            </div>
+            {role === 'gvcn' && onEditTeacher && (
+              <button
+                onClick={onEditTeacher}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-blue-200 transition-colors"
+                title="Chỉnh sửa thông tin GVCN"
+              >
+                <Edit2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         )}
       </div>
 
-      {/* Role & User Indicator Widget */}
-      <div
-        className={`mx-3.5 my-3 p-3 bg-white/10 rounded-2xl border border-white/10 flex items-center justify-between group transition-all ${
-          (role === 'gvcn' && onEditTeacher) || (role === 'bgh' && onEditBgh)
-            ? 'hover:bg-white/15 cursor-pointer'
-            : ''
-        }`}
-        onClick={() => {
-          if (role === 'gvcn' && onEditTeacher) onEditTeacher();
-          if (role === 'bgh' && onEditBgh) onEditBgh();
-        }}
-        title={
-          role === 'gvcn'
-            ? 'Nhấp để chỉnh sửa thông tin & ảnh đại diện GVCN'
-            : role === 'bgh'
-            ? 'Nhấp để chỉnh sửa thông tin & ảnh đại diện BGH'
-            : undefined
-        }
-      >
-        <div className="flex items-center gap-2.5 min-w-0">
-          {role === 'gvcn' ? (
-            <div className="relative shrink-0">
-              <img
-                src={currentTeacher.avatar}
-                alt={currentTeacher.name}
-                className="w-9 h-9 rounded-full object-cover border-2 border-[#98FF98] shadow-xs"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = defaultTeacher.avatar;
-                }}
-              />
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#003366] text-[#98FF98] flex items-center justify-center border border-[#98FF98]">
-                <ShieldCheck className="w-2.5 h-2.5" />
-              </span>
-            </div>
-          ) : role === 'bgh' ? (
-            <div className="relative shrink-0">
-              {currentBgh.avatar ? (
-                <img
-                  src={currentBgh.avatar}
-                  alt={currentBgh.name}
-                  className="w-9 h-9 rounded-full object-cover border-2 border-amber-400 shadow-xs"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = defaultBgh.avatar;
-                  }}
-                />
-              ) : (
-                <div className="w-9 h-9 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center shrink-0">
-                  <Landmark className="w-4 h-4 text-amber-300" />
-                </div>
-              )}
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-600 text-amber-100 flex items-center justify-center border border-white">
-                <Landmark className="w-2 h-2" />
-              </span>
-            </div>
-          ) : role === 'gvbm' ? (
-            <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-2xl bg-indigo-500/30 border border-indigo-300/50 flex items-center justify-center shrink-0 shadow-xs">
-                <GraduationCap className="w-4 h-4 text-indigo-200" />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-indigo-700 text-white flex items-center justify-center border border-indigo-300">
-                <BookOpen className="w-2 h-2" />
-              </span>
-            </div>
-          ) : role === 'csl' ? (
-            <div className="relative shrink-0">
-              <div className="w-9 h-9 rounded-2xl bg-teal-500/30 border border-teal-300/50 flex items-center justify-center shrink-0 shadow-xs">
-                <CheckSquare className="w-4 h-4 text-teal-200" />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-teal-700 text-white flex items-center justify-center border border-teal-300">
-                <Award className="w-2 h-2" />
-              </span>
-            </div>
-          ) : role === 'student' ? (
-            <div className="w-9 h-9 rounded-2xl bg-sky-400/20 border border-sky-300/40 flex items-center justify-center shrink-0">
-              <User className="w-4 h-4 text-sky-300" />
-            </div>
-          ) : (
-            <div className="w-9 h-9 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center shrink-0">
-              <HeartHandshake className="w-4 h-4 text-amber-300" />
-            </div>
-          )}
-          <div className="overflow-hidden min-w-0">
-            <p className="text-[10px] text-slate-300 font-semibold uppercase truncate">
-              {role === 'gvcn'
-                ? 'Giáo Viên Chủ Nhiệm'
-                : role === 'bgh'
-                ? currentBgh.dutyRole || 'Ban Giám Hiệu'
-                : role === 'gvbm'
-                ? 'Giáo Viên Bộ Môn'
-                : role === 'csl'
-                ? 'Ban Cán Sự Lớp'
-                : 'Vai trò hiện tại'}
-            </p>
-            <p className="text-xs font-bold text-white truncate">
-              {role === 'gvcn'
-                ? currentTeacher.name
-                : role === 'bgh'
-                ? currentBgh.name
-                : role === 'gvbm'
-                ? 'Thầy/Cô Bộ Môn KHTN'
-                : role === 'csl'
-                ? 'Lớp Trưởng / Cán Sự Lớp'
-                : role === 'student'
-                ? `Học sinh ${currentClass.className}`
-                : 'Phụ huynh Học sinh'}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-1 shrink-0 ml-1">
-          {role === 'gvcn' && onEditTeacher && (
-            <button
-              id="btn-sidebar-edit-teacher"
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditTeacher();
-              }}
-              title="Chỉnh sửa thông tin & hình đại diện GVCN"
-              className="p-1 rounded-lg bg-white/10 hover:bg-[#98FF98] text-slate-300 hover:text-[#003366] transition-all opacity-80 hover:opacity-100 cursor-pointer"
-            >
-              <Edit2 className="w-3 h-3" />
-            </button>
-          )}
-
-          {role === 'bgh' && onEditBgh && (
-            <button
-              id="btn-sidebar-edit-bgh"
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditBgh();
-              }}
-              title="Chỉnh sửa thông tin & ảnh đại diện BGH"
-              className="p-1 rounded-lg bg-white/10 hover:bg-amber-400 text-amber-200 hover:text-[#003366] transition-all opacity-80 hover:opacity-100 cursor-pointer"
-            >
-              <Edit2 className="w-3 h-3" />
-            </button>
-          )}
-
-          <span
-            className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
-              role === 'gvcn'
-                ? 'bg-[#98FF98] text-[#003366]'
-                : role === 'bgh'
-                ? 'bg-amber-400 text-[#003366]'
-                : role === 'student'
-                ? 'bg-sky-400 text-slate-900'
-                : 'bg-emerald-400 text-slate-900'
-            }`}
-          >
-            {role === 'gvcn' ? 'GVCN' : role === 'bgh' ? 'BGH' : role === 'student' ? 'Học Sinh' : 'Phụ Huynh'}
-          </span>
-        </div>
-      </div>
-
-      {/* Navigation Menu */}
-      <nav className="p-3 space-y-1 overflow-y-auto flex-1">
+      {/* Navigation List */}
+      <nav className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
+
           return (
             <button
               key={item.id}
-              id={`sidebar-item-${item.id}`}
-              onClick={() => handleItemClick(item)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
-                isActive
-                  ? 'bg-white text-[#003366] font-bold shadow-md'
-                  : item.highlight
-                  ? 'bg-[#98FF98]/15 text-[#98FF98] hover:bg-[#98FF98]/25 border border-[#98FF98]/30 font-bold'
-                  : 'text-slate-200 hover:bg-white/10 hover:text-white'
+              onClick={() => {
+                if (item.id === 'ai-advisor') {
+                  if (onOpenAiAdvisor) onOpenAiAdvisor();
+                } else {
+                  onTabChange(item.id as NavigationTab);
+                }
+                if (onCloseMobile) onCloseMobile();
+              }}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all duration-200 ${
+                item.highlight
+                  ? 'bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-900/40 hover:from-emerald-500 hover:to-teal-600 mt-3'
+                  : isActive
+                  ? 'bg-white text-blue-900 shadow-md shadow-black/10'
+                  : 'text-blue-100/80 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-3">
                 <Icon
-                  className={`w-4 h-4 transition-transform group-hover:scale-110 ${
-                    isActive
-                      ? 'text-[#003366]'
-                      : item.highlight
-                      ? 'text-[#98FF98]'
-                      : 'text-slate-300'
+                  className={`w-4 h-4 ${
+                    item.highlight
+                      ? 'text-amber-300'
+                      : isActive
+                      ? 'text-blue-600'
+                      : 'text-blue-200/70'
                   }`}
                 />
                 <span>{item.label}</span>
               </div>
 
               {item.badge !== undefined && item.badge > 0 && (
-                <span
-                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                    isActive ? 'bg-red-500 text-white' : 'bg-amber-400 text-slate-900'
-                  }`}
-                >
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs animate-pulse">
                   {item.badge}
                 </span>
               )}
@@ -494,22 +380,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
         id="desktop-sidebar"
         className="hidden md:flex flex-col w-64 rounded-3xl shadow-lg border border-[#002244] overflow-hidden shrink-0 self-start sticky top-24"
       >
-        {sidebarContent}
+        {renderNavContent()}
       </aside>
 
-      {/* Mobile Drawer Overlay */}
+      {/* Mobile Drawer Sidebar */}
       {isMobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden flex">
           <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-slate-950/70 backdrop-blur-xs transition-opacity animate-fadeIn"
             onClick={onCloseMobile}
           />
-          <aside className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
-            {sidebarContent}
-          </aside>
+          <div className="relative flex-1 max-w-xs w-full bg-slate-900 h-full shadow-2xl flex flex-col z-10 animate-slideRight">
+            {renderNavContent()}
+          </div>
         </div>
       )}
     </>
   );
 };
-
