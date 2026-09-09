@@ -128,14 +128,17 @@ export interface Student {
     phone: string;
     workplace: string;
   };
-  // Điểm số khối Tự nhiên
+  // Điểm số TB các môn học
   grades: {
     math: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     physics: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     chemistry: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     biology: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
-    literature: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     english: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
+    literature: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
+    history?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
+    geography?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
+    informatics?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     gpa: number;
   };
   // Lịch sử điểm các kỳ để vẽ biểu đồ tiến bộ & thống kê theo đợt
