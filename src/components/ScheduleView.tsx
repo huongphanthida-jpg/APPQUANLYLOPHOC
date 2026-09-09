@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   CalendarDays,
   Clock,
@@ -22,7 +22,11 @@ import {
   Video,
   Trash2,
   RefreshCw,
+  UploadCloud,
+  Download,
+  FileSpreadsheet,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { TimetableData, DaySchedule, TimetablePeriod, UserRole, ClassInfo, TeacherInfo } from '../types';
 import { INITIAL_TIMETABLE } from '../data/mockData';
 
@@ -69,8 +73,17 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     data: TimetablePeriod;
   } | null>(null);
 
+  // Modal & Toast states
   const [isConfirmClearAllOpen, setIsConfirmClearAllOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // File import states
+  const [importFile, setImportFile] = useState<File | null>(null);
+  const [parsedTimetableDays, setParsedTimetableDays] = useState<DaySchedule[]>([]);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [isParsing, setIsParsing] = useState(false);
+  const timetableFileInputRef = useRef<HTMLInputElement>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -196,6 +209,133 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     showToast('Đã khôi phục thời khóa biểu mẫu mặc định!');
   };
 
+  // Download Sample Excel Template for Timetable
+  const downloadSampleTemplate = () => {
+    const data = [
+      ['Buổi', 'Tiết', 'Thời Gian', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'],
+      ['Sáng', '1', '07:00 - 07:45', 'Chào cờ & Sinh hoạt dưới cờ', 'Vật Lý (Lý thuyết)', 'Toán Học (Giải Tích)', 'Ngữ Văn', 'Tiếng Anh', 'Thể Dục'],
+      ['Sáng', '2', '07:50 - 08:35', 'Toán Học (Đại Số)', 'Vật Lý (Bài tập)', 'Hóa Học', 'Ngữ Văn', 'Tiếng Anh', 'Thể Dục'],
+      ['Sáng', '3', '08:55 - 09:40', 'Toán Học (Hình Học)', 'Hóa Học (Thực hành)', 'Hóa Học (Bài tập)', 'Toán Học', 'Lịch Sử', 'Sinh Hoạt Lớp'],
+      ['Sáng', '4', '09:45 - 10:30', 'Vật Lý', 'Ngữ Văn', 'Tiếng Anh', 'Vật Lý', 'Lịch Sử', 'Địa Lý'],
+      ['Sáng', '5', '10:35 - 11:20', 'Hóa Học', 'Ngữ Văn', 'Tiếng Anh', 'Sinh Học', 'GD Quốc Phòng', 'Địa Lý'],
+      ['Chiều', '6', '13:00 - 13:45', 'Hoạt động trải nghiệm', 'Tin Học', 'Bồi dưỡng Toán', 'Bồi dưỡng Văn', 'Tiếng Anh Tăng Cường', 'Tự Học'],
+      ['Chiều', '7', '13:50 - 14:35', 'Hoạt động trải nghiệm', 'Tin Học', 'Bồi dưỡng Toán', 'Bồi dưỡng Văn', 'Tiếng Anh Tăng Cường', 'Tự Học'],
+      ['Chiều', '8', '14:45 - 15:30', 'GDQP - AN', 'CLB Thể Thao', 'Ôn Tập Vật Lý', 'Ôn Tập Hóa Học', 'Bồi Dưỡng HSG', 'Nghỉ'],
+      ['Chiều', '9', '15:35 - 16:20', 'GDQP - AN', 'CLB Thể Thao', 'Ôn Tập Vật Lý', 'Ôn Tập Hóa Học', 'Bồi Dưỡng HSG', 'Nghỉ'],
+      ['Chiều', '10', '16:25 - 17:10', 'Nghỉ', 'Nghỉ', 'Nghỉ', 'Nghỉ', 'Nghỉ', 'Nghỉ'],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'ThoiKhoaBieu');
+    XLSX.writeFile(wb, `Mau_Thoi_Khoa_Bieu_${(classInfo?.className || '11D5').replace(/\s+/g, '_')}.xlsx`);
+  };
+
+  // Handle Select & Parse Excel Timetable File
+  const handleFileSelectTimetable = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportFile(file);
+    setImportError(null);
+    setIsParsing(true);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (rows.length < 2) {
+        setImportError('File không chứa dữ liệu Thời khóa biểu hoặc sai định dạng!');
+        setIsParsing(false);
+        return;
+      }
+
+      // Find header row containing day columns
+      let headerIdx = 0;
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        const rowStr = rows[i].join(' ').toLowerCase();
+        if (rowStr.includes('thứ') || rowStr.includes('hai') || rowStr.includes('ba') || rowStr.includes('tư')) {
+          headerIdx = i;
+          break;
+        }
+      }
+
+      const headers = rows[headerIdx].map((h) => String(h || '').trim().toLowerCase());
+      const findCol = (keywords: string[]) =>
+        headers.findIndex((h) => keywords.some((k) => h.includes(k)));
+
+      const colMon = findCol(['thứ hai', 'thứ 2', 'thuhai', 'thu 2', 'mon']);
+      const colTue = findCol(['thứ ba', 'thứ 3', 'thuba', 'thu 3', 'tue']);
+      const colWed = findCol(['thứ tư', 'thứ 4', 'thutu', 'thu 4', 'wed']);
+      const colThu = findCol(['thứ năm', 'thứ 5', 'thunam', 'thu 5', 'thu']);
+      const colFri = findCol(['thứ sáu', 'thứ 6', 'thusau', 'thu 6', 'fri']);
+      const colSat = findCol(['thứ bảy', 'thứ 7', 'thubay', 'thu 7', 'sat']);
+
+      // Clone existing timetable structure
+      const newDaysData: DaySchedule[] = JSON.parse(JSON.stringify(timetable.days));
+
+      // Loop through data rows (expected 10 periods)
+      let dataRowsCount = 0;
+      for (let i = headerIdx + 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || r.length === 0) continue;
+
+        const sessionText = String(r[0] || '').toLowerCase();
+        const periodNumRaw = Number(String(r[1] || '').replace(/[^0-9]/g, ''));
+
+        if (!periodNumRaw && dataRowsCount >= 10) continue;
+
+        const periodIdx = dataRowsCount < 10 ? dataRowsCount : 0;
+        const isMorning = periodIdx < 5;
+        const targetSession = isMorning ? 'morning' : 'afternoon';
+        const targetIdx = isMorning ? periodIdx : periodIdx - 5;
+
+        const assignSubject = (dayKey: 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat', colIdx: number) => {
+          if (colIdx !== -1 && r[colIdx]) {
+            const val = String(r[colIdx] || '').trim();
+            const dayObj = newDaysData.find((d) => d.dayKey === dayKey);
+            if (dayObj && dayObj[targetSession][targetIdx]) {
+              dayObj[targetSession][targetIdx].subject = val === 'Nghỉ' || val === 'Trống' ? '' : val;
+            }
+          }
+        };
+
+        assignSubject('mon', colMon);
+        assignSubject('tue', colTue);
+        assignSubject('wed', colWed);
+        assignSubject('thu', colThu);
+        assignSubject('fri', colFri);
+        assignSubject('sat', colSat);
+
+        dataRowsCount++;
+        if (dataRowsCount >= 10) break;
+      }
+
+      setParsedTimetableDays(newDaysData);
+    } catch (err) {
+      setImportError('Lỗi đọc file Excel Thời khóa biểu. Vui lòng sử dụng File mẫu chuẩn!');
+    } finally {
+      setIsParsing(false);
+    }
+  };
+
+  const handleConfirmImportTimetable = () => {
+    if (parsedTimetableDays.length === 0) return;
+
+    onSaveTimetable({
+      ...timetable,
+      days: parsedTimetableDays,
+    });
+
+    setIsImportModalOpen(false);
+    setParsedTimetableDays([]);
+    setImportFile(null);
+    showToast('Đã nhập thành công Thời khóa biểu mới từ file Excel!');
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -237,7 +377,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                   </span>
                 </h1>
                 <p className="text-xs md:text-sm text-slate-500 mt-0.5">
-                  Lớp: <span className="font-bold text-slate-800">{classInfo?.className || '12A1'}</span> •{' '}
+                  Lớp: <span className="font-bold text-slate-800">{classInfo?.className || '11D5'}</span> •{' '}
                   {timetable.academicYear} • <span className="text-slate-600">{timetable.appliedDate}</span>
                 </p>
               </div>
@@ -303,15 +443,42 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             )}
 
             {(role === 'gvcn' || role === 'bgh') && (
-              <button
-                type="button"
-                onClick={() => setIsConfirmClearAllOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                title="Xóa toàn bộ thời khóa biểu để tự nhập lại từ đầu"
-              >
-                <Trash2 className="w-4 h-4 text-rose-500" />
-                <span>Xóa Hết TKB</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImportFile(null);
+                    setParsedTimetableDays([]);
+                    setImportError(null);
+                    setIsImportModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  title="Tải thời khóa biểu từ file Excel trên máy tính"
+                >
+                  <UploadCloud className="w-4 h-4 text-cyan-300" />
+                  <span>Tải Từ Máy Tính</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={downloadSampleTemplate}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Tải file Excel mẫu (.xlsx) để điền thời khóa biểu"
+                >
+                  <Download className="w-4 h-4 text-emerald-600" />
+                  <span>Tải File Mẫu</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmClearAllOpen(true)}
+                  className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  title="Xóa toàn bộ thời khóa biểu để tự nhập lại từ đầu"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-500" />
+                  <span>Xóa Hết TKB</span>
+                </button>
+              </>
             )}
 
             <button
@@ -1005,6 +1172,149 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
               >
                 Hủy Bỏ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL IMPORT TIMETABLE FROM EXCEL / CSV */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-2xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden space-y-0">
+            <div className="p-6 bg-gradient-to-r from-[#003366] via-indigo-900 to-[#001A33] text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  <UploadCloud className="w-5 h-5 text-cyan-300" />
+                  Tải Thời Khóa Biểu Từ Máy Tính
+                </h3>
+                <p className="text-xs text-blue-200 mt-0.5">
+                  Hỗ trợ định dạng file Excel (.xlsx, .xls) và CSV
+                </p>
+              </div>
+              <button
+                onClick={() => setIsImportModalOpen(false)}
+                className="text-white/70 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <div className="p-6 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-3xl bg-slate-50 dark:bg-slate-800/50 text-center space-y-3 transition-colors">
+                  <FileSpreadsheet className="w-10 h-10 mx-auto text-[#003366]" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                      {importFile ? importFile.name : 'Kéo thả file Excel Thời khóa biểu vào đây hoặc bấm chọn tệp'}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      Định dạng chuẩn: Buổi, Tiết, Thời gian, Thứ 2, Thứ 3, Thứ 4, Thứ 5, Thứ 6, Thứ 7
+                    </span>
+                  </div>
+
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs cursor-pointer shadow-md">
+                    <UploadCloud className="w-4 h-4 text-cyan-300" />
+                    <span>Chọn File Excel Từ Máy</span>
+                    <input
+                      type="file"
+                      ref={timetableFileInputRef}
+                      accept=".xlsx, .xls, .csv"
+                      onChange={handleFileSelectTimetable}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-400">Chưa có file thời khóa biểu mẫu?</span>
+                  <button
+                    type="button"
+                    onClick={downloadSampleTemplate}
+                    className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tải File Mẫu Excel (.xlsx)</span>
+                  </button>
+                </div>
+              </div>
+
+              {isParsing && (
+                <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Đang phân tích thời khóa biểu từ file Excel...</span>
+                </div>
+              )}
+
+              {importError && (
+                <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 text-xs font-semibold flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{importError}</span>
+                </div>
+              )}
+
+              {parsedTimetableDays.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                      <CheckCircle2 className="w-4 h-4" />
+                      Đã trích xuất thành công Thời khóa biểu 6 ngày (Thứ 2 - Thứ 7)
+                    </span>
+                  </div>
+
+                  <div className="max-h-48 overflow-y-auto rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-[#002850] text-white font-bold sticky top-0">
+                        <tr>
+                          <th className="p-2 pl-3">Tiết</th>
+                          <th className="p-2">Thứ 2</th>
+                          <th className="p-2">Thứ 3</th>
+                          <th className="p-2">Thứ 4</th>
+                          <th className="p-2">Thứ 5</th>
+                          <th className="p-2">Thứ 6</th>
+                          <th className="p-2">Thứ 7</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300 text-[11px]">
+                        {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((pIdx) => {
+                          const session = pIdx < 5 ? 'morning' : 'afternoon';
+                          const idxInSession = pIdx < 5 ? pIdx : pIdx - 5;
+
+                          return (
+                            <tr key={pIdx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                              <td className="p-2 pl-3 font-bold text-[#003366]">Tiết {pIdx + 1}</td>
+                              <td className="p-2">{parsedTimetableDays.find((d) => d.dayKey === 'mon')?.[session][idxInSession]?.subject || '-'}</td>
+                              <td className="p-2">{parsedTimetableDays.find((d) => d.dayKey === 'tue')?.[session][idxInSession]?.subject || '-'}</td>
+                              <td className="p-2">{parsedTimetableDays.find((d) => d.dayKey === 'wed')?.[session][idxInSession]?.subject || '-'}</td>
+                              <td className="p-2">{parsedTimetableDays.find((d) => d.dayKey === 'thu')?.[session][idxInSession]?.subject || '-'}</td>
+                              <td className="p-2">{parsedTimetableDays.find((d) => d.dayKey === 'fri')?.[session][idxInSession]?.subject || '-'}</td>
+                              <td className="p-2">{parsedTimetableDays.find((d) => d.dayKey === 'sat')?.[session][idxInSession]?.subject || '-'}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs border border-slate-200 dark:border-slate-700 hover:bg-slate-50"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                disabled={parsedTimetableDays.length === 0}
+                onClick={handleConfirmImportTimetable}
+                className="px-5 py-2.5 rounded-xl bg-[#003366] hover:bg-[#002244] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Áp Dụng Thời Khóa Biểu Mới</span>
               </button>
             </div>
           </div>
