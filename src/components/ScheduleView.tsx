@@ -147,6 +147,34 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     showToast(`Đã xóa tiết ${editingPeriod.data.period} về trạng thái tiết trống!`);
   };
 
+  const handleDirectDeletePeriod = (dayKey: string, session: 'morning' | 'afternoon', periodIndex: number) => {
+    const newDays = timetable.days.map((day) => {
+      if (day.dayKey !== dayKey) return day;
+
+      const newSessionList = [...day[session]];
+      const pNum = newSessionList[periodIndex]?.period || (session === 'morning' ? periodIndex + 1 : periodIndex + 6);
+      newSessionList[periodIndex] = {
+        ...newSessionList[periodIndex],
+        subject: '',
+        teacher: '',
+        room: '',
+        note: '',
+      };
+
+      return {
+        ...day,
+        [session]: newSessionList,
+      };
+    });
+
+    onSaveTimetable({
+      ...timetable,
+      days: newDays,
+    });
+
+    showToast(`Đã xóa tiết ${session === 'morning' ? periodIndex + 1 : periodIndex + 6} về trạng thái tiết trống!`);
+  };
+
   const handleClearAllTimetable = () => {
     const emptyDays: DaySchedule[] = timetable.days.map((day) => ({
       ...day,
@@ -239,7 +267,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               )}
             </div>
 
-            {/* View Mode Toggle: Weekly Matrix vs Daily Timeline */}
+            {/* View Mode Toggle */}
             <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
               <button
                 onClick={() => setViewMode('weekly')}
@@ -299,7 +327,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         </div>
       </div>
 
-      {/* VIEW MODE 1: WEEKLY FULL MATRIX (Mã Trận 6 Ngày Thứ 2 - Thứ 7) */}
+      {/* VIEW MODE 1: WEEKLY FULL MATRIX */}
       {viewMode === 'weekly' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
           <div className="p-4 bg-slate-50/80 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -309,7 +337,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </h2>
             <p className="text-xs text-slate-500 italic">
               {(role === 'gvcn' || role === 'bgh')
-                ? 'Nhấp vào biểu tượng chỉnh sửa hoặc bấm trực tiếp lên tiết để thay đổi/xóa tiết'
+                ? 'Nhấp biểu tượng cây bút để SỬA tiết, nhấp biểu tượng THÙNG RÁC để XÓA tiết về tiết trống'
                 : 'Xem chi tiết các tiết học trong tuần'}
             </p>
           </div>
@@ -387,9 +415,38 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                               }
                             }}
                           >
+                            {/* Hover Edit & Delete Actions */}
                             {(role === 'gvcn' || role === 'bgh') && (
-                              <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/cell:opacity-100 flex items-center gap-1 bg-white/90 rounded-md p-1 shadow-xs transition-opacity">
-                                <Edit2 className="w-3 h-3 text-[#003366]" />
+                              <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/cell:opacity-100 flex items-center gap-1 bg-white/95 rounded-lg p-1 shadow-md border border-slate-200/80 transition-opacity z-20">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingPeriod({
+                                      dayKey: dh.key,
+                                      session: 'morning',
+                                      periodIndex: periodIdx,
+                                      data: { ...period },
+                                    });
+                                  }}
+                                  className="p-1 hover:bg-slate-100 rounded-md text-[#003366] transition-colors"
+                                  title="Chỉnh sửa thông tin tiết"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                {hasSubject && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDirectDeletePeriod(dh.key, 'morning', periodIdx);
+                                    }}
+                                    className="p-1 hover:bg-rose-50 rounded-md text-rose-500 transition-colors"
+                                    title="Xóa tiết học này về tiết trống"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
                             )}
 
@@ -477,9 +534,38 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                               }
                             }}
                           >
+                            {/* Hover Edit & Delete Actions */}
                             {(role === 'gvcn' || role === 'bgh') && (
-                              <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/cell:opacity-100 flex items-center gap-1 bg-white/90 rounded-md p-1 shadow-xs transition-opacity">
-                                <Edit2 className="w-3 h-3 text-[#003366]" />
+                              <div className="absolute top-1.5 right-1.5 opacity-0 group-hover/cell:opacity-100 flex items-center gap-1 bg-white/95 rounded-lg p-1 shadow-md border border-slate-200/80 transition-opacity z-20">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingPeriod({
+                                      dayKey: dh.key,
+                                      session: 'afternoon',
+                                      periodIndex: periodIdx,
+                                      data: { ...period },
+                                    });
+                                  }}
+                                  className="p-1 hover:bg-slate-100 rounded-md text-[#003366] transition-colors"
+                                  title="Chỉnh sửa thông tin tiết"
+                                >
+                                  <Edit2 className="w-3 h-3" />
+                                </button>
+                                {hasSubject && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDirectDeletePeriod(dh.key, 'afternoon', periodIdx);
+                                    }}
+                                    className="p-1 hover:bg-rose-50 rounded-md text-rose-500 transition-colors"
+                                    title="Xóa tiết học này về tiết trống"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
                               </div>
                             )}
 
@@ -517,7 +603,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       {/* VIEW MODE 2: DAILY TIMELINE DETAILS */}
       {viewMode === 'daily' && (
         <div className="space-y-4">
-          {/* Day Navigation Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
             {timetable.days.map((day) => {
               const isActive = day.dayKey === activeTab;
@@ -539,9 +624,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             })}
           </div>
 
-          {/* Detailed Timeline list for Selected Day */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Morning Session */}
             <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
@@ -602,13 +685,37 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                           {period.time}
                         </span>
                         {(role === 'gvcn' || role === 'bgh') && (
-                          <button
-                            type="button"
-                            className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-slate-600 shadow-xs"
-                            title="Sửa/Xóa tiết"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPeriod({
+                                  dayKey: activeDaySchedule.dayKey,
+                                  session: 'morning',
+                                  periodIndex: idx,
+                                  data: { ...period },
+                                });
+                              }}
+                              className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-slate-600 shadow-xs"
+                              title="Sửa tiết"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            {hasSubject && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDirectDeletePeriod(activeDaySchedule.dayKey, 'morning', idx);
+                                }}
+                                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-xs"
+                                title="Xóa tiết này về tiết trống"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -617,7 +724,6 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </div>
             </div>
 
-            {/* Afternoon Session */}
             <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
@@ -678,13 +784,37 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                           {period.time}
                         </span>
                         {(role === 'gvcn' || role === 'bgh') && (
-                          <button
-                            type="button"
-                            className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-slate-600 shadow-xs"
-                            title="Sửa/Xóa tiết"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingPeriod({
+                                  dayKey: activeDaySchedule.dayKey,
+                                  session: 'afternoon',
+                                  periodIndex: idx,
+                                  data: { ...period },
+                                });
+                              }}
+                              className="p-1.5 rounded-lg bg-white/80 hover:bg-white text-slate-600 shadow-xs"
+                              title="Sửa tiết"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            {hasSubject && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDirectDeletePeriod(activeDaySchedule.dayKey, 'afternoon', idx);
+                                }}
+                                className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 shadow-xs"
+                                title="Xóa tiết này về tiết trống"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </div>
@@ -696,7 +826,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         </div>
       )}
 
-      {/* EDIT PERIOD MODAL (GVCN & BGH) */}
+      {/* EDIT PERIOD MODAL */}
       {editingPeriod && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-scaleUp">
@@ -884,3 +1014,4 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     </div>
   );
 };
+```,Description:
