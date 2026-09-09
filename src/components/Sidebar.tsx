@@ -69,189 +69,326 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onEditTeacher,
   onEditBgh,
 }) => {
-  const getNavItems = (): NavItem[] => {
-    const baseItems: NavItem[] = [
-      { id: 'overview', label: 'Tổng quan Lớp học', icon: LayoutDashboard },
-      { id: 'homeroom-book', label: 'Sổ Chủ nhiệm số', icon: BookOpen },
-    ];
-
-    if (role === 'student' || role === 'parent') {
-      return [
-        ...baseItems,
-        { id: 'academic', label: 'Kết quả Học tập', icon: GraduationCap },
-        { id: 'discipline', label: 'Nội quy & Thể lệ', icon: Award },
-        { id: 'task-duty', label: 'Trực nhật & Nhiệm vụ', icon: CheckSquare },
-        { id: 'seating-chart', label: 'Sơ đồ Lớp & Thời khóa biểu', icon: LayoutGrid },
-        { id: 'leave-requests', label: 'Đơn xin nghỉ học', icon: FileText },
-        { id: 'materials', label: 'Học liệu & Kho số', icon: FolderOpen },
-        { id: 'connect', label: 'Số liên lạc điện tử', icon: Bell },
-      ];
-    }
-
-    if (role === 'subject_teacher') {
-      return [
-        ...baseItems,
-        { id: 'students', label: 'Danh sách Học sinh', icon: Users },
-        { id: 'academic', label: 'Sổ điểm Môn học', icon: GraduationCap },
-        { id: 'seating-chart', label: 'Sơ đồ Lớp & Thời khóa biểu', icon: LayoutGrid },
-        { id: 'materials', label: 'Học liệu số & Bài tập', icon: FolderOpen },
-      ];
-    }
-
-    if (role === 'bgh') {
-      return [
-        ...baseItems,
-        { id: 'students', label: 'Quản lý Học sinh', icon: Users },
-        { id: 'subject-teachers', label: 'Giáo viên Bộ môn', icon: UserCheck },
-        { id: 'academic', label: 'Tổng hợp Học tập', icon: GraduationCap },
-        { id: 'discipline', label: 'Nề nếp & Kỷ luật', icon: Award },
-        { id: 'group-emulation', label: 'Thi đua Khối / Trường', icon: Trophy },
-        { id: 'leave-requests', label: 'Duyệt Đơn nghỉ học', icon: FileText, badge: pendingLeavesCount },
-        { id: 'materials', label: 'Kho Học liệu Trường', icon: FolderOpen },
-        { id: 'connect', label: 'Thông báo & Liên lạc', icon: Bell },
-        { id: 'settings', label: 'Cấu hình Hệ thống', icon: Settings },
-      ];
-    }
-
-    return [
-      ...baseItems,
-      { id: 'students', label: 'Danh sách Học sinh', icon: Users },
-      { id: 'subject-teachers', label: 'Giáo viên Bộ môn', icon: UserCheck },
-      { id: 'academic', label: 'Học tập & Điểm số', icon: GraduationCap },
-      { id: 'discipline', label: 'Nề nếp & Kỷ luật', icon: Award },
-      { id: 'task-duty', label: 'Trực nhật & Nhiệm vụ', icon: CheckSquare },
-      { id: 'group-emulation', label: 'Thi đua Nhóm / Tổ', icon: Trophy },
-      { id: 'seating-chart', label: 'Sơ đồ & Thời khóa biểu', icon: LayoutGrid },
-      { id: 'random-picker', label: 'Gọi tên & Ghép cặp', icon: Shuffle },
-      { id: 'leave-requests', label: 'Đơn xin nghỉ học', icon: FileText, badge: pendingLeavesCount },
-      { id: 'materials', label: 'Kho Học liệu & Bài tập', icon: FolderOpen },
-      { id: 'connect', label: 'Sổ liên lạc điện tử', icon: Bell },
-      { id: 'settings', label: 'Cấu hình & Sao lưu', icon: Settings },
-    ];
+  const defaultClass: ClassInfo = {
+    className: 'LỚP 11D5',
+    schoolName: 'THPT TRẦN NGUYÊN HÃN',
+    academicYear: 'Niên khóa 2024 - 2027',
+    avatar: 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&q=80&w=300',
   };
 
-  const navItems = getNavItems();
+  const defaultTeacher: TeacherInfo = {
+    name: 'Cô Phan Thị Dạ Hương',
+    title: 'GVCN Lớp 11D5',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
+    phone: '0912.345.678',
+    email: 'dahuong.gv@tnh.edu.vn',
+    subject: 'Chủ nhiệm / Ngữ Văn',
+  };
 
-  const handleNavClick = (id: NavigationTab | 'ai-advisor') => {
-    if (id === 'ai-advisor') {
+  const defaultBgh: BghInfo = {
+    name: 'TS. Lê Thị Mai',
+    title: 'Phó Hiệu Trưởng - Phụ trách Khối 12 & Chuyên môn KHTN',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
+    phone: '0903.888.999',
+    email: 'lethimai.bgh@tnh.edu.vn',
+    office: 'Phòng BGH - Tầng 2 Nhà Hiệu Bộ',
+    dutyRole: 'Phó Hiệu Trưởng',
+  };
+
+  const currentClass = classInfo || defaultClass;
+  const currentTeacher = teacherInfo || defaultTeacher;
+  const currentBgh = bghInfo || defaultBgh;
+
+  const gvcnNavItems: NavItem[] = [
+    { id: 'overview', label: 'Bảng Tổng Quan', icon: LayoutDashboard },
+    { id: 'students', label: 'Hồ Sơ Học Sinh', icon: Users },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
+    { id: 'seating', label: 'Sơ Đồ Lớp (4 Dãy)', icon: LayoutGrid },
+    { id: 'schedule', label: 'Thời Khoá Biểu (2 Buổi)', icon: CalendarDays },
+    { id: 'connect', label: 'Kênh Kết Nối PH & HS', icon: HeartHandshake },
+    { id: 'academic', label: 'Bảng tổng hợp thi đua Lớp', icon: GraduationCap },
+    { id: 'materials', label: 'Học Liệu & Nộp Bài', icon: FolderOpen },
+    { id: 'discipline', label: 'Nề Nếp & Sổ Đầu Bài', icon: Award },
+    { id: 'tasks', label: 'Nhiệm Vụ & Trực Nhật', icon: CheckSquare },
+    { id: 'random-picker', label: 'Gọi Tên Ngẫu Nhiên', icon: Shuffle },
+    { id: 'group-emulation', label: 'Tổng Hợp Thi Đua Theo Tổ', icon: Trophy },
+    { id: 'leaves', label: 'Đơn Từ & Phê Duyệt', icon: FileText, badge: pendingLeavesCount },
+    { id: 'homeroom-book', label: 'Sổ Chủ Nhiệm', icon: BookOpen },
+    { id: 'settings', label: 'Cài Đặt', icon: Settings },
+    { id: 'ai-advisor', label: 'Cố Vấn Sư Phạm AI', icon: Sparkles, highlight: true },
+  ];
+
+  const bghNavItems: NavItem[] = [
+    { id: 'overview', label: 'Tổng Quan', icon: LayoutDashboard },
+    { id: 'students', label: 'Hồ Sơ Học Sinh', icon: Users },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
+    { id: 'seating', label: 'Sơ Đồ Lớp', icon: LayoutGrid },
+    { id: 'schedule', label: 'Thời Khoá Biểu Giảng Dạy', icon: CalendarDays },
+    { id: 'connect', label: 'Cổng Kết Nối & Liên Lạc', icon: HeartHandshake },
+    { id: 'academic', label: 'Bảng tổng hợp thi đua', icon: GraduationCap },
+    { id: 'materials', label: 'Kho Tài Liệu & Hồ Sơ', icon: FolderOpen },
+    { id: 'discipline', label: 'Kiểm Duyệt Sổ Đầu Bài', icon: Award },
+    { id: 'tasks', label: 'Thông báo & Kế Hoạch', icon: CheckSquare },
+    { id: 'random-picker', label: 'Gọi Tên Ngẫu Nhiên', icon: Shuffle },
+    { id: 'group-emulation', label: 'Tổng Hợp Thi Đua Theo Tổ', icon: Trophy },
+    { id: 'leaves', label: 'Đơn Từ', icon: FileText, badge: pendingLeavesCount },
+    { id: 'homeroom-book', label: 'Sổ Chủ Nhiệm & Báo Cáo', icon: BookOpen },
+    { id: 'ai-advisor', label: 'Trợ Lý Chiến Lược BGH AI', icon: Sparkles, highlight: true },
+  ];
+
+  const gvbmNavItems: NavItem[] = [
+    { id: 'overview', label: 'Bảng Tổng Quan', icon: LayoutDashboard },
+    { id: 'students', label: 'Hồ Sơ Học Sinh', icon: Users },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
+    { id: 'seating', label: 'Sơ Đồ Lớp (4 Dãy)', icon: LayoutGrid },
+    { id: 'schedule', label: 'Thời Khoá Biểu Tiết Dạy', icon: CalendarDays },
+    { id: 'materials', label: 'Học Liệu & Đề Kiểm Tra', icon: FolderOpen },
+    { id: 'academic', label: 'Nhập & Quản Lý Điểm Môn', icon: GraduationCap },
+    { id: 'discipline', label: 'Ghi Nhận Sổ Đầu Bài Tiết', icon: Award },
+    { id: 'random-picker', label: 'Gọi Tên Trả Lời Bài', icon: Shuffle },
+    { id: 'group-emulation', label: 'Tổng Hợp Thi Đua Theo Tổ', icon: Trophy },
+    { id: 'leaves', label: 'Danh Sách Vắng Phép', icon: FileText, badge: pendingLeavesCount },
+    { id: 'homeroom-book', label: 'Sổ Đầu Bài Lớp', icon: BookOpen },
+    { id: 'ai-advisor', label: 'Cố Vấn Sư Phạm Bộ Môn AI', icon: Sparkles, highlight: true },
+  ];
+
+  const studentNavItems: NavItem[] = [
+    { id: 'overview', label: 'Tổng Quan Của Tôi', icon: LayoutDashboard },
+    { id: 'students', label: 'Hồ Sơ Cá Nhân', icon: User },
+    { id: 'subject-teachers', label: 'Giáo Viên Bộ Môn', icon: UserCheck },
+    { id: 'seating', label: 'Vị Trí Chỗ Ngồi Của Tôi', icon: LayoutGrid },
+    { id: 'schedule', label: 'Thời Khoá Biểu Tuần', icon: CalendarDays },
+    { id: 'connect', label: 'Kênh Kết Nối & Bạn Học', icon: HeartHandshake },
+    { id: 'academic', label: 'Xem Điểm & Học Tập', icon: GraduationCap },
+    { id: 'materials', label: 'Kho Học Liệu & Bài Nộp', icon: FolderOpen },
+    { id: 'discipline', label: 'Sổ Đầu Bài & Nề Nếp', icon: Award },
+    { id: 'tasks', label: 'Phân Công Trực Nhật', icon: CheckSquare },
+    { id: 'random-picker', label: 'Vòng Quay Học Tập', icon: Shuffle },
+    { id: 'group-emulation', label: 'Thi Đua Tổ Của Tôi', icon: Trophy },
+    { id: 'leaves', label: 'Nộp Đơn Xin Nghỉ Phép', icon: FileText },
+    { id: 'homeroom-book', label: 'Sổ Đầu Bài & Sổ CN', icon: BookOpen },
+    { id: 'ai-advisor', label: 'Gia Sư & Cố Vấn Học Tập AI', icon: Sparkles, highlight: true },
+  ];
+
+  const navItems =
+    role === 'gvcn'
+      ? gvcnNavItems
+      : role === 'bgh'
+      ? bghNavItems
+      : role === 'subject_teacher'
+      ? gvbmNavItems
+      : studentNavItems;
+
+  const handleItemClick = (item: NavItem) => {
+    if (item.id === 'ai-advisor') {
       if (onOpenAiAdvisor) onOpenAiAdvisor();
     } else {
-      onTabChange(id);
+      onTabChange(item.id as NavigationTab);
     }
     if (onCloseMobile) onCloseMobile();
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#001A33] text-white">
-      {/* Header Info */}
-      <div className="p-4 border-b border-white/10 space-y-3 bg-[#002244]/80">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-2xl bg-linear-to-br from-[#003366] to-[#002244] border border-white/20 flex items-center justify-center text-white shadow-inner font-black text-lg">
-            {classInfo?.name?.substring(0, 2) || '11'}
+    <div className="flex flex-col h-full bg-[#003366] text-white">
+      {/* School Badge Header */}
+      <div className="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between bg-[#002850]/50 group">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative w-11 h-11 rounded-2xl overflow-hidden bg-white/15 border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
+            {currentClass.avatar ? (
+              <img
+                src={currentClass.avatar}
+                alt={currentClass.className}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultClass.avatar;
+                }}
+              />
+            ) : (
+              <School className="w-5 h-5 text-[#98FF98]" />
+            )}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center justify-between">
-              <h2 className="font-extrabold text-sm text-white truncate">
-                Lớp {classInfo?.name || '11A2'}
-              </h2>
-              {role === 'teacher' && onEditClass && (
-                <button
-                  onClick={onEditClass}
-                  className="text-slate-400 hover:text-amber-400 p-1 rounded-lg hover:bg-white/10 transition-colors"
-                  title="Chỉnh sửa thông tin lớp"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-              )}
+          <div className="overflow-hidden min-w-0">
+            <span className="text-[9px] font-bold uppercase tracking-wider text-[#98FF98] bg-[#98FF98]/15 px-2 py-0.5 rounded truncate block">
+              {currentClass.schoolName}
+            </span>
+            <h2 className="text-sm font-black text-white truncate mt-0.5">
+              {currentClass.className}
+            </h2>
+            <p className="text-[11px] text-slate-300 truncate">{currentClass.academicYear}</p>
+          </div>
+        </div>
+
+        {role === 'gvcn' && onEditClass && (
+          <button
+            id="btn-sidebar-edit-class"
+            type="button"
+            onClick={onEditClass}
+            title="Chỉnh sửa thông tin & hình đại diện Lớp"
+            className="p-1.5 rounded-xl bg-white/10 hover:bg-[#98FF98] text-slate-300 hover:text-[#003366] transition-all opacity-80 hover:opacity-100 shrink-0 ml-1"
+          >
+            <Edit2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Role & User Indicator Widget */}
+      <div
+        className={`mx-3.5 my-3 p-3 bg-white/10 rounded-2xl border border-white/10 flex items-center justify-between group transition-all ${
+          (role === 'gvcn' && onEditTeacher) || (role === 'bgh' && onEditBgh)
+            ? 'hover:bg-white/15 cursor-pointer'
+            : ''
+        }`}
+        onClick={() => {
+          if (role === 'gvcn' && onEditTeacher) onEditTeacher();
+          if (role === 'bgh' && onEditBgh) onEditBgh();
+        }}
+        title={
+          role === 'gvcn'
+            ? 'Nhấp để chỉnh sửa thông tin & ảnh đại diện GVCN'
+            : role === 'bgh'
+            ? 'Nhấp để chỉnh sửa thông tin & ảnh đại diện BGH'
+            : undefined
+        }
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          {role === 'gvcn' ? (
+            <div className="relative shrink-0">
+              <img
+                src={currentTeacher.avatar}
+                alt={currentTeacher.name}
+                className="w-9 h-9 rounded-full object-cover border-2 border-[#98FF98] shadow-xs"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultTeacher.avatar;
+                }}
+              />
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[#003366] text-[#98FF98] flex items-center justify-center border border-[#98FF98]">
+                <ShieldCheck className="w-2.5 h-2.5" />
+              </span>
             </div>
-            <p className="text-[11px] text-slate-300 truncate">
-              Năm học: {classInfo?.academicYear || '2023 - 2024'}
+          ) : role === 'bgh' ? (
+            <div className="relative shrink-0">
+              {currentBgh.avatar ? (
+                <img
+                  src={currentBgh.avatar}
+                  alt={currentBgh.name}
+                  className="w-9 h-9 rounded-full object-cover border-2 border-amber-400 shadow-xs"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = defaultBgh.avatar;
+                  }}
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center shrink-0">
+                  <Landmark className="w-4 h-4 text-amber-300" />
+                </div>
+              )}
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-amber-600 text-amber-100 flex items-center justify-center border border-white">
+                <Landmark className="w-2 h-2" />
+              </span>
+            </div>
+          ) : role === 'subject_teacher' ? (
+            <div className="relative shrink-0">
+              <div className="w-9 h-9 rounded-2xl bg-indigo-500/30 border border-indigo-300/50 flex items-center justify-center shrink-0 shadow-xs">
+                <GraduationCap className="w-4 h-4 text-indigo-200" />
+              </div>
+              <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-indigo-700 text-white flex items-center justify-center border border-indigo-300">
+                <BookOpen className="w-2 h-2" />
+              </span>
+            </div>
+          ) : (
+            <div className="w-9 h-9 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center shrink-0">
+              <HeartHandshake className="w-4 h-4 text-amber-300" />
+            </div>
+          )}
+          <div className="overflow-hidden min-w-0">
+            <p className="text-[10px] text-slate-300 font-semibold uppercase truncate">
+              {role === 'gvcn'
+                ? 'Giáo Viên Chủ Nhiệm'
+                : role === 'bgh'
+                ? currentBgh.dutyRole || 'Ban Giám Hiệu'
+                : role === 'subject_teacher'
+                ? 'Giáo Viên Bộ Môn'
+                : 'Vai trò hiện tại'}
+            </p>
+            <p className="text-xs font-bold text-white truncate">
+              {role === 'gvcn'
+                ? currentTeacher.name
+                : role === 'bgh'
+                ? currentBgh.name
+                : role === 'subject_teacher'
+                ? 'Thầy/Cô Bộ Môn'
+                : 'Phụ huynh / Học sinh'}
             </p>
           </div>
         </div>
 
-        {/* Teacher / User Card */}
-        <div className="bg-white/5 rounded-xl p-2.5 border border-white/10 space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center space-x-2 min-w-0">
-              <div className="p-1.5 rounded-lg bg-[#003366] text-[#98FF98]">
-                {role === 'teacher' ? (
-                  <User className="w-3.5 h-3.5" />
-                ) : role === 'bgh' ? (
-                  <Landmark className="w-3.5 h-3.5" />
-                ) : role === 'subject_teacher' ? (
-                  <UserCheck className="w-3.5 h-3.5" />
-                ) : (
-                  <HeartHandshake className="w-3.5 h-3.5" />
-                )}
-              </div>
-              <div className="truncate">
-                <p className="text-[10px] text-slate-400 font-medium">
-                  {role === 'teacher'
-                    ? 'GVCN'
-                    : role === 'bgh'
-                    ? 'Ban Giám Hiệu'
-                    : role === 'subject_teacher'
-                    ? 'GV Bộ Môn'
-                    : 'Học sinh / Phụ huynh'}
-                </p>
-                <p className="font-semibold text-white truncate text-xs">
-                  {role === 'teacher'
-                    ? teacherInfo?.name || 'Thầy Nguyễn Văn A'
-                    : role === 'bgh'
-                    ? bghInfo?.name || 'Cô Trần Thị B (Hiệu Trưởng)'
-                    : role === 'subject_teacher'
-                    ? 'Thầy Lê Văn C'
-                    : 'Phụ huynh HS'}
-                </p>
-              </div>
-            </div>
+        <div className="flex items-center gap-1 shrink-0 ml-1">
+          {role === 'gvcn' && onEditTeacher && (
+            <button
+              id="btn-sidebar-edit-teacher"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditTeacher();
+              }}
+              title="Chỉnh sửa thông tin & hình đại diện GVCN"
+              className="p-1 rounded-lg bg-white/10 hover:bg-[#98FF98] text-slate-300 hover:text-[#003366] transition-all opacity-80 hover:opacity-100 cursor-pointer"
+            >
+              <Edit2 className="w-3 h-3" />
+            </button>
+          )}
 
-            {role === 'teacher' && onEditTeacher && (
-              <button
-                onClick={onEditTeacher}
-                className="text-slate-400 hover:text-amber-400 p-1 rounded hover:bg-white/10 transition-colors"
-                title="Sửa thông tin GVCN"
-              >
-                <Edit2 className="w-3 h-3" />
-              </button>
-            )}
-            {role === 'bgh' && onEditBgh && (
-              <button
-                onClick={onEditBgh}
-                className="text-slate-400 hover:text-amber-400 p-1 rounded hover:bg-white/10 transition-colors"
-                title="Sửa thông tin BGH"
-              >
-                <Edit2 className="w-3 h-3" />
-              </button>
-            )}
-          </div>
+          {role === 'bgh' && onEditBgh && (
+            <button
+              id="btn-sidebar-edit-bgh"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditBgh();
+              }}
+              title="Chỉnh sửa thông tin & ảnh đại diện BGH"
+              className="p-1 rounded-lg bg-white/10 hover:bg-amber-400 text-amber-200 hover:text-[#003366] transition-all opacity-80 hover:opacity-100 cursor-pointer"
+            >
+              <Edit2 className="w-3 h-3" />
+            </button>
+          )}
+
+          <span
+            className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${
+              role === 'gvcn'
+                ? 'bg-[#98FF98] text-[#003366]'
+                : role === 'bgh'
+                ? 'bg-amber-400 text-[#003366]'
+                : 'bg-emerald-400 text-slate-900'
+            }`}
+          >
+            {role === 'gvcn' ? 'GVCN' : role === 'bgh' ? 'BGH' : 'Khách'}
+          </span>
         </div>
       </div>
 
-      {/* Navigation Items */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1 custom-scrollbar">
+      {/* Navigation Menu */}
+      <nav className="p-3 space-y-1 overflow-y-auto flex-1 custom-scrollbar">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.id;
-
           return (
             <button
               key={item.id}
-              onClick={() => handleNavClick(item.id)}
-              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-medium text-xs transition-all duration-200 ${
+              id={`sidebar-item-${item.id}`}
+              onClick={() => handleItemClick(item)}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                 isActive
-                  ? 'bg-linear-to-r from-[#003366] to-[#002244] text-white font-bold shadow-md border border-white/20'
+                  ? 'bg-white text-[#003366] font-bold shadow-md'
                   : item.highlight
-                  ? 'bg-emerald-950/40 hover:bg-emerald-900/60 text-[#98FF98] border border-[#98FF98]/30'
-                  : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  ? 'bg-[#98FF98]/15 text-[#98FF98] hover:bg-[#98FF98]/25 border border-[#98FF98]/30 font-bold'
+                  : 'text-slate-200 hover:bg-white/10 hover:text-white'
               }`}
             >
-              <div className="flex items-center space-x-3 truncate">
+              <div className="flex items-center gap-2.5">
                 <Icon
-                  className={`w-4 h-4 shrink-0 ${
+                  className={`w-4 h-4 transition-transform group-hover:scale-110 ${
                     isActive
-                      ? 'text-white'
+                      ? 'text-[#003366]'
                       : item.highlight
                       ? 'text-[#98FF98]'
                       : 'text-slate-300'
