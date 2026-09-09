@@ -1110,6 +1110,7 @@ export default function App() {
           onTabChange={setCurrentTab}
           role={role}
           pendingLeavesCount={leaveRequests.filter((l) => l.status === 'pending').length}
+          studentsCount={students.length}
           onOpenAiAdvisor={() => {
             setAiSelectedStudent(null);
             setIsAiAdvisorOpen(true);
