@@ -232,7 +232,10 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
 
   // 2. Data for "group_emulation" Bar Chart Mode (Shows 4 Groups on X-axis with all subjects)
   const groupEmulationBarData = [1, 2, 3, 4].map((grpNum) => {
-    const grpStudents = students.filter((s) => s.group === grpNum);
+    const grpStudents = students.filter((s) => {
+      const gVal = typeof s.group === 'number' ? s.group : parseInt(String(s.group || 1).replace(/[^0-9]/g, ''), 10);
+      return (isNaN(gVal) ? 1 : gVal) === grpNum;
+    });
     const grpCount = grpStudents.length || 1;
 
     const calcGrpSubjAvg = (subjKey: typeof subjectsList[number]['key']) => {
