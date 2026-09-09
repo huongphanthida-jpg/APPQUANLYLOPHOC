@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   AlertCircle,
   Trash2,
-  Camera
+  Camera,
+  Edit3
 } from 'lucide-react';
 import { Student } from '../types';
 import { ConfirmModal } from './ConfirmModal';
@@ -45,6 +46,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   const [activeTab, setActiveTab] = useState<'profile' | 'academic' | 'emergency'>('profile');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [isEditingGrades, setIsEditingGrades] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,6 +60,47 @@ export const StudentModal: React.FC<StudentModalProps> = ({
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleGradeChange = (
+    subjectKey: 'math' | 'physics' | 'chemistry' | 'biology' | 'english' | 'literature',
+    field: 'tx1' | 'tx2' | 'gk' | 'ck',
+    rawVal: string
+  ) => {
+    const val = parseFloat(rawVal);
+    const numVal = isNaN(val) ? 0 : Math.min(10, Math.max(0, val));
+
+    setFormData((prev) => {
+      const currentSubject = (prev.grades as any)[subjectKey] || { tx1: 0, tx2: 0, gk: 0, ck: 0, avg: 0 };
+      const updatedSubject = {
+        ...currentSubject,
+        [field]: numVal,
+      };
+
+      const tx1 = updatedSubject.tx1;
+      const tx2 = updatedSubject.tx2;
+      const gk = updatedSubject.gk;
+      const ck = updatedSubject.ck;
+
+      const avg = Number(((tx1 + tx2 + gk * 2 + ck * 3) / 7).toFixed(1));
+      updatedSubject.avg = avg;
+
+      const newGrades = {
+        ...prev.grades,
+        [subjectKey]: updatedSubject,
+      };
+
+      const subjects = ['math', 'physics', 'chemistry', 'biology', 'english', 'literature'] as const;
+      const totalAvg = subjects.reduce((sum, key) => sum + ((newGrades as any)[key]?.avg || 0), 0);
+      const gpa = Number((totalAvg / subjects.length).toFixed(1));
+
+      newGrades.gpa = gpa;
+
+      return {
+        ...prev,
+        grades: newGrades,
+      };
+    });
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -185,6 +228,28 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003366]"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Tổ Phụ Trách
+                  </label>
+                  <select
+                    disabled={!isGVCN}
+                    value={formData.group}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        group: Number(e.target.value) as 1 | 2 | 3 | 4,
+                      })
+                    }
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-bold text-[#003366] focus:outline-none focus:ring-2 focus:ring-[#003366]"
+                  >
+                    <option value={1}>Tổ 1</option>
+                    <option value={2}>Tổ 2</option>
+                    <option value={3}>Tổ 3</option>
+                    <option value={4}>Tổ 4</option>
+                  </select>
                 </div>
 
                 <div>
@@ -404,9 +469,28 @@ export const StudentModal: React.FC<StudentModalProps> = ({
 
           {activeTab === 'academic' && (
             <div className="space-y-4">
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between">
-                <span>Điểm trung bình Khối Tự Nhiên (ĐTB): <strong>{formData.grades.gpa}</strong></span>
-                <span>Hạnh kiểm: <strong className="text-emerald-700">{formData.conductRating}</strong> ({formData.conductScore}đ)</span>
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-4">
+                  <span>Điểm trung bình Khối Tự Nhiên (ĐTB): <strong className="text-sm font-black text-[#003366]">{formData.grades.gpa}</strong></span>
+                  <span>Hạnh kiểm: <strong className="text-emerald-700 font-bold">{formData.conductRating}</strong> ({formData.conductScore}đ)</span>
+                </div>
+
+                {isGVCN && (
+                  <button
+                    type="button"
+                    id="btn-toggle-edit-grades"
+                    onClick={() => setIsEditingGrades(!isEditingGrades)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                      isEditingGrades
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                        : 'bg-white border border-blue-300 text-[#003366] hover:bg-blue-100'
+                    }`}
+                    title="Nhấp vào đây hoặc biểu tượng cây bút để sửa điểm trực tiếp"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>{isEditingGrades ? 'Hoàn tất sửa điểm' : 'Sửa điểm số'}</span>
+                  </button>
+                )}
               </div>
 
               <div className="overflow-x-auto">
@@ -430,15 +514,78 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                       { key: 'english', name: 'Tiếng Anh' },
                       { key: 'literature', name: 'Ngữ văn' },
                     ].map((subject) => {
-                      const grade = (formData.grades as any)[subject.key];
+                      const grade = (formData.grades as any)[subject.key] || { tx1: 0, tx2: 0, gk: 0, ck: 0, avg: 0 };
                       return (
-                        <tr key={subject.key} className="hover:bg-slate-50">
-                          <td className="py-2.5 px-3 font-bold text-[#003366]">{subject.name}</td>
-                          <td className="py-2.5 px-3">{grade.tx1}</td>
-                          <td className="py-2.5 px-3">{grade.tx2}</td>
-                          <td className="py-2.5 px-3">{grade.gk}</td>
-                          <td className="py-2.5 px-3">{grade.ck}</td>
-                          <td className="py-2.5 px-3 font-bold text-blue-700">{grade.avg}</td>
+                        <tr key={subject.key} className="hover:bg-slate-50 transition-colors">
+                          <td className="py-2.5 px-3 font-bold text-[#003366] flex items-center justify-between gap-2">
+                            <span>{subject.name}</span>
+                            {isGVCN && (
+                              <button
+                                type="button"
+                                onClick={() => setIsEditingGrades(!isEditingGrades)}
+                                title="Nhấp vào biểu tượng cây bút để chỉnh sửa điểm"
+                                className="p-1 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors cursor-pointer"
+                              >
+                                <Edit3 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </td>
+                          {isEditingGrades && isGVCN ? (
+                            <>
+                              <td className="py-1.5 px-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="10"
+                                  step="0.1"
+                                  value={grade.tx1}
+                                  onChange={(e) => handleGradeChange(subject.key as any, 'tx1', e.target.value)}
+                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                                />
+                              </td>
+                              <td className="py-1.5 px-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="10"
+                                  step="0.1"
+                                  value={grade.tx2}
+                                  onChange={(e) => handleGradeChange(subject.key as any, 'tx2', e.target.value)}
+                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                                />
+                              </td>
+                              <td className="py-1.5 px-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="10"
+                                  step="0.1"
+                                  value={grade.gk}
+                                  onChange={(e) => handleGradeChange(subject.key as any, 'gk', e.target.value)}
+                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                                />
+                              </td>
+                              <td className="py-1.5 px-2">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="10"
+                                  step="0.1"
+                                  value={grade.ck}
+                                  onChange={(e) => handleGradeChange(subject.key as any, 'ck', e.target.value)}
+                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                                />
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.tx1}</td>
+                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.tx2}</td>
+                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.gk}</td>
+                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.ck}</td>
+                            </>
+                          )}
+                          <td className="py-2.5 px-3 font-black text-blue-700 text-sm">{grade.avg}</td>
                         </tr>
                       );
                     })}
