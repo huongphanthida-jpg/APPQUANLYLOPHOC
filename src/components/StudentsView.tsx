@@ -95,13 +95,14 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
   }, [students]);
 
   const filteredStudents = students.filter((s) => {
+    const q = (searchQuery || '').toLowerCase();
     const matchesSearch =
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.phone.includes(searchQuery) ||
-      s.emergencyContact.parentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.emergencyContact.phone.includes(searchQuery) ||
-      s.strengths.toLowerCase().includes(searchQuery.toLowerCase());
+      (s.name || '').toLowerCase().includes(q) ||
+      (s.code || '').toLowerCase().includes(q) ||
+      (s.phone || '').includes(searchQuery) ||
+      (s.emergencyContact?.parentName || '').toLowerCase().includes(q) ||
+      (s.emergencyContact?.phone || '').includes(searchQuery) ||
+      (s.strengths || '').toLowerCase().includes(q);
 
     const matchesGroup = selectedGroup === 'all' || s.group === selectedGroup;
 
