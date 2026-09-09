@@ -62,6 +62,7 @@ interface GroupEmulationViewProps {
   onDeleteEmulationLog?: (id: string) => void;
   onClearAllEmulationLogs?: () => void;
   disciplineLogs?: DisciplineEntry[];
+  leaveRequests?: LeaveRequest[];
   dutySchedule?: DutySchedule[];
   examAttempts?: OnlineExamAttempt[];
   randomPicks?: RandomPickRecord[];
@@ -79,6 +80,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
   onDeleteEmulationLog,
   onClearAllEmulationLogs,
   disciplineLogs = [],
+  leaveRequests = [],
   dutySchedule = [],
   examAttempts = [],
   randomPicks = [],
@@ -111,7 +113,6 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
 
   // Dynamic Group Leader resolution
   const getGroupLeaderInfo = (groupNum: number, groupStudents: Student[]) => {
-    // Check manual custom leader override
     if (customLeaders[groupNum]) {
       return {
         name: customLeaders[groupNum],
@@ -119,7 +120,6 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       };
     }
 
-    // Check homeroomBookData committee
     if (homeroomBookData?.committee) {
       const commItem = homeroomBookData.committee.find((c) => {
         const r = (c.roleName || '').toLowerCase();
@@ -133,7 +133,6 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       }
     }
 
-    // Check if default leader name is in group
     const defaultName = defaultLeadersMap[groupNum];
     const foundInGroup = groupStudents.find((s) => s.name === defaultName);
     if (foundInGroup) {
@@ -144,7 +143,6 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       };
     }
 
-    // Fallback to first student of group
     if (groupStudents.length > 0) {
       return {
         name: groupStudents[0].name,
@@ -153,7 +151,6 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       };
     }
 
-    // Default fallback
     return {
       name: defaultName || 'Chưa phân công',
       title: `Tổ Trưởng Tổ ${groupNum}`,
@@ -192,51 +189,79 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
     },
   };
 
-  // Compute comprehensive stats for each of the 4 groups
+  // Compute comprehensive stats for each of the 4 groups (Synchronized with Class Emulation)
   const groupSummaries = useMemo(() => {
+    const savedAttBase = localStorage.getItem('emulation_attendance_base_score');
+    const savedCondBase = localStorage.getItem('emulation_conduct_base_score');
+    const attBase = savedAttBase !== null ? Math.max(0, Number(savedAttBase)) : 0;
+    const condBase = savedCondBase !== null ? Math.max(0, Number(savedCondBase)) : 0;
+    const baseScore = Math.round(attBase * 0.4 + condBase * 0.6);
+
     return ([1, 2, 3, 4] as const).map((groupNum) => {
       const groupStudents = students.filter((s) => getStudentGroupNumber(s.group) === groupNum);
       const studentIds = new Set(groupStudents.map((s) => s.id));
 
-      // 1. Base Score
-      const baseScore = 100;
-
-      // 2. Academic Score
+      // 1. Academic Score
       const avgGpa = groupStudents.length > 0
         ? groupStudents.reduce((acc, s) => acc + (s.grades?.gpa || 8.0), 0) / groupStudents.length
         : 8.0;
       const academicGpaBonus = Math.round((avgGpa - 7.5) * 10);
 
-      // Online exams completed
       const groupAttempts = examAttempts.filter((a) => studentIds.has(a.studentId) && a.status === 'completed');
       const examBonus = groupAttempts.reduce((sum, a) => sum + (a.score >= 8 ? 3 : 1), 0);
 
-      // Random Oral Picks bonus
       const groupPicks = randomPicks.filter((p) => studentIds.has(p.studentId));
       const oralBonus = groupPicks.reduce((sum, p) => sum + (p.emulationPointsAwarded || 0), 0);
 
       const totalAcademic = academicGpaBonus + examBonus + oralBonus;
 
-      // 3. Discipline Score
+      // 2. Discipline Score (Synchronized with disciplineLogs)
       const groupDiscipline = disciplineLogs.filter(
         (d) => studentIds.has(d.studentId) || getStudentGroupNumber(d.group) === groupNum
       );
       const violations = groupDiscipline.filter((d) => d.type === 'violation' || d.type === 'penalty');
       const commendations = groupDiscipline.filter((d) => d.type === 'commendation' || d.type === 'bonus');
-      const totalDiscipline = commendations.length * 5 - violations.length * 5;
 
-      // 4. Attendance Score
-      const totalAbsences = groupStudents.reduce((acc, s) => acc + (s.absenceCount || 0), 0);
-      const totalAttendance = 15 - totalAbsences * 5;
+      const bonusPoints = groupDiscipline
+        .filter((d) => (d.type === 'bonus' || d.type === 'commendation') && d.category !== 'Chuyên cần')
+        .reduce((sum, d) => sum + Math.abs(d.points), 0);
+      const penaltyPoints = groupDiscipline
+        .filter((d) => (d.type === 'penalty' || d.type === 'violation') && d.category !== 'Chuyên cần')
+        .reduce((sum, d) => sum + Math.abs(d.points), 0);
+      const totalDiscipline = bonusPoints - penaltyPoints;
 
-      // 5. Duty Score
+      // 3. Attendance Score (Synchronized with leaveRequests & disciplineLogs Chuyên cần)
+      const groupAttendanceDisc = groupDiscipline.filter((d) => d.category === 'Chuyên cần');
+      const unexcusedAbsences = groupAttendanceDisc.filter((v) =>
+        (v.type === 'penalty' || v.type === 'violation') &&
+        (v.reason.toLowerCase().includes('không phép') || v.reason.toLowerCase().includes('trốn'))
+      ).length;
+      const lateArrivals = groupAttendanceDisc.filter((v) =>
+        (v.type === 'penalty' || v.type === 'violation') &&
+        (v.reason.toLowerCase().includes('muộn') || v.reason.toLowerCase().includes('trễ'))
+      ).length;
+
+      const groupApprovedLeaves = (leaveRequests || []).filter((l) => studentIds.has(l.studentId) && l.status === 'approved');
+      let excusedAbsences = groupApprovedLeaves.length;
+      if (excusedAbsences === 0) {
+        excusedAbsences = groupStudents.reduce((acc, s) => acc + (s.absenceCount || 0), 0);
+      }
+
+      const attendanceBonuses = groupAttendanceDisc
+        .filter((d) => d.type === 'bonus' || d.type === 'commendation')
+        .reduce((sum, d) => sum + Math.abs(d.points), 0);
+
+      const attendanceDeductions = (excusedAbsences * 2 + unexcusedAbsences * 5 + lateArrivals * 2);
+      const totalAttendance = attendanceBonuses - attendanceDeductions;
+
+      // 4. Duty Score
       const groupDuties = dutySchedule.filter(
         (d) => getStudentGroupNumber(d.assignedGroup || (d as any).group) === groupNum
       );
       const completedDuties = groupDuties.filter((d) => d.status === 'completed' || (d.status as any) === 'Đã hoàn thành');
       const totalDuty = completedDuties.length * 5;
 
-      // 6. Direct Emulation Logs Points
+      // 5. Direct Emulation Logs Points
       const groupLogs = emulationLogs.filter((l) => getStudentGroupNumber(l.group) === groupNum);
       const totalDirectLogs = groupLogs.reduce((sum, l) => sum + l.points, 0);
 
@@ -265,7 +290,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
         logs: groupLogs,
       };
     });
-  }, [students, disciplineLogs, dutySchedule, examAttempts, randomPicks, emulationLogs, customLeaders, homeroomBookData]);
+  }, [students, disciplineLogs, leaveRequests, dutySchedule, examAttempts, randomPicks, emulationLogs, customLeaders, homeroomBookData]);
 
   // Sort groups by final score descending
   const rankedGroups = useMemo(() => {
