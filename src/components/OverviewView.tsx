@@ -383,7 +383,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-500/30 hover:bg-indigo-500/40 text-indigo-200 text-xs font-bold transition-all shadow-xs border border-indigo-400/30"
                 >
                   <BookOpen className="w-4 h-4" />
-                  <span>Ghi Sổ Đầu Bài</span>
+                  <span>Nề Nếp & Thi Đua</span>
                 </button>
               </>
             ) : (
