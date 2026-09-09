@@ -150,6 +150,9 @@ export interface Student {
     biology?: number;
     literature?: number;
     english?: number;
+    history?: number;
+    geography?: number;
+    informatics?: number;
     gpa?: number;
   }[];
   // Nề nếp
