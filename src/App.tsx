@@ -662,6 +662,11 @@ export default function App() {
     saveDutySchedule(updated);
   };
 
+  const handleClearAllDutySchedule = () => {
+    setDutySchedule([]);
+    saveDutySchedule([]);
+  };
+
   const handleSubmitLeave = (
     reqData: Omit<LeaveRequest, 'id' | 'status' | 'createdAt'>
   ) => {
@@ -1336,6 +1341,7 @@ export default function App() {
               onSaveDuty={handleSaveDuty}
               onBatchSaveDuty={handleBatchSaveDuty}
               onDeleteDuty={handleDeleteDuty}
+              onClearAllDutySchedule={handleClearAllDutySchedule}
               role={role}
             />
           )}
