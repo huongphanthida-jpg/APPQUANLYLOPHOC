@@ -43,9 +43,8 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
   role,
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'bonus' | 'penalty'>('all');
-  const [showAddJournal, setShowAddJournal] = useState(false);
   const [bghSigned, setBghSigned] = useState(true);
-  const [bghDirectiveText, setBghDirectiveText] = useState('Ban Giám Hiệu ghi nhận: Nề nếp chuyên cần của lớp tốt, 100% tiết học đạt chuẩn A. Đề nghị GVCN tiếp tục động viên học sinh giữ vững kỷ luật trong giai đoạn ôn thi nước rút.');
+  const [bghDirectiveText, setBghDirectiveText] = useState('Ban Giám Hiệu ghi nhận: Nề nếp chuyên cần của lớp tốt. Đề nghị GVCN tiếp tục động viên học sinh giữ vững kỷ luật trong giai đoạn thi đua nước rút.');
   const [showDirectiveEdit, setShowDirectiveEdit] = useState(false);
   const [bghToast, setBghToast] = useState<string | null>(null);
   const [confirmModalState, setConfirmModalState] = useState<{
@@ -55,21 +54,9 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
     onConfirm: () => void;
   } | null>(null);
 
-  const [newJournal, setNewJournal] = useState<Omit<ClassJournalEntry, 'id'>>({
-    dayOfWeek: 'Thứ Năm',
-    date: new Date().toISOString().split('T')[0],
-    period: 1,
-    subject: 'Toán học',
-    teacherName: 'Thầy Trần Đình Khôi',
-    lessonName: '',
-    attendance: 'Đủ 42/42',
-    assessment: 'A',
-    notes: '',
-  });
-
   const handleSignWeeklyJournal = () => {
     setBghSigned(true);
-    setBghToast('Ban Giám Hiệu đã ký số xác nhận Sổ Đầu Bài tuần thứ 24 thành công!');
+    setBghToast('Ban Giám Hiệu đã phê duyệt nề nếp thi đua tuần thứ 24 thành công!');
     setTimeout(() => setBghToast(null), 4000);
   };
 
@@ -89,18 +76,6 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
     return { group: g, avgConduct, bonus, penalty, count: groupStudents.length };
   }).sort((a, b) => b.avgConduct - a.avgConduct);
 
-  const handleSaveJournal = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newJournal.lessonName.trim()) return;
-    onAddJournalEntry(newJournal);
-    setShowAddJournal(false);
-    setNewJournal({
-      ...newJournal,
-      lessonName: '',
-      notes: '',
-    });
-  };
-
   return (
     <div id="discipline-view" className="space-y-6 pb-12">
       {/* Header */}
@@ -113,10 +88,10 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
             <span className="text-xs text-slate-400">Hệ thống tính điểm thời gian thực (Real-time)</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-[#003366] mt-1">
-            Sổ Đầu Bài Kỹ Thuật Số & Điểm Thi Đua
+            Theo Dõi Nề Nếp & Điểm Thi Đua
           </h2>
           <p className="text-xs text-slate-500">
-            Quản lý nhật ký tiết học, đánh giá chuyên cần, cộng/trừ điểm rèn luyện 4 Tổ
+            Đánh giá chuyên cần, theo dõi nề nếp và cộng/trừ điểm rèn luyện 4 Tổ
           </p>
         </div>
 
@@ -128,7 +103,7 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
               className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black transition-all shadow-md"
             >
               <BookmarkCheck className="w-4 h-4" />
-              <span>{bghSigned ? '✓ BGH Đã Ký Số Sổ Tuần 24' : 'Ký Số & Phê Duyệt Sổ Đầu Bài'}</span>
+              <span>{bghSigned ? '✓ BGH Đã Phê Duyệt Nề Nếp Tuần 24' : 'Ký Số & Phê Duyệt Nề Nếp'}</span>
             </button>
             <button
               id="btn-bgh-add-directive"
@@ -141,27 +116,16 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
           </div>
         )}
 
-        {(role === 'gvcn' || role === 'gvbm' || role === 'csl') && (
+        {(role === 'gvcn' || role === 'csl') && (
           <div className="flex items-center gap-2">
             <button
-              id="btn-open-add-journal"
-              onClick={() => setShowAddJournal(!showAddJournal)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors shadow-xs"
+              id="btn-open-add-discipline"
+              onClick={onOpenAddDiscipline}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-md"
             >
-              <Plus className="w-4 h-4 text-slate-500" />
-              <span>Ghi Sổ Đầu Bài</span>
+              <PlusCircle className="w-4 h-4" />
+              <span>Cộng / Trừ Điểm Thi Đua</span>
             </button>
-
-            {(role === 'gvcn' || role === 'csl') && (
-              <button
-                id="btn-open-add-discipline"
-                onClick={onOpenAddDiscipline}
-                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-md"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Cộng / Trừ Điểm Thi Đua</span>
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -181,7 +145,7 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
             <div className="flex items-center gap-2">
               <Landmark className="w-4 h-4 text-amber-600" />
               <h3 className="text-xs font-bold text-slate-900 uppercase">
-                Ý Kiến Thanh Tra & Chỉ Đạo Của Ban Giám Hiệu Vào Sổ Đầu Bài
+                Ý Kiến Thanh Tra & Chỉ Đạo Của Ban Giám Hiệu Về Nề Nếp Lớp Học
               </h3>
             </div>
             <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/80 text-amber-900">
@@ -226,129 +190,7 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
         </div>
       )}
 
-      {/* Add Journal Form Collapse */}
-      {showAddJournal && (
-        <form
-          onSubmit={handleSaveJournal}
-          className="bg-blue-50/70 border border-blue-200 rounded-2xl p-5 space-y-4 animate-in fade-in"
-        >
-          <div className="flex items-center justify-between border-b border-blue-200 pb-2">
-            <h3 className="text-sm font-bold text-[#003366] flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Nhập Tiết Học Mới Vào Sổ Đầu Bài
-            </h3>
-            <span className="text-xs text-slate-500">THPT Trần Nguyên Hãn</span>
-          </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Thứ & Tiết</label>
-              <div className="flex gap-1.5">
-                <select
-                  value={newJournal.dayOfWeek}
-                  onChange={(e) => setNewJournal({ ...newJournal, dayOfWeek: e.target.value })}
-                  className="w-2/3 px-2 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-                >
-                  <option value="Thứ Hai">Thứ 2</option>
-                  <option value="Thứ Ba">Thứ 3</option>
-                  <option value="Thứ Tư">Thứ 4</option>
-                  <option value="Thứ Năm">Thứ 5</option>
-                  <option value="Thứ Sáu">Thứ 6</option>
-                  <option value="Thứ Bảy">Thứ 7</option>
-                </select>
-                <select
-                  value={newJournal.period}
-                  onChange={(e) => setNewJournal({ ...newJournal, period: Number(e.target.value) })}
-                  className="w-1/3 px-1 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold"
-                >
-                  {[1, 2, 3, 4, 5].map((p) => (
-                    <option key={p} value={p}>
-                      T{p}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Môn học</label>
-              <input
-                type="text"
-                required
-                value={newJournal.subject}
-                onChange={(e) => setNewJournal({ ...newJournal, subject: e.target.value })}
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Giáo viên dạy</label>
-              <input
-                type="text"
-                required
-                value={newJournal.teacherName}
-                onChange={(e) => setNewJournal({ ...newJournal, teacherName: e.target.value })}
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Xếp loại tiết</label>
-              <select
-                value={newJournal.assessment}
-                onChange={(e) => setNewJournal({ ...newJournal, assessment: e.target.value as any })}
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-emerald-700"
-              >
-                <option value="A">Loại A (Tốt)</option>
-                <option value="B">Loại B (Khá)</option>
-                <option value="C">Loại C (Trung bình)</option>
-                <option value="D">Loại D (Yếu)</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Tên bài học</label>
-              <input
-                type="text"
-                required
-                placeholder="VD: Bài 12: Đồ thị hàm số phân thức bậc nhất..."
-                value={newJournal.lessonName}
-                onChange={(e) => setNewJournal({ ...newJournal, lessonName: e.target.value })}
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Nhận xét của GV bộ môn</label>
-              <input
-                type="text"
-                placeholder="Lớp sôi nổi, làm bài tốt..."
-                value={newJournal.notes}
-                onChange={(e) => setNewJournal({ ...newJournal, notes: e.target.value })}
-                className="w-full px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setShowAddJournal(false)}
-              className="px-3.5 py-1.5 rounded-lg border border-slate-300 text-xs font-bold"
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-1.5 rounded-lg bg-[#003366] text-white text-xs font-bold shadow-xs"
-            >
-              Lưu Vào Sổ Đầu Bài
-            </button>
-          </div>
-        </form>
-      )}
 
       {/* 4 Groups Thi Đua Leaderboard Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -384,83 +226,7 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
         ))}
       </div>
 
-      {/* Sổ Đầu Bài Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-[#003366]" />
-            <h3 className="text-base font-bold text-[#003366]">
-              Nhật Ký Sổ Đầu Bài Lớp Học
-            </h3>
-          </div>
-          <span className="text-xs text-slate-500 font-medium">Học kỳ I - Năm học 2025 - 2026</span>
-        </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
-                <th className="py-3 px-3">Thứ / Ngày</th>
-                <th className="py-3 px-2 text-center">Tiết</th>
-                <th className="py-3 px-3">Môn học</th>
-                <th className="py-3 px-3">Giáo viên</th>
-                <th className="py-3 px-4">Tên bài dạy</th>
-                <th className="py-3 px-3">Sĩ số</th>
-                <th className="py-3 px-3">Xếp loại</th>
-                <th className="py-3 px-4">Nhận xét của GV</th>
-                {role === 'gvcn' && onDeleteJournalEntry && (
-                  <th className="py-3 px-2 text-center w-12">Thao tác</th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {journal.map((entry) => (
-                <tr key={entry.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-3 px-3 font-semibold text-slate-800">
-                    {entry.dayOfWeek}
-                    <span className="block text-[10px] text-slate-400 font-normal">{entry.date}</span>
-                  </td>
-                  <td className="py-3 px-2 text-center font-bold text-[#003366]">Tiết {entry.period}</td>
-                  <td className="py-3 px-3 font-bold text-blue-900">{entry.subject}</td>
-                  <td className="py-3 px-3 text-slate-700">{entry.teacherName}</td>
-                  <td className="py-3 px-4 text-slate-800 font-medium">{entry.lessonName}</td>
-                  <td className="py-3 px-3">
-                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">
-                      {entry.attendance}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3">
-                    <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      Loại {entry.assessment}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-slate-600 italic">{entry.notes || '—'}</td>
-                  {role === 'gvcn' && onDeleteJournalEntry && (
-                    <td className="py-3 px-2 text-center">
-                      <button
-                        type="button"
-                        id={`btn-delete-journal-${entry.id}`}
-                        onClick={() => {
-                          setConfirmModalState({
-                            isOpen: true,
-                            title: 'Xoá Mục Sổ Đầu Bài',
-                            message: `Bạn có chắc muốn xoá mục sổ đầu bài môn ${entry.subject} (Tiết ${entry.period}, ngày ${entry.date})?`,
-                            onConfirm: () => onDeleteJournalEntry(entry.id),
-                          });
-                        }}
-                        title="Xoá mục sổ đầu bài"
-                        className="p-1.5 rounded-lg hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       {/* Real-time Discipline & Commendation Logs Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
