@@ -15,6 +15,8 @@ import {
   ChevronRight,
   TrendingUp,
   HelpCircle,
+  Sliders,
+  Settings2,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Student, ClassInfo } from '../types';
@@ -26,17 +28,28 @@ import {
 } from '../utils/excelParser';
 import { autoRepairVietnameseText } from '../utils/vietnameseEncoding';
 
+export interface SubjectScoreDetail {
+  tx1?: number;
+  tx2?: number;
+  gk?: number;
+  ck?: number;
+  avg: number;
+}
+
 export interface ParsedGradeRow {
   studentCode: string;
   studentName: string;
   group?: number;
   matchedStudentId?: string;
-  math: { tx1?: number; tx2?: number; gk?: number; ck?: number; avg: number };
-  physics: { tx1?: number; tx2?: number; gk?: number; ck?: number; avg: number };
-  chemistry: { tx1?: number; tx2?: number; gk?: number; ck?: number; avg: number };
-  biology: { tx1?: number; tx2?: number; gk?: number; ck?: number; avg: number };
-  literature: { tx1?: number; tx2?: number; gk?: number; ck?: number; avg: number };
-  english: { tx1?: number; tx2?: number; gk?: number; ck?: number; avg: number };
+  math: SubjectScoreDetail;
+  physics: SubjectScoreDetail;
+  chemistry: SubjectScoreDetail;
+  biology: SubjectScoreDetail;
+  literature: SubjectScoreDetail;
+  english: SubjectScoreDetail;
+  history: SubjectScoreDetail;
+  geography: SubjectScoreDetail;
+  informatics: SubjectScoreDetail;
   gpa: number;
   status: 'valid' | 'matched_by_name' | 'not_found' | 'warning';
   warningMessage?: string;
@@ -54,6 +67,18 @@ interface ImportGradesModalProps {
   classInfo?: ClassInfo;
   existingPeriods: string[];
 }
+
+export const SUBJECT_CONFIG = [
+  { key: 'math' as const, label: 'Toán Học', aliases: ['toán', 'toan', 'math', 'toán học', 'toan hoc'], color: 'text-blue-700' },
+  { key: 'physics' as const, label: 'Vật Lý', aliases: ['vật lý', 'vat ly', 'vật lí', 'vat li', 'lý', 'ly', 'physics'], color: 'text-emerald-700' },
+  { key: 'chemistry' as const, label: 'Hóa Học', aliases: ['hóa học', 'hoa hoc', 'hóa', 'hoa', 'chemistry'], color: 'text-amber-700' },
+  { key: 'biology' as const, label: 'Sinh Học', aliases: ['sinh học', 'sinh hoc', 'sinh', 'biology'], color: 'text-teal-700' },
+  { key: 'literature' as const, label: 'Ngữ Văn', aliases: ['ngữ văn', 'ngu van', 'văn', 'van', 'literature'], color: 'text-purple-700' },
+  { key: 'english' as const, label: 'Tiếng Anh', aliases: ['tiếng anh', 'tieng anh', 'anh', 'english'], color: 'text-pink-700' },
+  { key: 'history' as const, label: 'Lịch Sử', aliases: ['lịch sử', 'lich su', 'sử', 'su', 'history'], color: 'text-orange-700' },
+  { key: 'geography' as const, label: 'Địa Lý', aliases: ['địa lý', 'dia ly', 'địa lí', 'dia li', 'địa', 'dia', 'geography'], color: 'text-indigo-700' },
+  { key: 'informatics' as const, label: 'Tin Học', aliases: ['tin học', 'tin hoc', 'tin', 'informatics'], color: 'text-cyan-700' },
+];
 
 export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
   isOpen,
@@ -78,6 +103,12 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [step, setStep] = useState<'upload' | 'preview' | 'success'>('upload');
   const [previewFilter, setPreviewFilter] = useState<'all' | 'valid' | 'warning'>('all');
+
+  // Interactive Subject Column Adjustment / Mapping state
+  const [detectedColumns, setDetectedColumns] = useState<string[]>([]);
+  const [subjectMappings, setSubjectMappings] = useState<Record<string, string>>({});
+  const [showMappingConfig, setShowMappingConfig] = useState(false);
+  const [rawExtractedRows, setRawExtractedRows] = useState<Record<string, any>[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -112,7 +143,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
     return Number(((tx1 + tx2 + gk * 2 + ck * 3) / 7).toFixed(1));
   };
 
-  // Download Sample Excel File (.xlsx & .csv)
+  // Download Sample Excel File (.xlsx & .csv) for 9 subjects
   const handleDownloadExcelTemplate = (format: 'xlsx' | 'csv' = 'xlsx') => {
     const templateData = students.map((s) => ({
       'Mã HS': s.code,
@@ -136,8 +167,11 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
       'Sinh ĐTB': s.grades.biology.avg,
       'Văn ĐTB': s.grades.literature.avg,
       'Anh ĐTB': s.grades.english.avg,
-      'ĐTB Khối A': Number(((s.grades.math.avg + s.grades.physics.avg + s.grades.chemistry.avg) / 3).toFixed(2)),
-      'Ghi Chú': 'Mẫu cập nhật điểm số',
+      'Sử ĐTB': s.grades.history?.avg ?? 8.0,
+      'Địa ĐTB': s.grades.geography?.avg ?? 8.2,
+      'Tin ĐTB': s.grades.informatics?.avg ?? 8.5,
+      'ĐTB 9 Môn': s.grades.gpa,
+      'Ghi Chú': 'Mẫu cập nhật điểm số 9 môn học',
     }));
 
     if (format === 'xlsx') {
@@ -149,10 +183,10 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
         { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
         { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 20 },
+        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 22 },
       ];
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Bang_Diem_Lop');
+      XLSX.utils.book_append_sheet(wb, ws, 'Bang_Diem_9_Mon');
       XLSX.writeFile(wb, `Mau_Bang_Diem_${safeClassName}_${effectivePeriod.replace(/\s+/g, '_')}.xlsx`);
     } else {
       const ws = XLSX.utils.json_to_sheet(templateData);
@@ -169,8 +203,308 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
     }
   };
 
+  // Helper to parse rows with dynamic column mappings
+  const parseRowsWithMapping = (
+    extractedRows: Record<string, any>[],
+    mappings: Record<string, string>
+  ): ParsedGradeRow[] => {
+    const parsed: ParsedGradeRow[] = [];
+
+    extractedRows.forEach((row, rIdx) => {
+      // Extract student identity with broad aliases
+      const rawCode = getRowValue(row, [
+        'mã hs', 'mã học sinh', 'ma hs', 'mshs', 'sbd', 'số báo danh', 'code', 'id', 'student code', 'stt',
+      ]);
+      const rawName = getRowValue(row, [
+        'họ và tên', 'họ tên', 'tên học sinh', 'tên', 'ho va ten', 'ho ten', 'ten', 'full name', 'fullname', 'học sinh',
+      ]);
+
+      const codeVal = rawCode !== undefined && rawCode !== null ? String(rawCode).trim() : '';
+      const nameVal = rawName !== undefined && rawName !== null ? autoRepairVietnameseText(String(rawName).trim()) : '';
+
+      const rawGroup = getRowValue(row, ['tổ', 'to', 'nhóm', 'group']);
+      const groupVal = rawGroup ? parseInt(String(rawGroup).replace(/[^0-9]/g, ''), 10) : undefined;
+
+      // Try match existing student
+      let matchedStudent: Student | undefined = undefined;
+      let status: 'valid' | 'matched_by_name' | 'not_found' | 'warning' = 'valid';
+      let warningMessage: string | undefined = undefined;
+
+      if (codeVal) {
+        matchedStudent = students.find((s) => s.code.toLowerCase().trim() === codeVal.toLowerCase());
+      }
+
+      if (!matchedStudent && nameVal) {
+        matchedStudent = students.find((s) => s.name.toLowerCase().trim() === nameVal.toLowerCase());
+        if (matchedStudent) {
+          status = 'matched_by_name';
+          warningMessage = `Khớp qua Tên: ${matchedStudent.name} (${matchedStudent.code})`;
+        }
+      }
+
+      if (!matchedStudent && (!codeVal || codeVal === String(rIdx + 1)) && rIdx < students.length) {
+        matchedStudent = students.find((_, sIdx) => sIdx === rIdx);
+        if (matchedStudent) {
+          status = 'matched_by_name';
+          warningMessage = `Khớp theo vị trí STT ${rIdx + 1}: ${matchedStudent.name}`;
+        }
+      }
+
+      if (!matchedStudent) {
+        status = 'not_found';
+        warningMessage = 'Học sinh chưa có trong danh sách hiện tại của lớp';
+      }
+
+      // Helper to build score detail for any subject
+      const parseSubjectScore = (
+        subjKey: string,
+        standardAliases: { tx1: string[]; tx2: string[]; gk: string[]; ck: string[]; avg: string[] },
+        fallbackValues: { tx1: number; tx2: number; gk: number; ck: number; avg: number }
+      ): SubjectScoreDetail => {
+        const customCol = mappings[subjKey];
+        
+        const tx1Aliases = customCol ? [`${customCol} tx1`, customCol] : standardAliases.tx1;
+        const tx2Aliases = customCol ? [`${customCol} tx2`] : standardAliases.tx2;
+        const gkAliases  = customCol ? [`${customCol} gk`]  : standardAliases.gk;
+        const ckAliases  = customCol ? [`${customCol} ck`]  : standardAliases.ck;
+        const avgAliases = customCol ? [customCol, `${customCol} đtb`, `${customCol} tb`] : standardAliases.avg;
+
+        const rawTx1 = getRowValue(row, tx1Aliases);
+        const rawTx2 = getRowValue(row, tx2Aliases);
+        const rawGk  = getRowValue(row, gkAliases);
+        const rawCk  = getRowValue(row, ckAliases);
+        const rawAvg = getRowValue(row, avgAliases);
+
+        const tx1 = rawTx1 !== undefined ? parseScore(rawTx1, fallbackValues.tx1) : fallbackValues.tx1;
+        const tx2 = rawTx2 !== undefined ? parseScore(rawTx2, fallbackValues.tx2) : fallbackValues.tx2;
+        const gk  = rawGk  !== undefined ? parseScore(rawGk,  fallbackValues.gk)  : fallbackValues.gk;
+        const ck  = rawCk  !== undefined ? parseScore(rawCk,  fallbackValues.ck)  : fallbackValues.ck;
+        const avg = rawAvg !== undefined && rawAvg !== '' ? parseScore(rawAvg, calcSubjAvg(tx1, tx2, gk, ck)) : calcSubjAvg(tx1, tx2, gk, ck);
+
+        return { tx1, tx2, gk, ck, avg };
+      };
+
+      // 1. Math
+      const math = parseSubjectScore(
+        'math',
+        {
+          tx1: ['toán tx1', 'toan tx1', 'toán đgtx1', 'toán 15p', 'toan 15p', 'math tx1'],
+          tx2: ['toán tx2', 'toan tx2', 'toán đgtx2', 'toán 45p', 'toan 45p', 'math tx2'],
+          gk: ['toán gk', 'toan gk', 'toán giữa kỳ', 'toán đggk', 'toan giua ky', 'math gk'],
+          ck: ['toán ck', 'toan ck', 'toán cuối kỳ', 'toán đgck', 'toan cuoi ky', 'math ck'],
+          avg: ['toán đtb', 'toan dtb', 'toán tb', 'toán', 'toan', 'điểm toán', 'diem toan', 'math'],
+        },
+        {
+          tx1: matchedStudent?.grades.math.tx1 ?? 8.5,
+          tx2: matchedStudent?.grades.math.tx2 ?? 9.0,
+          gk: matchedStudent?.grades.math.gk ?? 8.8,
+          ck: matchedStudent?.grades.math.ck ?? 9.0,
+          avg: matchedStudent?.grades.math.avg ?? 8.8,
+        }
+      );
+
+      // 2. Physics
+      const physics = parseSubjectScore(
+        'physics',
+        {
+          tx1: ['lý tx1', 'ly tx1', 'vật lý tx1', 'vật lí tx1', 'physics tx1'],
+          tx2: ['lý tx2', 'ly tx2', 'vật lý tx2', 'vật lí tx2', 'physics tx2'],
+          gk: ['lý gk', 'ly gk', 'vật lý gk', 'vật lý giữa kỳ', 'vật lí gk', 'physics gk'],
+          ck: ['lý ck', 'ly ck', 'vật lý ck', 'vật lý cuối kỳ', 'vật lí ck', 'physics ck'],
+          avg: ['lý đtb', 'ly dtb', 'lý tb', 'vật lý', 'vật lí', 'ly', 'điểm lý', 'physics'],
+        },
+        {
+          tx1: matchedStudent?.grades.physics.tx1 ?? 8.0,
+          tx2: matchedStudent?.grades.physics.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.physics.gk ?? 8.5,
+          ck: matchedStudent?.grades.physics.ck ?? 8.8,
+          avg: matchedStudent?.grades.physics.avg ?? 8.5,
+        }
+      );
+
+      // 3. Chemistry
+      const chemistry = parseSubjectScore(
+        'chemistry',
+        {
+          tx1: ['hóa tx1', 'hoa tx1', 'hóa học tx1', 'chemistry tx1'],
+          tx2: ['hóa tx2', 'hoa tx2', 'hóa học tx2', 'chemistry tx2'],
+          gk: ['hóa gk', 'hoa gk', 'hóa học gk', 'hóa học giữa kỳ', 'chemistry gk'],
+          ck: ['hóa ck', 'hoa ck', 'hóa học ck', 'hóa học cuối kỳ', 'chemistry ck'],
+          avg: ['hóa đtb', 'hoa dtb', 'hóa tb', 'hóa học', 'hoa hoc', 'hóa', 'hoa', 'điểm hóa', 'chemistry'],
+        },
+        {
+          tx1: matchedStudent?.grades.chemistry.tx1 ?? 8.0,
+          tx2: matchedStudent?.grades.chemistry.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.chemistry.gk ?? 8.5,
+          ck: matchedStudent?.grades.chemistry.ck ?? 8.8,
+          avg: matchedStudent?.grades.chemistry.avg ?? 8.5,
+        }
+      );
+
+      // 4. Biology
+      const biology = parseSubjectScore(
+        'biology',
+        {
+          tx1: ['sinh tx1', 'sinh học tx1', 'biology tx1'],
+          tx2: ['sinh tx2', 'sinh học tx2', 'biology tx2'],
+          gk: ['sinh gk', 'sinh học gk', 'biology gk'],
+          ck: ['sinh ck', 'sinh học ck', 'biology ck'],
+          avg: ['sinh đtb', 'sinh tb', 'sinh học', 'sinh hoc', 'sinh', 'biology'],
+        },
+        {
+          tx1: matchedStudent?.grades.biology.tx1 ?? 8.2,
+          tx2: matchedStudent?.grades.biology.tx2 ?? 8.2,
+          gk: matchedStudent?.grades.biology.gk ?? 8.2,
+          ck: matchedStudent?.grades.biology.ck ?? 8.2,
+          avg: matchedStudent?.grades.biology.avg ?? 8.2,
+        }
+      );
+
+      // 5. Literature
+      const literature = parseSubjectScore(
+        'literature',
+        {
+          tx1: ['văn tx1', 'ngữ văn tx1', 'literature tx1'],
+          tx2: ['văn tx2', 'ngữ văn tx2', 'literature tx2'],
+          gk: ['văn gk', 'ngữ văn gk', 'literature gk'],
+          ck: ['văn ck', 'ngữ văn ck', 'literature ck'],
+          avg: ['văn đtb', 'văn tb', 'ngữ văn', 'ngu van', 'văn', 'van', 'literature'],
+        },
+        {
+          tx1: matchedStudent?.grades.literature.tx1 ?? 7.8,
+          tx2: matchedStudent?.grades.literature.tx2 ?? 7.8,
+          gk: matchedStudent?.grades.literature.gk ?? 7.8,
+          ck: matchedStudent?.grades.literature.ck ?? 7.8,
+          avg: matchedStudent?.grades.literature.avg ?? 7.8,
+        }
+      );
+
+      // 6. English
+      const english = parseSubjectScore(
+        'english',
+        {
+          tx1: ['anh tx1', 'tiếng anh tx1', 'english tx1'],
+          tx2: ['anh tx2', 'tiếng anh tx2', 'english tx2'],
+          gk: ['anh gk', 'tiếng anh gk', 'english gk'],
+          ck: ['anh ck', 'tiếng anh ck', 'english ck'],
+          avg: ['anh đtb', 'anh tb', 'tiếng anh', 'tieng anh', 'anh', 'english'],
+        },
+        {
+          tx1: matchedStudent?.grades.english.tx1 ?? 8.6,
+          tx2: matchedStudent?.grades.english.tx2 ?? 8.6,
+          gk: matchedStudent?.grades.english.gk ?? 8.6,
+          ck: matchedStudent?.grades.english.ck ?? 8.6,
+          avg: matchedStudent?.grades.english.avg ?? 8.6,
+        }
+      );
+
+      // 7. History
+      const history = parseSubjectScore(
+        'history',
+        {
+          tx1: ['sử tx1', 'lịch sử tx1', 'history tx1'],
+          tx2: ['sử tx2', 'lịch sử tx2', 'history tx2'],
+          gk: ['sử gk', 'lịch sử gk', 'history gk'],
+          ck: ['sử ck', 'lịch sử ck', 'history ck'],
+          avg: ['sử đtb', 'sử tb', 'lịch sử', 'lich su', 'sử', 'su', 'history'],
+        },
+        {
+          tx1: matchedStudent?.grades.history?.tx1 ?? 8.0,
+          tx2: matchedStudent?.grades.history?.tx2 ?? 8.0,
+          gk: matchedStudent?.grades.history?.gk ?? 8.0,
+          ck: matchedStudent?.grades.history?.ck ?? 8.0,
+          avg: matchedStudent?.grades.history?.avg ?? 8.0,
+        }
+      );
+
+      // 8. Geography
+      const geography = parseSubjectScore(
+        'geography',
+        {
+          tx1: ['địa tx1', 'địa lý tx1', 'geography tx1'],
+          tx2: ['địa tx2', 'địa lý tx2', 'geography tx2'],
+          gk: ['địa gk', 'địa lý gk', 'geography gk'],
+          ck: ['địa ck', 'địa lý ck', 'geography ck'],
+          avg: ['địa đtb', 'địa tb', 'địa lý', 'dia ly', 'địa lí', 'dia li', 'địa', 'dia', 'geography'],
+        },
+        {
+          tx1: matchedStudent?.grades.geography?.tx1 ?? 8.2,
+          tx2: matchedStudent?.grades.geography?.tx2 ?? 8.2,
+          gk: matchedStudent?.grades.geography?.gk ?? 8.2,
+          ck: matchedStudent?.grades.geography?.ck ?? 8.2,
+          avg: matchedStudent?.grades.geography?.avg ?? 8.2,
+        }
+      );
+
+      // 9. Informatics
+      const informatics = parseSubjectScore(
+        'informatics',
+        {
+          tx1: ['tin tx1', 'tin học tx1', 'informatics tx1'],
+          tx2: ['tin tx2', 'tin học tx2', 'informatics tx2'],
+          gk: ['tin gk', 'tin học gk', 'informatics gk'],
+          ck: ['tin ck', 'tin học ck', 'informatics ck'],
+          avg: ['tin đtb', 'tin tb', 'tin học', 'tin hoc', 'tin', 'informatics'],
+        },
+        {
+          tx1: matchedStudent?.grades.informatics?.tx1 ?? 8.5,
+          tx2: matchedStudent?.grades.informatics?.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.informatics?.gk ?? 8.5,
+          ck: matchedStudent?.grades.informatics?.ck ?? 8.5,
+          avg: matchedStudent?.grades.informatics?.avg ?? 8.5,
+        }
+      );
+
+      // Calculate GPA across all 9 subjects
+      const rawGpa = getRowValue(row, ['đtb 9 môn', 'đtb khối a', 'đtb', 'điểm tb', 'gpa', 'dtb', 'điểm trung bình']);
+      const allAvgs = [
+        math.avg,
+        physics.avg,
+        chemistry.avg,
+        biology.avg,
+        literature.avg,
+        english.avg,
+        history.avg,
+        geography.avg,
+        informatics.avg,
+      ];
+      const calculatedGpa =
+        rawGpa !== undefined && rawGpa !== ''
+          ? parseScore(rawGpa, Number((allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length).toFixed(2)))
+          : Number((allAvgs.reduce((a, b) => a + b, 0) / allAvgs.length).toFixed(2));
+
+      const finalCode = codeVal || matchedStudent?.code || `HS-${(rIdx + 1).toString().padStart(2, '0')}`;
+      const finalName = nameVal || matchedStudent?.name || `Học sinh ${rIdx + 1}`;
+
+      parsed.push({
+        studentCode: finalCode,
+        studentName: finalName,
+        group: groupVal || matchedStudent?.group || 1,
+        matchedStudentId: matchedStudent?.id,
+        math,
+        physics,
+        chemistry,
+        biology,
+        literature,
+        english,
+        history,
+        geography,
+        informatics,
+        gpa: calculatedGpa,
+        status,
+        warningMessage,
+      });
+    });
+
+    return parsed;
+  };
+
   // Process and extract grades from buffer
-  const parseBufferData = (buffer: ArrayBuffer, nameOfFile: string, encoding: 'auto' | 'utf8' | 'win1258' | 'tcvn3' | 'vni') => {
+  const parseBufferData = (
+    buffer: ArrayBuffer,
+    nameOfFile: string,
+    encoding: 'auto' | 'utf8' | 'win1258' | 'tcvn3' | 'vni'
+  ) => {
     try {
       setIsProcessing(true);
       setErrorMessage(null);
@@ -198,143 +532,26 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         throw new Error('Tệp không chứa dòng dữ liệu nào.');
       }
 
-      const parsed: ParsedGradeRow[] = [];
+      setRawExtractedRows(extractedRows);
 
-      extractedRows.forEach((row, rIdx) => {
-        // Extract student identity with broad aliases
-        const rawCode = getRowValue(row, [
-          'mã hs', 'mã học sinh', 'ma hs', 'mshs', 'sbd', 'số báo danh', 'code', 'id', 'student code', 'stt',
-        ]);
-        const rawName = getRowValue(row, [
-          'họ và tên', 'họ tên', 'tên học sinh', 'tên', 'ho va ten', 'ho ten', 'ten', 'full name', 'fullname', 'học sinh',
-        ]);
+      // Auto-detect columns in the file
+      const firstRowKeys = Object.keys(extractedRows[0] || {});
+      setDetectedColumns(firstRowKeys);
 
-        const codeVal = rawCode !== undefined && rawCode !== null ? String(rawCode).trim() : '';
-        const nameVal = rawName !== undefined && rawName !== null ? autoRepairVietnameseText(String(rawName).trim()) : '';
-
-        // If row is completely empty of identifying data and scores, skip
-        const rawGroup = getRowValue(row, ['tổ', 'to', 'nhóm', 'group']);
-        const groupVal = rawGroup ? parseInt(String(rawGroup).replace(/[^0-9]/g, ''), 10) : undefined;
-
-        // Try match existing student
-        let matchedStudent: Student | undefined = undefined;
-        let status: ParsedGradeRow['status'] = 'valid';
-        let warningMessage: string | undefined = undefined;
-
-        // 1. Try match by exact or numeric Code
-        if (codeVal) {
-          matchedStudent = students.find((s) => s.code.toLowerCase().trim() === codeVal.toLowerCase());
-          if (!matchedStudent) {
-            const numCode = codeVal.replace(/[^0-9]/g, '');
-            if (numCode) {
-              matchedStudent = students.find((s) => s.code.replace(/[^0-9]/g, '') === numCode);
-            }
-          }
-        }
-
-        // 2. Try match by Name (exact, auto-repaired, or accent-free)
-        if (!matchedStudent && nameVal) {
-          const normName = nameVal.toLowerCase();
-          const noAccName = removeVietnameseAccents(normName);
-
-          matchedStudent = students.find(
-            (s) => s.name.toLowerCase().trim() === normName || autoRepairVietnameseText(s.name).toLowerCase().trim() === normName
-          );
-
-          if (!matchedStudent) {
-            matchedStudent = students.find(
-              (s) => removeVietnameseAccents(s.name.toLowerCase().trim()) === noAccName
-            );
-          }
-
-          if (matchedStudent) {
-            status = 'matched_by_name';
-            warningMessage = `Khớp qua Tên: ${matchedStudent.name} (${matchedStudent.code})`;
-          }
-        }
-
-        // 3. Fallback to index if code and name were generic
-        if (!matchedStudent && (!codeVal || codeVal === String(rIdx + 1)) && rIdx < students.length) {
-          matchedStudent = students[rIdx];
-          status = 'matched_by_name';
-          warningMessage = `Khớp theo vị trí STT ${rIdx + 1}: ${matchedStudent.name}`;
-        }
-
-        if (!matchedStudent) {
-          status = 'not_found';
-          warningMessage = 'Học sinh chưa có trong danh sách hiện tại của lớp';
-        }
-
-        // Resolve scores for Math
-        const rawMathTx1 = getRowValue(row, ['toán tx1', 'toan tx1', 'toán đgtx1', 'toán 15p', 'toan 15p', 'math tx1']);
-        const rawMathTx2 = getRowValue(row, ['toán tx2', 'toan tx2', 'toán đgtx2', 'toán 45p', 'toan 45p', 'math tx2']);
-        const rawMathGk = getRowValue(row, ['toán gk', 'toan gk', 'toán giữa kỳ', 'toán đggk', 'toan giua ky', 'math gk']);
-        const rawMathCk = getRowValue(row, ['toán ck', 'toan ck', 'toán cuối kỳ', 'toán đgck', 'toan cuoi ky', 'math ck']);
-        const rawMathAvg = getRowValue(row, ['toán đtb', 'toan dtb', 'toán tb', 'toán', 'toan', 'điểm toán', 'diem toan', 'math']);
-
-        const mTx1 = rawMathTx1 !== undefined ? parseScore(rawMathTx1, matchedStudent?.grades.math.tx1 ?? 8.5) : (matchedStudent?.grades.math.tx1 ?? 8.5);
-        const mTx2 = rawMathTx2 !== undefined ? parseScore(rawMathTx2, matchedStudent?.grades.math.tx2 ?? 9.0) : (matchedStudent?.grades.math.tx2 ?? 9.0);
-        const mGk = rawMathGk !== undefined ? parseScore(rawMathGk, matchedStudent?.grades.math.gk ?? 8.8) : (matchedStudent?.grades.math.gk ?? 8.8);
-        const mCk = rawMathCk !== undefined ? parseScore(rawMathCk, matchedStudent?.grades.math.ck ?? 9.0) : (matchedStudent?.grades.math.ck ?? 9.0);
-        const mAvg = rawMathAvg !== undefined && rawMathAvg !== '' ? parseScore(rawMathAvg, calcSubjAvg(mTx1, mTx2, mGk, mCk)) : calcSubjAvg(mTx1, mTx2, mGk, mCk);
-
-        // Resolve scores for Physics
-        const rawPhysTx1 = getRowValue(row, ['lý tx1', 'ly tx1', 'vật lý tx1', 'vật lí tx1', 'physics tx1']);
-        const rawPhysTx2 = getRowValue(row, ['lý tx2', 'ly tx2', 'vật lý tx2', 'vật lí tx2', 'physics tx2']);
-        const rawPhysGk = getRowValue(row, ['lý gk', 'ly gk', 'vật lý gk', 'vật lý giữa kỳ', 'vật lí gk', 'physics gk']);
-        const rawPhysCk = getRowValue(row, ['lý ck', 'ly ck', 'vật lý ck', 'vật lý cuối kỳ', 'vật lí ck', 'physics ck']);
-        const rawPhysAvg = getRowValue(row, ['lý đtb', 'ly dtb', 'lý tb', 'vật lý', 'vật lí', 'ly', 'điểm lý', 'physics']);
-
-        const pTx1 = rawPhysTx1 !== undefined ? parseScore(rawPhysTx1, matchedStudent?.grades.physics.tx1 ?? 8.0) : (matchedStudent?.grades.physics.tx1 ?? 8.0);
-        const pTx2 = rawPhysTx2 !== undefined ? parseScore(rawPhysTx2, matchedStudent?.grades.physics.tx2 ?? 8.5) : (matchedStudent?.grades.physics.tx2 ?? 8.5);
-        const pGk = rawPhysGk !== undefined ? parseScore(rawPhysGk, matchedStudent?.grades.physics.gk ?? 8.5) : (matchedStudent?.grades.physics.gk ?? 8.5);
-        const pCk = rawPhysCk !== undefined ? parseScore(rawPhysCk, matchedStudent?.grades.physics.ck ?? 8.8) : (matchedStudent?.grades.physics.ck ?? 8.8);
-        const pAvg = rawPhysAvg !== undefined && rawPhysAvg !== '' ? parseScore(rawPhysAvg, calcSubjAvg(pTx1, pTx2, pGk, pCk)) : calcSubjAvg(pTx1, pTx2, pGk, pCk);
-
-        // Resolve scores for Chemistry
-        const rawChemTx1 = getRowValue(row, ['hóa tx1', 'hoa tx1', 'hóa học tx1', 'chemistry tx1']);
-        const rawChemTx2 = getRowValue(row, ['hóa tx2', 'hoa tx2', 'hóa học tx2', 'chemistry tx2']);
-        const rawChemGk = getRowValue(row, ['hóa gk', 'hoa gk', 'hóa học gk', 'hóa học giữa kỳ', 'chemistry gk']);
-        const rawChemCk = getRowValue(row, ['hóa ck', 'hoa ck', 'hóa học ck', 'hóa học cuối kỳ', 'chemistry ck']);
-        const rawChemAvg = getRowValue(row, ['hóa đtb', 'hoa dtb', 'hóa tb', 'hóa học', 'hoa hoc', 'hóa', 'hoa', 'điểm hóa', 'chemistry']);
-
-        const cTx1 = rawChemTx1 !== undefined ? parseScore(rawChemTx1, matchedStudent?.grades.chemistry.tx1 ?? 8.0) : (matchedStudent?.grades.chemistry.tx1 ?? 8.0);
-        const cTx2 = rawChemTx2 !== undefined ? parseScore(rawChemTx2, matchedStudent?.grades.chemistry.tx2 ?? 8.5) : (matchedStudent?.grades.chemistry.tx2 ?? 8.5);
-        const cGk = rawChemGk !== undefined ? parseScore(rawChemGk, matchedStudent?.grades.chemistry.gk ?? 8.5) : (matchedStudent?.grades.chemistry.gk ?? 8.5);
-        const cCk = rawChemCk !== undefined ? parseScore(rawChemCk, matchedStudent?.grades.chemistry.ck ?? 8.8) : (matchedStudent?.grades.chemistry.ck ?? 8.8);
-        const cAvg = rawChemAvg !== undefined && rawChemAvg !== '' ? parseScore(rawChemAvg, calcSubjAvg(cTx1, cTx2, cGk, cCk)) : calcSubjAvg(cTx1, cTx2, cGk, cCk);
-
-        // Resolve Biology, Literature, English
-        const rawBio = getRowValue(row, ['sinh đtb', 'sinh tb', 'sinh học', 'sinh hoc', 'sinh', 'biology']);
-        const rawLit = getRowValue(row, ['văn đtb', 'văn tb', 'ngữ văn', 'ngu van', 'văn', 'van', 'literature']);
-        const rawEng = getRowValue(row, ['anh đtb', 'anh tb', 'tiếng anh', 'tieng anh', 'anh', 'english']);
-        const rawGpa = getRowValue(row, ['đtb khối a', 'đtb', 'điểm tb', 'gpa', 'dtb', 'điểm trung bình']);
-
-        const bAvg = rawBio !== undefined && rawBio !== '' ? parseScore(rawBio, matchedStudent?.grades.biology.avg ?? 8.2) : (matchedStudent?.grades.biology.avg ?? 8.2);
-        const lAvg = rawLit !== undefined && rawLit !== '' ? parseScore(rawLit, matchedStudent?.grades.literature.avg ?? 7.8) : (matchedStudent?.grades.literature.avg ?? 7.8);
-        const eAvg = rawEng !== undefined && rawEng !== '' ? parseScore(rawEng, matchedStudent?.grades.english.avg ?? 8.6) : (matchedStudent?.grades.english.avg ?? 8.6);
-
-        const calculatedGpa = rawGpa !== undefined && rawGpa !== '' ? parseScore(rawGpa, Number(((mAvg + pAvg + cAvg) / 3).toFixed(2))) : Number(((mAvg + pAvg + cAvg) / 3).toFixed(2));
-
-        const finalCode = codeVal || matchedStudent?.code || `HS-${(rIdx + 1).toString().padStart(2, '0')}`;
-        const finalName = nameVal || matchedStudent?.name || `Học sinh ${rIdx + 1}`;
-
-        parsed.push({
-          studentCode: finalCode,
-          studentName: finalName,
-          group: groupVal || matchedStudent?.group || 1,
-          matchedStudentId: matchedStudent?.id,
-          math: { tx1: mTx1, tx2: mTx2, gk: mGk, ck: mCk, avg: mAvg },
-          physics: { tx1: pTx1, tx2: pTx2, gk: pGk, ck: pCk, avg: pAvg },
-          chemistry: { tx1: cTx1, tx2: cTx2, gk: cGk, ck: cCk, avg: cAvg },
-          biology: { tx1: bAvg, tx2: bAvg, gk: bAvg, ck: bAvg, avg: bAvg },
-          literature: { tx1: lAvg, tx2: lAvg, gk: lAvg, ck: lAvg, avg: lAvg },
-          english: { tx1: eAvg, tx2: eAvg, gk: eAvg, ck: eAvg, avg: eAvg },
-          gpa: calculatedGpa,
-          status,
-          warningMessage,
+      // Auto-detect default subject mapping
+      const autoMappings: Record<string, string> = {};
+      SUBJECT_CONFIG.forEach((subj) => {
+        const matchedCol = firstRowKeys.find((col) => {
+          const colNorm = removeVietnameseAccents(normalizeHeaderKey(col));
+          return subj.aliases.some((alias) => colNorm.includes(removeVietnameseAccents(alias)));
         });
+        if (matchedCol) {
+          autoMappings[subj.key] = matchedCol;
+        }
       });
+      setSubjectMappings(autoMappings);
+
+      const parsed = parseRowsWithMapping(extractedRows, autoMappings);
 
       if (parsed.length === 0) {
         throw new Error('Không tìm thấy bản ghi điểm số nào từ tệp. Vui lòng kiểm tra lại cấu trúc bảng tính.');
@@ -348,6 +565,17 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
       setParsedRows([]);
     } finally {
       setIsProcessing(false);
+    }
+  };
+
+  // Handler for manual subject column re-mapping
+  const handleMappingChange = (subjKey: string, colName: string) => {
+    const updatedMappings = { ...subjectMappings, [subjKey]: colName };
+    setSubjectMappings(updatedMappings);
+
+    if (rawExtractedRows.length > 0) {
+      const reParsed = parseRowsWithMapping(rawExtractedRows, updatedMappings);
+      setParsedRows(reParsed);
     }
   };
 
@@ -442,6 +670,9 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
             biology: { ...stu.grades.biology, ...rowData.biology },
             literature: { ...stu.grades.literature, ...rowData.literature },
             english: { ...stu.grades.english, ...rowData.english },
+            history: { ...(stu.grades.history || {}), ...rowData.history },
+            geography: { ...(stu.grades.geography || {}), ...rowData.geography },
+            informatics: { ...(stu.grades.informatics || {}), ...rowData.informatics },
             gpa: rowData.gpa,
           }
         : stu.grades;
@@ -458,6 +689,9 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         biology: rowData.biology.avg,
         literature: rowData.literature.avg,
         english: rowData.english.avg,
+        history: rowData.history.avg,
+        geography: rowData.geography.avg,
+        informatics: rowData.informatics.avg,
         gpa: rowData.gpa,
       };
 
@@ -505,6 +739,9 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
               biology: r.biology,
               literature: r.literature,
               english: r.english,
+              history: r.history,
+              geography: r.geography,
+              informatics: r.informatics,
               gpa: r.gpa,
             },
             progressHistory: [
@@ -516,6 +753,9 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                 biology: r.biology.avg,
                 literature: r.literature.avg,
                 english: r.english.avg,
+                history: r.history.avg,
+                geography: r.geography.avg,
+                informatics: r.informatics.avg,
                 gpa: r.gpa,
               },
             ],
@@ -549,7 +789,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-100 w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-gradient-to-r from-[#003366] to-[#002244] text-white">
           <div className="flex items-center gap-3">
@@ -559,12 +799,12 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                  Import Bảng Điểm Excel
+                  Import Sổ Điểm Các Môn Excel (9 Môn)
                 </span>
                 <span className="text-xs text-slate-300">Hỗ trợ .xlsx, .xls, .csv, .json</span>
               </div>
               <h3 className="text-base sm:text-lg font-bold text-white mt-0.5">
-                Cập Nhật Điểm Số & Thống Kê Biểu Đồ Theo Đợt
+                Cập Nhật Điểm Số & Tự Điều Chỉnh Môn Học Đã Tải Lên
               </h3>
             </div>
           </div>
@@ -628,7 +868,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                       </label>
                       <input
                         type="text"
-                        placeholder="VD: Khảo Sát Khối A Tháng 3, Thi Thử Lần 2..."
+                        placeholder="VD: Khảo Sát 9 Môn Tháng 3, Thi Thử Lần 2..."
                         value={customPeriodName}
                         onChange={(e) => setCustomPeriodName(e.target.value)}
                         className="w-full bg-white border border-blue-400 rounded-xl px-3 py-2 text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -667,10 +907,10 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                 <div>
                   <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                     <Download className="w-4 h-4 text-emerald-600" />
-                    Chưa có tệp bảng điểm theo mẫu chuẩn?
+                    Chưa có tệp bảng điểm theo mẫu chuẩn (9 môn)?
                   </h4>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Tải mẫu Excel (.xlsx) đã điền sẵn danh sách {students.length} học sinh lớp {currentClassName} để nhập điểm nhanh chóng.
+                    Tải mẫu Excel (.xlsx) đã điền sẵn danh sách {students.length} học sinh lớp {currentClassName} với đầy đủ 9 môn học để nhập điểm nhanh chóng.
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -680,7 +920,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Tải Mẫu Excel (.xlsx)</span>
+                    <span>Tải Mẫu Excel 9 Môn (.xlsx)</span>
                   </button>
                   <button
                     type="button"
@@ -744,7 +984,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                         : 'Nhấp để chọn tệp hoặc kéo thả file Excel vào đây'}
                     </p>
                     <p className="text-xs text-slate-400 mt-1">
-                      Định dạng hỗ trợ: .xlsx, .xls, .csv, .json (Tự động nhận diện dòng tiêu đề & môn học)
+                      Định dạng hỗ trợ: .xlsx, .xls, .csv, .json (Tự động nhận diện & ghép đúng 9 môn học)
                     </p>
                   </div>
 
@@ -765,7 +1005,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                     <p className="font-bold">Lỗi xử lý tệp</p>
                     <p className="mt-0.5">{errorMessage}</p>
                     <p className="mt-1 text-[11px] text-red-600">
-                      Mẹo: Tải về "Mẫu Excel (.xlsx)" ở trên, điền điểm và tải lên lại để đảm bảo dữ liệu được nhận diện chính xác nhất.
+                      Mẹo: Tải về "Mẫu Excel 9 Môn (.xlsx)" ở trên, điền điểm và tải lên lại để đảm bảo dữ liệu được nhận diện chính xác nhất.
                     </p>
                   </div>
                 </div>
@@ -773,7 +1013,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
             </div>
           )}
 
-          {/* STEP 2: Preview & Validation */}
+          {/* STEP 2: Preview & Dynamic Subject Mapping */}
           {step === 'preview' && (
             <div className="space-y-4">
               {/* Summary Banner */}
@@ -800,11 +1040,96 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                 </div>
 
                 <div className="bg-amber-50 p-3 rounded-2xl border border-amber-100">
-                  <p className="text-[10px] text-amber-700 font-bold uppercase">ĐTB Dự Kiến</p>
+                  <p className="text-[10px] text-amber-700 font-bold uppercase">ĐTB 9 Môn Dự Kiến</p>
                   <p className="text-base font-black text-amber-800 mt-0.5">
                     {avgParsedGpa} / 10
                   </p>
                 </div>
+              </div>
+
+              {/* TỰ ĐIỀU CHỈNH MÔN HỌC (Subject Column Alignment Box) */}
+              <div className="bg-gradient-to-r from-amber-50/80 to-orange-50/60 border border-amber-200/80 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowMappingConfig(!showMappingConfig)}>
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-bold shadow-xs">
+                      <Sliders className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                        Tự Điều Chỉnh Môn Học Đúng Với File Tải Lên
+                        <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 border border-amber-300">
+                          {detectedColumns.length} cột tự nhận diện
+                        </span>
+                      </h4>
+                      <p className="text-[11px] text-slate-600 mt-0.5">
+                        Nhấp để kiểm tra hoặc chọn lại cột tương ứng cho từng môn học nếu file của bạn dùng tên cột tùy chỉnh.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMappingConfig(!showMappingConfig);
+                    }}
+                    className="text-xs font-bold text-blue-700 bg-white border border-blue-200 px-3 py-1.5 rounded-xl hover:bg-blue-50 transition-all flex items-center gap-1 cursor-pointer shadow-2xs"
+                  >
+                    <Settings2 className="w-3.5 h-3.5" />
+                    <span>{showMappingConfig ? 'Thu gọn điều chỉnh' : 'Tự điều chỉnh môn'}</span>
+                  </button>
+                </div>
+
+                {showMappingConfig && (
+                  <div className="pt-3 border-t border-amber-200/60 space-y-3 animate-in fade-in duration-200">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-9 gap-2">
+                      {SUBJECT_CONFIG.map((subj) => {
+                        const currentCol = subjectMappings[subj.key] || '';
+                        return (
+                          <div key={subj.key} className="bg-white p-2 rounded-xl border border-amber-200/80 shadow-2xs space-y-1">
+                            <label className={`text-[11px] font-bold block truncate ${subj.color}`}>
+                              {subj.label}:
+                            </label>
+                            <select
+                              value={currentCol}
+                              onChange={(e) => handleMappingChange(subj.key, e.target.value)}
+                              className="w-full bg-slate-50 border border-slate-200 rounded-lg px-1.5 py-1 text-[11px] font-semibold text-slate-800 focus:ring-1 focus:ring-amber-500 focus:outline-none cursor-pointer truncate"
+                            >
+                              <option value="">✨ Tự động tìm</option>
+                              {detectedColumns.map((col) => (
+                                <option key={col} value={col}>
+                                  {col}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="flex justify-between items-center text-[11px] text-slate-500 pt-1">
+                      <span>💡 Điểm ĐTB tự động cập nhật ngay khi bạn thay đổi môn học tương ứng.</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const autoMappings: Record<string, string> = {};
+                          SUBJECT_CONFIG.forEach((subj) => {
+                            const matchedCol = detectedColumns.find((col) => {
+                              const colNorm = removeVietnameseAccents(normalizeHeaderKey(col));
+                              return subj.aliases.some((alias) => colNorm.includes(removeVietnameseAccents(alias)));
+                            });
+                            if (matchedCol) autoMappings[subj.key] = matchedCol;
+                          });
+                          setSubjectMappings(autoMappings);
+                          if (rawExtractedRows.length > 0) {
+                            setParsedRows(parseRowsWithMapping(rawExtractedRows, autoMappings));
+                          }
+                        }}
+                        className="text-amber-800 font-bold hover:underline cursor-pointer"
+                      >
+                        🔄 Khôi phục mặc định
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Filter Tabs & Encoding Bar */}
@@ -875,21 +1200,24 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                 </div>
               </div>
 
-              {/* Preview Table */}
-              <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs max-h-72 overflow-y-auto">
-                <table className="w-full text-left text-xs border-collapse">
+              {/* Preview Table for all 9 Subjects */}
+              <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-2xs max-h-72 overflow-y-auto overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse min-w-[900px]">
                   <thead className="sticky top-0 bg-slate-100 text-slate-700 font-bold border-b border-slate-200 z-10">
                     <tr>
                       <th className="py-2.5 px-3">Mã HS</th>
                       <th className="py-2.5 px-3">Họ và Tên</th>
-                      <th className="py-2.5 px-2 text-center">Toán</th>
-                      <th className="py-2.5 px-2 text-center">Lý</th>
-                      <th className="py-2.5 px-2 text-center">Hóa</th>
-                      <th className="py-2.5 px-2 text-center">Sinh</th>
-                      <th className="py-2.5 px-2 text-center">Văn</th>
-                      <th className="py-2.5 px-2 text-center">Anh</th>
+                      <th className="py-2.5 px-2 text-center text-blue-700">Toán</th>
+                      <th className="py-2.5 px-2 text-center text-emerald-700">Lý</th>
+                      <th className="py-2.5 px-2 text-center text-amber-700">Hóa</th>
+                      <th className="py-2.5 px-2 text-center text-teal-700">Sinh</th>
+                      <th className="py-2.5 px-2 text-center text-purple-700">Văn</th>
+                      <th className="py-2.5 px-2 text-center text-pink-700">Anh</th>
+                      <th className="py-2.5 px-2 text-center text-orange-700">Sử</th>
+                      <th className="py-2.5 px-2 text-center text-indigo-700">Địa</th>
+                      <th className="py-2.5 px-2 text-center text-cyan-700">Tin</th>
                       <th className="py-2.5 px-3 text-center text-[#003366] font-extrabold bg-blue-50/80">
-                        ĐTB
+                        ĐTB 9 Môn
                       </th>
                       <th className="py-2.5 px-3">Trạng Thái</th>
                     </tr>
@@ -920,6 +1248,15 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                         </td>
                         <td className="py-2 px-2 text-center font-semibold text-pink-700">
                           {r.english.avg}
+                        </td>
+                        <td className="py-2 px-2 text-center font-semibold text-orange-700">
+                          {r.history.avg}
+                        </td>
+                        <td className="py-2 px-2 text-center font-semibold text-indigo-700">
+                          {r.geography.avg}
+                        </td>
+                        <td className="py-2 px-2 text-center font-semibold text-cyan-700">
+                          {r.informatics.avg}
                         </td>
                         <td className="py-2 px-3 text-center font-black text-[#003366] bg-blue-50/50">
                           {r.gpa}
@@ -958,10 +1295,10 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
               </div>
               <div>
                 <h4 className="text-lg font-black text-slate-900">
-                  Cập Nhật Bảng Điểm Thành Công!
+                  Cập Nhật Bảng Điểm 9 Môn Thành Công!
                 </h4>
                 <p className="text-xs text-slate-600 mt-1 max-w-md mx-auto">
-                  Đã đồng bộ dữ liệu điểm của <strong>{matchedCount} học sinh</strong> vào đợt{' '}
+                  Đã đồng bộ dữ liệu điểm 9 môn học của <strong>{matchedCount} học sinh</strong> vào đợt{' '}
                   <strong>"{effectivePeriod}"</strong>. Biểu đồ cột và thống kê thi đua học tập đã được làm mới tức thì.
                 </p>
               </div>
