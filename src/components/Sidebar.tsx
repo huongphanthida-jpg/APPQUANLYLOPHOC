@@ -70,7 +70,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onEditBgh,
 }) => {
   const getNavItems = (): NavItem[] => {
-    // Base items for all roles
     const baseItems: NavItem[] = [
       { id: 'overview', label: 'Tổng quan Lớp học', icon: LayoutDashboard },
       { id: 'homeroom-book', label: 'Sổ Chủ nhiệm số', icon: BookOpen },
@@ -114,7 +113,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ];
     }
 
-    // Default: Teacher (GVCN)
     return [
       ...baseItems,
       { id: 'students', label: 'Danh sách Học sinh', icon: Users },
@@ -281,6 +279,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           );
         })}
       </nav>
+
+      {/* Footer Info */}
+      <div className="p-4 mt-auto border-t border-white/10 bg-[#002244]/50 text-[11px] text-slate-300 space-y-1">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-300 font-medium">
+            Sĩ số: <strong className="text-white font-bold">{studentsCount} Học sinh</strong>
+          </span>
+          <span className="text-[10px] font-semibold text-[#98FF98]">Top 1 Khối 12</span>
+        </div>
+        <p className="text-slate-400 text-[10px]">Hệ thống Quản trị & Học liệu THPT</p>
+      </div>
     </div>
   );
 
