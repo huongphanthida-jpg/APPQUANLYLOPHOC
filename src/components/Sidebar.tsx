@@ -41,6 +41,7 @@ interface SidebarProps {
   onTabChange: (tab: NavigationTab) => void;
   role: UserRole;
   pendingLeavesCount?: number;
+  studentsCount?: number;
   onOpenAiAdvisor?: () => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -57,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTabChange,
   role,
   pendingLeavesCount = 0,
+  studentsCount = 42,
   onOpenAiAdvisor,
   isMobileOpen = false,
   onCloseMobile,
@@ -475,11 +477,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer Info */}
       <div className="p-4 mt-auto border-t border-white/10 bg-[#002244]/50 text-[11px] text-slate-300 space-y-1">
-        <div className="flex justify-between">
-          <span className="text-slate-300">Sĩ số: <strong>42 Học sinh</strong></span>
-          <span className="text-emerald-300 font-bold">Top 1 {gradeName}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-slate-300 font-medium">
+            Sĩ số: <strong className="text-white font-bold">{studentsCount} Học sinh</strong>
+          </span>
         </div>
-        <p className="text-slate-300 text-[10px]">Hệ thống Quản trị & Học liệu THPT</p>
+        <p className="text-slate-400 text-[10px]">Hệ thống Quản trị & Học liệu THPT</p>
       </div>
     </div>
   );
