@@ -24,6 +24,8 @@ import {
   Trash2,
   FileSpreadsheet,
   X,
+  UserCheck,
+  Edit3,
 } from 'lucide-react';
 import {
   Student,
@@ -35,7 +37,19 @@ import {
   RandomPickRecord,
   ClassInfo,
   TeacherInfo,
+  HomeroomBookData,
 } from '../types';
+
+export const getStudentGroupNumber = (groupVal: any): 1 | 2 | 3 | 4 => {
+  if (typeof groupVal === 'number' && groupVal >= 1 && groupVal <= 4) {
+    return groupVal as 1 | 2 | 3 | 4;
+  }
+  if (groupVal) {
+    const parsed = parseInt(String(groupVal).replace(/[^0-9]/g, ''), 10);
+    if (parsed >= 1 && parsed <= 4) return parsed as 1 | 2 | 3 | 4;
+  }
+  return 1;
+};
 
 interface GroupEmulationViewProps {
   students: Student[];
@@ -49,6 +63,8 @@ interface GroupEmulationViewProps {
   dutySchedule?: DutySchedule[];
   examAttempts?: OnlineExamAttempt[];
   randomPicks?: RandomPickRecord[];
+  onUpdateStudents?: (students: Student[]) => void;
+  homeroomBookData?: HomeroomBookData;
 }
 
 export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
@@ -63,11 +79,16 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
   dutySchedule = [],
   examAttempts = [],
   randomPicks = [],
+  onUpdateStudents,
+  homeroomBookData,
 }) => {
   const [selectedWeek, setSelectedWeek] = useState<number>(1);
   const [selectedMonth, setSelectedMonth] = useState<string>('Tháng 9');
   const [selectedGroupModal, setSelectedGroupModal] = useState<number | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+
+  // Custom Group Leaders Override State
+  const [customLeaders, setCustomLeaders] = useState<Record<number, string>>({});
 
   // New Log Form State
   const [targetGroup, setTargetGroup] = useState<1 | 2 | 3 | 4>(1);
@@ -76,12 +97,63 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
   const [logPoints, setLogPoints] = useState<number>(10);
   const [logDesc, setLogDesc] = useState<string>('');
 
-  // Group Leaders mapping for 12A1
-  const groupLeaders: Record<number, { name: string; avatar?: string; title: string }> = {
-    1: { name: 'Nguyễn Hoàng Long', title: 'Tổ Trưởng Tổ 1 (KHTN - Toán)' },
-    2: { name: 'Phạm Đức Anh', title: 'Tổ Trưởng Tổ 2 (KHTN - Hóa)' },
-    3: { name: 'Đỗ Hải Đăng', title: 'Tổ Trưởng Tổ 3 (KHTN - Lý)' },
-    4: { name: 'Bùi Minh Triết', title: 'Tổ Trưởng Tổ 4 (KHTN - Ngoại ngữ)' },
+  // Default Leaders fallback map
+  const defaultLeadersMap: Record<number, string> = {
+    1: 'Nguyễn Hoàng Long',
+    2: 'Phạm Đức Anh',
+    3: 'Đỗ Hải Đăng',
+    4: 'Bùi Minh Triết',
+  };
+
+  // Dynamic Group Leader resolution
+  const getGroupLeaderInfo = (groupNum: number, groupStudents: Student[]) => {
+    // Check manual custom leader override
+    if (customLeaders[groupNum]) {
+      return {
+        name: customLeaders[groupNum],
+        title: `Tổ Trưởng Tổ ${groupNum}`,
+      };
+    }
+
+    // Check homeroomBookData committee
+    if (homeroomBookData?.committee) {
+      const commItem = homeroomBookData.committee.find((c) => {
+        const r = (c.roleName || '').toLowerCase();
+        return r.includes('tổ trưởng') && r.includes(`${groupNum}`);
+      });
+      if (commItem && commItem.studentName && commItem.studentName !== 'Chưa gán') {
+        return {
+          name: commItem.studentName,
+          title: `Tổ Trưởng Tổ ${groupNum}`,
+        };
+      }
+    }
+
+    // Check if default leader name is in group
+    const defaultName = defaultLeadersMap[groupNum];
+    const foundInGroup = groupStudents.find((s) => s.name === defaultName);
+    if (foundInGroup) {
+      return {
+        name: foundInGroup.name,
+        title: `Tổ Trưởng Tổ ${groupNum}`,
+        avatar: foundInGroup.avatar,
+      };
+    }
+
+    // Fallback to first student of group
+    if (groupStudents.length > 0) {
+      return {
+        name: groupStudents[0].name,
+        title: `Tổ Trưởng Tổ ${groupNum}`,
+        avatar: groupStudents[0].avatar,
+      };
+    }
+
+    // Default fallback
+    return {
+      name: defaultName || 'Chưa phân công',
+      title: `Tổ Trưởng Tổ ${groupNum}`,
+    };
   };
 
   // Group Color Palettes
@@ -119,14 +191,13 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
   // Compute comprehensive stats for each of the 4 groups
   const groupSummaries = useMemo(() => {
     return ([1, 2, 3, 4] as const).map((groupNum) => {
-      const groupStudents = students.filter((s) => s.group === groupNum);
+      const groupStudents = students.filter((s) => getStudentGroupNumber(s.group) === groupNum);
       const studentIds = new Set(groupStudents.map((s) => s.id));
 
       // 1. Base Score
       const baseScore = 100;
 
       // 2. Academic Score
-      // Average GPA calculation
       const avgGpa = groupStudents.length > 0
         ? groupStudents.reduce((acc, s) => acc + (s.grades?.gpa || 8.0), 0) / groupStudents.length
         : 8.0;
@@ -143,9 +214,11 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       const totalAcademic = academicGpaBonus + examBonus + oralBonus;
 
       // 3. Discipline Score
-      const groupDiscipline = disciplineLogs.filter((d) => studentIds.has(d.studentId));
-      const violations = groupDiscipline.filter((d) => d.type === 'violation');
-      const commendations = groupDiscipline.filter((d) => d.type === 'commendation');
+      const groupDiscipline = disciplineLogs.filter(
+        (d) => studentIds.has(d.studentId) || getStudentGroupNumber(d.group) === groupNum
+      );
+      const violations = groupDiscipline.filter((d) => d.type === 'violation' || d.type === 'penalty');
+      const commendations = groupDiscipline.filter((d) => d.type === 'commendation' || d.type === 'bonus');
       const totalDiscipline = commendations.length * 5 - violations.length * 5;
 
       // 4. Attendance Score
@@ -153,20 +226,24 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       const totalAttendance = 15 - totalAbsences * 5; // Start with +15 for full attendance
 
       // 5. Duty Score
-      const groupDuties = dutySchedule.filter((d) => d.group === groupNum);
-      const completedDuties = groupDuties.filter((d) => d.status === 'completed');
+      const groupDuties = dutySchedule.filter(
+        (d) => getStudentGroupNumber(d.assignedGroup || (d as any).group) === groupNum
+      );
+      const completedDuties = groupDuties.filter((d) => d.status === 'completed' || (d.status as any) === 'Đã hoàn thành');
       const totalDuty = completedDuties.length * 5;
 
       // 6. Direct Emulation Logs Points
-      const groupLogs = emulationLogs.filter((l) => l.group === groupNum);
+      const groupLogs = emulationLogs.filter((l) => getStudentGroupNumber(l.group) === groupNum);
       const totalDirectLogs = groupLogs.reduce((sum, l) => sum + l.points, 0);
 
       // Total Week Emulation Score
       const finalScore = baseScore + totalAcademic + totalDiscipline + totalAttendance + totalDuty + totalDirectLogs;
 
+      const leader = getGroupLeaderInfo(groupNum, groupStudents);
+
       return {
         group: groupNum,
-        leader: groupLeaders[groupNum],
+        leader,
         studentCount: groupStudents.length,
         avgGpa: avgGpa.toFixed(2),
         baseScore,
@@ -184,12 +261,19 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
         logs: groupLogs,
       };
     });
-  }, [students, disciplineLogs, dutySchedule, examAttempts, randomPicks, emulationLogs]);
+  }, [students, disciplineLogs, dutySchedule, examAttempts, randomPicks, emulationLogs, customLeaders, homeroomBookData]);
 
   // Sort groups by final score descending
   const rankedGroups = useMemo(() => {
     return [...groupSummaries].sort((a, b) => b.finalScore - a.finalScore);
   }, [groupSummaries]);
+
+  // Handle changing student group
+  const handleChangeStudentGroup = (studentId: string, newGroup: 1 | 2 | 3 | 4) => {
+    if (!onUpdateStudents) return;
+    const updated = students.map((s) => (s.id === studentId ? { ...s, group: newGroup } : s));
+    onUpdateStudents(updated);
+  };
 
   // Handle Add Emulation Log
   const handleCreateLog = (e: React.FormEvent) => {
@@ -206,7 +290,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       points: logPoints,
       description: logDesc.trim() || undefined,
       date: new Date().toISOString().slice(0, 10),
-      recordedBy: teacherInfo?.name || 'Thầy Nguyễn Văn An (GVCN)',
+      recordedBy: teacherInfo?.name || 'GVCN',
     };
 
     onAddEmulationLog(newLog);
@@ -233,19 +317,19 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
               <Trophy className="w-6 h-6 text-amber-200 animate-bounce" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-white/20 text-amber-100">
-                  Bảng Xếp Hạng Thi Đua Khối {classInfo?.className?.match(/(10|11|12)/)?.[0] || '11'}
+                  Bảng Xếp Hạng Thi Đua Khối {classInfo?.className?.match(/(10|11|12)/)?.[0] || '12'}
                 </span>
                 <span className="text-xs bg-black/20 text-white px-2 py-0.5 rounded-full font-medium">
-                  {classInfo?.className || 'Lớp 11D5'}
+                  {classInfo?.className || 'Lớp 12A1'} ({students.length} Học Sinh)
                 </span>
               </div>
-              <h2 className="text-xl font-black text-white">
+              <h2 className="text-xl font-black text-white mt-0.5">
                 Tổng Hợp & Xếp Hạng Thi Đua Theo 4 Tổ
               </h2>
               <p className="text-xs text-amber-100/90 max-w-2xl mt-0.5">
-                Bảng điểm tổng hợp tự động từ 5 trụ cột: Điểm học tập & kiểm tra, Kỷ luật nề nếp, Chuyên cần, Trực nhật lớp học và Điểm thưởng phong trào!
+                Tự động đồng bộ và tính toán kết quả thi đua khi thay đổi danh sách học sinh hoặc phân chia lại 4 tổ!
               </p>
             </div>
           </div>
@@ -255,7 +339,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
             {(role === 'gvcn' || role === 'csl') && (
               <button
                 onClick={() => setIsAddModalOpen(true)}
-                className="px-4 py-2.5 rounded-xl bg-white text-orange-800 font-bold text-xs shadow-md hover:bg-amber-50 active:scale-95 transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-white text-orange-800 font-bold text-xs shadow-md hover:bg-amber-50 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 <span>Thêm Điểm Thưởng / Phạt</span>
@@ -263,7 +347,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
             )}
             <button
               onClick={() => window.print()}
-              className="p-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/30 text-xs font-semibold flex items-center gap-1.5"
+              className="p-2.5 rounded-xl bg-white/20 hover:bg-white/30 text-white border border-white/30 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
               title="In báo cáo thi đua tuần"
             >
               <Printer className="w-4 h-4" />
@@ -285,7 +369,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
               key={wk}
               type="button"
               onClick={() => setSelectedWeek(wk)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 selectedWeek === wk
                   ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-sm'
                   : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
@@ -297,7 +381,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2 self-end sm:self-center">
-          <span className="text-xs text-slate-500">Tháng:</span>
+          <span className="text-xs text-slate-500 font-medium">Tháng:</span>
           <select
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(e.target.value)}
@@ -315,7 +399,6 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         {rankedGroups.map((groupData, idx) => {
           const rankInfo = rankBadges[idx];
-          const theme = groupThemes[groupData.group];
           const RankIcon = rankInfo.icon;
 
           return (
@@ -340,7 +423,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                       <h3 className="text-base font-black text-slate-900 dark:text-white">
                         TỔ {groupData.group}
                       </h3>
-                      <p className="text-[11px] text-slate-500">{groupData.studentCount} Học Sinh</p>
+                      <p className="text-[11px] font-semibold text-slate-500">{groupData.studentCount} Học Sinh</p>
                     </div>
                   </div>
 
@@ -419,7 +502,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedGroupModal(groupData.group)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 shrink-0"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1 shrink-0 cursor-pointer"
                 >
                   <span>Chi Tiết</span>
                   <ChevronRight className="w-3 h-3" />
@@ -452,7 +535,9 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                       <span className="w-6 h-6 rounded-lg bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-black flex items-center justify-center text-xs">
                         T{g.group}
                       </span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">Tổ {g.group} - {g.leader.name}</span>
+                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                        Tổ {g.group} - {g.leader.name} ({g.studentCount} HS)
+                      </span>
                     </div>
                     <span className="font-black text-orange-600 dark:text-orange-400 font-mono text-sm">
                       {g.finalScore} đ
@@ -462,7 +547,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                   {/* Multi-segment Progress Bar */}
                   <div className="w-full h-3.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex shadow-inner">
                     {/* Base 100 */}
-                    <div style={{ width: '50%' }} className="bg-slate-400 dark:bg-slate-600" title="Điểm gốc: 100đ" />
+                    <div style={{ width: '45%' }} className="bg-slate-400 dark:bg-slate-600" title="Điểm gốc: 100đ" />
                     {/* Academic */}
                     <div style={{ width: `${Math.max(g.totalAcademic * 1.5, 4)}%` }} className="bg-blue-500" title={`Học tập: +${g.totalAcademic}đ`} />
                     {/* Discipline */}
@@ -515,7 +600,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
               {(role === 'gvcn' || role === 'csl') && (
                 <button
                   onClick={() => setIsAddModalOpen(true)}
-                  className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-orange-600 hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" /> Ghi Nhận
                 </button>
@@ -536,7 +621,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300 font-bold text-[10px]">
-                          Tổ {log.group}
+                          Tổ {getStudentGroupNumber(log.group)}
                         </span>
                         <span className="font-bold text-slate-900 dark:text-slate-100">{log.title}</span>
                       </div>
@@ -551,7 +636,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                         {onDeleteEmulationLog && role === 'gvcn' && (
                           <button
                             onClick={() => onDeleteEmulationLog(log.id)}
-                            className="text-slate-400 hover:text-red-500 p-0.5"
+                            className="text-slate-400 hover:text-red-500 p-0.5 cursor-pointer"
                             title="Xóa bản ghi này"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -581,7 +666,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       {/* DETAIL MODAL FOR SPECIFIC GROUP */}
       {selectedGroupModal !== null && (
         <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-2xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className={`p-5 bg-gradient-to-r ${groupThemes[selectedGroupModal].headerGradient} text-white flex items-center justify-between`}>
               <div className="flex items-center space-x-3">
@@ -589,16 +674,41 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                   <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black">Danh Sách Thành Viên & Điểm Thi Đua Tổ {selectedGroupModal}</h3>
-                  <p className="text-xs text-white/80">
-                    Tổ Trưởng: <strong>{groupLeaders[selectedGroupModal]?.name}</strong>
-                  </p>
+                  <h3 className="text-lg font-black">
+                    Danh Sách Thành Viên & Điểm Thi Đua Tổ {selectedGroupModal}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-white/90 mt-0.5">
+                    <span>Tổ Trưởng:</span>
+                    <select
+                      value={groupSummaries.find((g) => g.group === selectedGroupModal)?.leader.name || ''}
+                      onChange={(e) => {
+                        setCustomLeaders((prev) => ({
+                          ...prev,
+                          [selectedGroupModal]: e.target.value,
+                        }));
+                      }}
+                      className="bg-black/30 text-white font-bold px-2 py-0.5 rounded-lg border border-white/30 text-xs"
+                    >
+                      {students
+                        .filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal)
+                        .map((s) => (
+                          <option key={s.id} value={s.name} className="text-slate-900">
+                            {s.name}
+                          </option>
+                        ))}
+                      {students.filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal).length === 0 && (
+                        <option value="Chưa phân công" className="text-slate-900">
+                          Chưa phân công
+                        </option>
+                      )}
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <button
                 onClick={() => setSelectedGroupModal(null)}
-                className="p-1.5 rounded-xl hover:bg-white/20 text-white transition-colors"
+                className="p-1.5 rounded-xl hover:bg-white/20 text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -613,15 +723,15 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                       <th className="p-3">#</th>
                       <th className="p-3">Họ và Tên</th>
                       <th className="p-3">Mã HS</th>
+                      <th className="p-3 text-center">Tổ Hiện Tại</th>
                       <th className="p-3 text-center">GPA</th>
                       <th className="p-3 text-center">Hạnh Kiểm</th>
-                      <th className="p-3 text-center">Khen Thưởng</th>
-                      <th className="p-3 text-center">Vi Phạm</th>
+                      <th className="p-3 text-center">Nề Nếp / Vi Phạm</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {students
-                      .filter((s) => s.group === selectedGroupModal)
+                      .filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal)
                       .map((student, idx) => (
                         <tr key={student.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
                           <td className="p-3 font-mono text-slate-400">{idx + 1}</td>
@@ -629,27 +739,57 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                             <img
                               src={student.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=50'}
                               alt={student.name}
-                              className="w-6 h-6 rounded-full object-cover"
+                              className="w-7 h-7 rounded-full object-cover border border-slate-200 dark:border-slate-700"
                             />
                             <span>{student.name}</span>
                           </td>
                           <td className="p-3 font-mono text-slate-500">{student.code}</td>
+                          <td className="p-3 text-center">
+                            {role === 'gvcn' || role === 'csl' ? (
+                              <select
+                                value={getStudentGroupNumber(student.group)}
+                                onChange={(e) =>
+                                  handleChangeStudentGroup(
+                                    student.id,
+                                    Number(e.target.value) as 1 | 2 | 3 | 4
+                                  )
+                                }
+                                className="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 font-bold text-xs"
+                              >
+                                <option value={1}>Tổ 1</option>
+                                <option value={2}>Tổ 2</option>
+                                <option value={3}>Tổ 3</option>
+                                <option value={4}>Tổ 4</option>
+                              </select>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 font-bold">
+                                Tổ {getStudentGroupNumber(student.group)}
+                              </span>
+                            )}
+                          </td>
                           <td className="p-3 text-center font-bold text-blue-600">
                             {student.grades?.gpa || 8.5}
                           </td>
                           <td className="p-3 text-center">
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-bold text-[10px]">
                               {student.conductRating || 'Tốt'}
                             </span>
                           </td>
-                          <td className="p-3 text-center font-bold text-emerald-600">
-                            {student.commendationsCount || 0}
-                          </td>
-                          <td className="p-3 text-center font-bold text-red-500">
-                            {student.violationsCount || 0}
+                          <td className="p-3 text-center">
+                            <span className="font-bold text-emerald-600">+{student.commendationsCount || 0}</span>
+                            <span className="mx-1 text-slate-300">/</span>
+                            <span className="font-bold text-red-500">-{student.violationsCount || 0}</span>
                           </td>
                         </tr>
                       ))}
+
+                    {students.filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal).length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="p-6 text-center text-slate-400 italic">
+                          Chưa có học sinh nào được phân công vào Tổ {selectedGroupModal}.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -660,7 +800,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedGroupModal(null)}
-                className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-bold hover:bg-slate-300"
+                className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-xs font-bold hover:bg-slate-300 cursor-pointer"
               >
                 Đóng
               </button>
@@ -680,7 +820,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
               </div>
               <button
                 onClick={() => setIsAddModalOpen(false)}
-                className="p-1 rounded-lg hover:bg-white/20 text-white"
+                className="p-1 rounded-lg hover:bg-white/20 text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -697,7 +837,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                       key={g}
                       type="button"
                       onClick={() => setTargetGroup(g)}
-                      className={`py-2 text-xs font-black rounded-xl transition-all ${
+                      className={`py-2 text-xs font-black rounded-xl transition-all cursor-pointer ${
                         targetGroup === g
                           ? 'bg-orange-600 text-white shadow-sm'
                           : 'bg-slate-100 dark:bg-slate-800 text-slate-600 hover:bg-slate-200'
@@ -777,13 +917,13 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 font-bold"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 font-bold cursor-pointer"
                 >
                   Hủy Bỏ
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black shadow-md"
+                  className="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black shadow-md cursor-pointer"
                 >
                   Lưu Bản Ghi
                 </button>
