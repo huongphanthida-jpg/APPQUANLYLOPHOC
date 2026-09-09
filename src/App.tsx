@@ -1361,6 +1361,11 @@ export default function App() {
               dutySchedule={dutySchedule}
               examAttempts={examAttempts}
               randomPicks={randomPicks}
+              onUpdateStudents={(newStudents) => {
+                setStudents(newStudents);
+                saveStudents(newStudents);
+              }}
+              homeroomBookData={homeroomBookData}
             />
           )}
 
