@@ -76,6 +76,21 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
   const [sortBy, setSortBy] = useState<'overall_desc' | 'overall_asc' | 'attendance_desc' | 'conduct_desc' | 'name_asc' | 'code_asc'>('overall_desc');
   const [selectedStudentDetail, setSelectedStudentDetail] = useState<Student | null>(null);
 
+  // Custom initial base scores (Default 100, configurable)
+  const [initialAttendanceBaseScore, setInitialAttendanceBaseScore] = useState<number>(() => {
+    const saved = localStorage.getItem('emulation_attendance_base_score');
+    return saved ? Math.max(1, Number(saved)) : 100;
+  });
+
+  const [initialConductBaseScore, setInitialConductBaseScore] = useState<number>(() => {
+    const saved = localStorage.getItem('emulation_conduct_base_score');
+    return saved ? Math.max(1, Number(saved)) : 100;
+  });
+
+  const [showBaseScoreModal, setShowBaseScoreModal] = useState<boolean>(false);
+  const [tempAttBase, setTempAttBase] = useState<number>(initialAttendanceBaseScore);
+  const [tempCondBase, setTempCondBase] = useState<number>(initialConductBaseScore);
+
   // Helper to determine which week a date/item belongs to
   const getWeekFromDate = (dateStr?: string): number => {
     if (!dateStr) return 1;
@@ -148,15 +163,16 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
         v.reason.toLowerCase().includes('muộn') || v.reason.toLowerCase().includes('trễ')
       ).length;
 
-      // Điểm chuyên cần (Thang 100: Trừ 2đ/nghỉ có phép, 5đ/nghỉ không phép, 2đ/đi muộn)
-      const rawAttendanceScore = 100 - (excusedAbsences * 2 + unexcusedAbsences * 5 + lateArrivals * 2);
-      const attendanceScore = Math.max(0, Math.min(100, rawAttendanceScore));
-      const attendanceRate = Number(((attendanceScore / 100) * 100).toFixed(1));
+      // Điểm chuyên cần (Thang gốc tự chọn: Trừ 2đ/nghỉ có phép, 5đ/nghỉ không phép, 2đ/đi muộn)
+      const rawAttendanceScore = initialAttendanceBaseScore - (excusedAbsences * 2 + unexcusedAbsences * 5 + lateArrivals * 2);
+      const attendanceScore = Math.max(0, Math.min(initialAttendanceBaseScore, rawAttendanceScore));
+      const attRatio = attendanceScore / (initialAttendanceBaseScore || 1);
+      const attendanceRate = Number((attRatio * 100).toFixed(1));
 
       let attendanceRating: 'Xuất Sắc' | 'Tốt' | 'Khá' | 'Cần Lưu Ý' = 'Xuất Sắc';
-      if (attendanceScore < 75 || unexcusedAbsences > 1) attendanceRating = 'Cần Lưu Ý';
-      else if (attendanceScore < 90 || excusedAbsences > 2 || lateArrivals > 2) attendanceRating = 'Khá';
-      else if (attendanceScore < 98 || excusedAbsences > 0 || lateArrivals > 0) attendanceRating = 'Tốt';
+      if (attendanceRate < 75 || unexcusedAbsences > 1) attendanceRating = 'Cần Lưu Ý';
+      else if (attendanceRate < 90 || excusedAbsences > 2 || lateArrivals > 2) attendanceRating = 'Khá';
+      else if (attendanceRate < 98 || excusedAbsences > 0 || lateArrivals > 0) attendanceRating = 'Tốt';
 
       // 2. Nề nếp & Kỷ luật (Conduct & Discipline) theo thời gian
       const studentDiscLogs = disciplineLogs.filter((d) => {
@@ -176,29 +192,34 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       const totalBonusPoints = bonusLogs.reduce((sum, l) => sum + Math.abs(l.points), 0);
       const totalPenaltyPoints = penaltyLogs.reduce((sum, l) => sum + Math.abs(l.points), 0);
 
-      // Điểm nề nếp thực tế tính theo mốc thời gian
-      let conductScore = 100;
+      // Điểm nề nếp thực tế tính theo mốc thời gian dựa trên điểm ban đầu
+      let conductScore = initialConductBaseScore;
       if (timePeriodMode === 'all') {
-        conductScore = student.conductScore ?? (100 + totalBonusPoints - totalPenaltyPoints);
+        const netPoints = totalBonusPoints - totalPenaltyPoints;
+        const studentConduct = student.conductScore !== undefined ? (student.conductScore - 100) : netPoints;
+        conductScore = Math.max(0, initialConductBaseScore + studentConduct);
       } else {
-        // Điểm nề nếp kỳ/tuần/tháng: 100 gốc + thưởng - phạt
-        conductScore = Math.max(50, Math.min(100, 100 + totalBonusPoints - totalPenaltyPoints));
+        conductScore = Math.max(0, initialConductBaseScore + totalBonusPoints - totalPenaltyPoints);
       }
       
-      const conductRating = conductScore >= 90 ? 'Tốt' : conductScore >= 80 ? 'Khá' : conductScore >= 65 ? 'Trung bình' : 'Yếu';
+      const conductRatio = conductScore / (initialConductBaseScore || 1);
+      const conductPercent = conductRatio * 100;
+      const conductRating = conductPercent >= 90 ? 'Tốt' : conductPercent >= 80 ? 'Khá' : conductPercent >= 65 ? 'Trung bình' : 'Yếu';
 
       // 3. Tổng hợp 2 mặt thi đua (Trọng số 40% Chuyên cần, 60% Nề nếp)
+      const overallBaseScore = Number(((initialAttendanceBaseScore * 0.4) + (initialConductBaseScore * 0.6)).toFixed(1));
       const overallEmulationScore = Number(((attendanceScore * 0.4) + (conductScore * 0.6)).toFixed(1));
+      const overallPercent = (overallEmulationScore / (overallBaseScore || 1)) * 100;
       
       let emulationTitle = 'Tiêu Biểu Xuất Sắc';
       let emulationBadgeColor = 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300';
-      if (overallEmulationScore >= 95 && attendanceRating === 'Xuất Sắc' && conductScore >= 95) {
+      if (overallPercent >= 95 && attendanceRating === 'Xuất Sắc' && conductPercent >= 95) {
         emulationTitle = 'Gương Mẫu Tiêu Biểu';
         emulationBadgeColor = 'bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black shadow-xs';
-      } else if (overallEmulationScore >= 90) {
+      } else if (overallPercent >= 90) {
         emulationTitle = 'Tiên Tiến Toàn Diện';
         emulationBadgeColor = 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300';
-      } else if (overallEmulationScore >= 80) {
+      } else if (overallPercent >= 80) {
         emulationTitle = 'Đạt Chuẩn Nề Nếp';
         emulationBadgeColor = 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950/60 dark:text-blue-300';
       } else {
@@ -230,7 +251,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
         emulationBadgeColor,
       };
     });
-  }, [students, disciplineLogs, leaveRequests, timePeriodMode, selectedWeek, selectedMonth, selectedSemester]);
+  }, [students, disciplineLogs, leaveRequests, timePeriodMode, selectedWeek, selectedMonth, selectedSemester, initialAttendanceBaseScore, initialConductBaseScore]);
 
   // Filtered & Sorted student emulation list
   const filteredStudents = useMemo(() => {
@@ -279,16 +300,18 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
   // High-level Class Metrics
   const classMetrics = useMemo(() => {
     const total = studentEmulationData.length || 1;
+    const overallBaseScore = Number(((initialAttendanceBaseScore * 0.4) + (initialConductBaseScore * 0.6)).toFixed(1));
     const avgAttendanceScore = Number((studentEmulationData.reduce((acc, s) => acc + s.attendanceScore, 0) / total).toFixed(1));
     const avgConductScore = Number((studentEmulationData.reduce((acc, s) => acc + s.conductScore, 0) / total).toFixed(1));
     const avgOverallScore = Number((studentEmulationData.reduce((acc, s) => acc + s.overallEmulationScore, 0) / total).toFixed(1));
 
     const excellentCount = studentEmulationData.filter((s) => s.emulationTitle.includes('Tiêu Biểu') || s.emulationTitle.includes('Gương Mẫu')).length;
     const goodCount = studentEmulationData.filter((s) => s.emulationTitle === 'Tiên Tiến Toàn Diện').length;
-    const warningCount = studentEmulationData.filter((s) => s.emulationTitle === 'Cần Chấn Chỉnh' || s.conductScore < 80 || s.attendanceScore < 85).length;
+    const warningCount = studentEmulationData.filter((s) => s.emulationTitle === 'Cần Chấn Chỉnh' || s.conductScore < (initialConductBaseScore * 0.8) || s.attendanceScore < (initialAttendanceBaseScore * 0.85)).length;
     const totalAbsences = studentEmulationData.reduce((acc, s) => acc + s.excusedAbsences + s.unexcusedAbsences, 0);
 
     return {
+      overallBaseScore,
       avgAttendanceScore,
       avgConductScore,
       avgOverallScore,
@@ -299,7 +322,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       excellentRate: Number(((excellentCount / total) * 100).toFixed(1)),
       goodOrHigherRate: Number((((excellentCount + goodCount) / total) * 100).toFixed(1)),
     };
-  }, [studentEmulationData]);
+  }, [studentEmulationData, initialAttendanceBaseScore, initialConductBaseScore]);
 
   // Group Statistics for Matrix & Chart
   const groupStats = useMemo(() => {
@@ -354,13 +377,13 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       'Nghỉ Có Phép (buổi)': item.excusedAbsences,
       'Nghỉ Không Phép (buổi)': item.unexcusedAbsences,
       'Đi Muộn (lần)': item.lateArrivals,
-      'Điểm Chuyên Cần (/100)': item.attendanceScore,
+      [`Điểm Chuyên Cần (/${initialAttendanceBaseScore})`]: item.attendanceScore,
       'Xếp Loại Chuyên Cần': item.attendanceRating,
       'Số Lượt Khen Thưởng': item.bonusCount,
       'Số Lượt Vi Phạm': item.penaltyCount,
-      'Điểm Rèn Luyện Nề Nếp (/100)': item.conductScore,
+      [`Điểm Rèn Luyện Nề Nếp (/${initialConductBaseScore})`]: item.conductScore,
       'Xếp Loại Nề Nếp': item.conductRating,
-      'Điểm Thi Đua Tổng Hợp (/100)': item.overallEmulationScore,
+      [`Điểm Thi Đua Tổng Hợp (/${classMetrics.overallBaseScore})`]: item.overallEmulationScore,
       'Danh Hiệu Thi Đua': item.emulationTitle,
       'Ghi Chú': item.student.healthNote || item.student.careerAspiration || '',
     }));
@@ -430,7 +453,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
           </div>
 
           {/* Action Buttons on 1 Horizontal Row */}
-          <div className="flex items-center gap-2 shrink-0 self-start xl:self-center">
+          <div className="flex flex-wrap items-center gap-2 shrink-0 self-start xl:self-center">
             {(role === 'gvcn' || role === 'bgh') && onOpenAddDiscipline && (
               <button
                 type="button"
@@ -442,6 +465,21 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                 <span>Ghi Nhận Khen / Phạt</span>
               </button>
             )}
+
+            <button
+              type="button"
+              id="btn-config-base-score"
+              onClick={() => {
+                setTempAttBase(initialAttendanceBaseScore);
+                setTempCondBase(initialConductBaseScore);
+                setShowBaseScoreModal(true);
+              }}
+              className="px-3.5 py-2 rounded-xl bg-purple-600/80 hover:bg-purple-600 border border-purple-400/40 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer whitespace-nowrap shadow-xs"
+              title="Cấu hình số điểm ban đầu cho Chuyên cần và Nề nếp"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-purple-200" />
+              <span>Điểm Ban Đầu ({initialAttendanceBaseScore}/{initialConductBaseScore})</span>
+            </button>
 
             <button
               type="button"
@@ -485,7 +523,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
               <span className="text-2xl sm:text-3xl font-black text-purple-700 dark:text-purple-400 font-mono">
                 {classMetrics.avgAttendanceScore}
               </span>
-              <span className="text-xs text-slate-400">/ 100 điểm</span>
+              <span className="text-xs text-slate-400">/ {initialAttendanceBaseScore} điểm</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
               <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
@@ -493,7 +531,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
             </p>
           </div>
           <div className="w-full bg-purple-100 dark:bg-purple-950/50 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${classMetrics.avgAttendanceScore}%` }} />
+            <div className="bg-purple-600 h-1.5 rounded-full" style={{ width: `${Math.min(100, Math.max(0, (classMetrics.avgAttendanceScore / (initialAttendanceBaseScore || 1)) * 100))}%` }} />
           </div>
         </div>
 
@@ -512,7 +550,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
               <span className="text-2xl sm:text-3xl font-black text-emerald-700 dark:text-emerald-400 font-mono">
                 {classMetrics.avgConductScore}
               </span>
-              <span className="text-xs text-slate-400">/ 100 điểm</span>
+              <span className="text-xs text-slate-400">/ {initialConductBaseScore} điểm</span>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
@@ -520,7 +558,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
             </p>
           </div>
           <div className="w-full bg-emerald-100 dark:bg-emerald-950/50 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-emerald-600 h-1.5 rounded-full" style={{ width: `${classMetrics.avgConductScore}%` }} />
+            <div className="bg-emerald-600 h-1.5 rounded-full" style={{ width: `${Math.min(100, Math.max(0, (classMetrics.avgConductScore / (initialConductBaseScore || 1)) * 100))}%` }} />
           </div>
         </div>
 
@@ -539,7 +577,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
               <span className="text-2xl sm:text-3xl font-black text-amber-700 dark:text-amber-300 font-mono">
                 {classMetrics.avgOverallScore}
               </span>
-              <span className="text-xs text-slate-400">/ 100 điểm</span>
+              <span className="text-xs text-slate-400">/ {classMetrics.overallBaseScore} điểm</span>
             </div>
             <p className="text-[11px] text-amber-700 dark:text-amber-300 mt-1 flex items-center gap-1">
               <Star className="w-3.5 h-3.5 text-amber-500 shrink-0 fill-amber-400" />
@@ -547,7 +585,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
             </p>
           </div>
           <div className="w-full bg-amber-100 dark:bg-amber-950/50 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${classMetrics.avgOverallScore}%` }} />
+            <div className="bg-amber-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, Math.max(0, (classMetrics.avgOverallScore / (classMetrics.overallBaseScore || 1)) * 100))}%` }} />
           </div>
         </div>
 
@@ -1036,11 +1074,11 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
             <div className="flex flex-wrap items-center gap-4">
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-purple-500" />
-                <strong>Chuyên cần (40%)</strong>: 100đ gốc - vắng có phép (-2đ), không phép (-5đ), muộn (-2đ).
+                <strong>Chuyên cần (40%)</strong>: {initialAttendanceBaseScore}đ gốc - vắng có phép (-2đ), không phép (-5đ), muộn (-2đ).
               </span>
               <span className="flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <strong>Nề nếp (60%)</strong>: 100đ gốc + điểm thưởng tác phong/Đoàn thể - vi phạm nội quy.
+                <strong>Nề nếp & Học tập (60%)</strong>: {initialConductBaseScore}đ gốc + điểm thưởng - vi phạm nội quy.
               </span>
             </div>
             <span className="font-semibold text-slate-700 dark:text-slate-300">
@@ -1088,20 +1126,20 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div className="p-3 rounded-2xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-900">
                       <p className="text-[10px] text-purple-700 font-bold uppercase">Chuyên Cần</p>
-                      <p className="text-xl font-black text-purple-800 dark:text-purple-300 font-mono mt-0.5">
-                        {item.attendanceScore}đ
+                      <p className="text-lg font-black text-purple-800 dark:text-purple-300 font-mono mt-0.5">
+                        {item.attendanceScore} / {initialAttendanceBaseScore}đ
                       </p>
                     </div>
                     <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900">
                       <p className="text-[10px] text-emerald-700 font-bold uppercase">Nề Nếp</p>
-                      <p className="text-xl font-black text-emerald-800 dark:text-emerald-300 font-mono mt-0.5">
-                        {item.conductScore}đ
+                      <p className="text-lg font-black text-emerald-800 dark:text-emerald-300 font-mono mt-0.5">
+                        {item.conductScore} / {initialConductBaseScore}đ
                       </p>
                     </div>
                     <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900">
                       <p className="text-[10px] text-amber-700 font-bold uppercase">Tổng Hợp 2 Mặt</p>
-                      <p className="text-xl font-black text-amber-800 dark:text-amber-300 font-mono mt-0.5">
-                        {item.overallEmulationScore}đ
+                      <p className="text-lg font-black text-amber-800 dark:text-amber-300 font-mono mt-0.5">
+                        {item.overallEmulationScore} / {classMetrics.overallBaseScore}đ
                       </p>
                     </div>
                   </div>
@@ -1154,7 +1192,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                           setSelectedStudentDetail(null);
                           onOpenAddDiscipline(selectedStudentDetail.id);
                         }}
-                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs"
+                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs cursor-pointer"
                       >
                         Ghi Nhận Khen / Phạt
                       </button>
@@ -1162,7 +1200,7 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                     <button
                       type="button"
                       onClick={() => setSelectedStudentDetail(null)}
-                      className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs"
+                      className="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs cursor-pointer"
                     >
                       Đóng
                     </button>
@@ -1170,6 +1208,154 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
                 </div>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* 6. Modal Adjust Initial Base Scores */}
+      {showBaseScoreModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
+            {/* Modal Header */}
+            <div className="p-5 bg-gradient-to-r from-purple-900 to-indigo-900 text-white flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-purple-500/30 border border-purple-400/40 flex items-center justify-center text-purple-300 font-black">
+                  <SlidersHorizontal className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Cấu Hình Điểm Ban Đầu</h3>
+                  <p className="text-xs text-purple-200">Tự điều chỉnh mốc điểm gốc thay vì mặc định 100 điểm</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowBaseScoreModal(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-5 space-y-5 text-xs">
+              {/* Field 1: Attendance Base */}
+              <div className="space-y-2">
+                <label className="block font-bold text-slate-800 dark:text-slate-200">
+                  1. Mốc điểm Chuyên Cần ban đầu (Mặt 1):
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={tempAttBase}
+                    onChange={(e) => setTempAttBase(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono font-bold text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none"
+                  />
+                  <span className="font-bold text-slate-500 shrink-0">điểm gốc</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {[50, 80, 100, 120, 150].map((preset) => (
+                    <button
+                      key={`att-${preset}`}
+                      type="button"
+                      onClick={() => setTempAttBase(preset)}
+                      className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                        tempAttBase === preset
+                          ? 'bg-purple-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                      }`}
+                    >
+                      {preset}đ {preset === 100 ? '(Mặc định)' : ''}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                  * Điểm chuyên cần của học sinh sẽ trừ dần từ mốc {tempAttBase}đ này khi vắng học hoặc đi muộn.
+                </p>
+              </div>
+
+              {/* Field 2: Conduct / Academic Base */}
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <label className="block font-bold text-slate-800 dark:text-slate-200">
+                  2. Mốc điểm Nề nếp & Học tập ban đầu (Mặt 2):
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={tempCondBase}
+                    onChange={(e) => setTempCondBase(Math.max(1, Number(e.target.value) || 1))}
+                    className="w-full px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-mono font-bold text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                  />
+                  <span className="font-bold text-slate-500 shrink-0">điểm gốc</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {[50, 80, 100, 120, 150].map((preset) => (
+                    <button
+                      key={`cond-${preset}`}
+                      type="button"
+                      onClick={() => setTempCondBase(preset)}
+                      className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                        tempCondBase === preset
+                          ? 'bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                      }`}
+                    >
+                      {preset}đ {preset === 100 ? '(Mặc định)' : ''}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400 italic">
+                  * Điểm rèn luyện nề nếp & học tập sẽ cộng/trừ từ mốc {tempCondBase}đ này theo lượt khen thưởng/vi phạm.
+                </p>
+              </div>
+
+              {/* Summary of overall base */}
+              <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
+                <span className="font-bold text-amber-900 dark:text-amber-300">Tổng điểm 2 mặt ban đầu:</span>
+                <span className="font-mono font-black text-sm text-amber-700 dark:text-amber-400">
+                  {Number(((tempAttBase * 0.4) + (tempCondBase * 0.6)).toFixed(1))} điểm
+                </span>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTempAttBase(100);
+                    setTempCondBase(100);
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-semibold text-xs cursor-pointer"
+                >
+                  Khôi phục 100đ
+                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowBaseScoreModal(false)}
+                    className="px-3.5 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInitialAttendanceBaseScore(tempAttBase);
+                      setInitialConductBaseScore(tempCondBase);
+                      localStorage.setItem('emulation_attendance_base_score', String(tempAttBase));
+                      localStorage.setItem('emulation_conduct_base_score', String(tempCondBase));
+                      setShowBaseScoreModal(false);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-bold text-xs shadow-md cursor-pointer active:scale-95"
+                  >
+                    Lưu Cấu Hình
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
