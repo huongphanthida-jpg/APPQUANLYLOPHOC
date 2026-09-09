@@ -41,6 +41,7 @@ interface TaskDutyViewProps {
   onSaveDuty?: (duty: DutySchedule) => void;
   onBatchSaveDuty?: (duties: DutySchedule[]) => void;
   onDeleteDuty?: (dutyId: string) => void;
+  onClearAllDutySchedule?: () => void;
   role: UserRole;
 }
 
@@ -55,6 +56,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
   onSaveDuty,
   onBatchSaveDuty,
   onDeleteDuty,
+  onClearAllDutySchedule,
   role,
 }) => {
   const [activeTab, setActiveTab] = useState<'tasks' | 'duty'>('duty');
@@ -291,6 +293,25 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
     }
   };
 
+  // Handler to clear/delete all duty schedules for quick reset
+  const handleClearAllDuties = () => {
+    setConfirmAction({
+      isOpen: true,
+      title: 'Xoá Hết Lịch Trực Nhật',
+      message: 'Bạn có chắc chắn muốn xoá toàn bộ lịch phân công trực nhật hiện tại để cài đặt / cập nhật lại từ đầu?',
+      confirmText: 'Xoá Hết Lịch Trực',
+      onConfirm: () => {
+        if (onClearAllDutySchedule) {
+          onClearAllDutySchedule();
+        } else if (onBatchSaveDuty) {
+          onBatchSaveDuty([]);
+        } else if (onDeleteDuty && dutySchedule.length > 0) {
+          dutySchedule.forEach((d) => onDeleteDuty(d.id));
+        }
+      },
+    });
+  };
+
   // Filtered duty list
   const filteredDutySchedule = dutySchedule.filter((duty) => {
     if (selectedDutyGroupFilter !== 'all' && duty.assignedGroup !== selectedDutyGroupFilter) {
@@ -350,6 +371,19 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
               <span>Task Board Tổ/Nhóm</span>
             </button>
           </div>
+
+          {/* Clear All Duties Button */}
+          {(role === 'gvcn' || role === 'csl') && activeTab === 'duty' && dutySchedule.length > 0 && (
+            <button
+              id="btn-clear-all-duties"
+              onClick={handleClearAllDuties}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600/90 hover:bg-rose-600 text-white text-xs font-bold shadow-md transition-all cursor-pointer active:scale-95 whitespace-nowrap"
+              title="Xóa hết lịch trực nhật hiện tại để cài đặt lại nhanh"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Xoá Hết Lịch Trực</span>
+            </button>
+          )}
 
           {/* Add New Duty Button */}
           {(role === 'gvcn' || role === 'csl') && activeTab === 'duty' && (
@@ -600,7 +634,7 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
 
               {/* Quick 1-click Auto Generator for any Group */}
               {(role === 'gvcn' || role === 'csl') && (
-                <div className="flex items-center gap-2 self-start md:self-auto bg-white/10 p-1.5 rounded-2xl border border-white/20">
+                <div className="flex items-center gap-2 self-start md:self-auto bg-white/10 p-1.5 rounded-2xl border border-white/20 flex-wrap">
                   <span className="text-xs font-bold text-blue-200 px-2 whitespace-nowrap">
                     Khởi tạo ca trực cho:
                   </span>
@@ -615,6 +649,17 @@ export const TaskDutyView: React.FC<TaskDutyViewProps> = ({
                       Tổ {grp}
                     </button>
                   ))}
+                  {dutySchedule.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleClearAllDuties}
+                      className="px-2.5 py-1 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-xs transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1 ml-1"
+                      title="Xóa hết lịch trực nhật hiện tại để cài đặt lại nhanh"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>Xóa Hết Lịch</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
