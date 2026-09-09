@@ -42,12 +42,44 @@ export const StudentModal: React.FC<StudentModalProps> = ({
 }) => {
   if (!isOpen || !student) return null;
 
-  const [formData, setFormData] = useState<Student>({ ...student });
-  const [activeTab, setActiveTab] = useState<'profile' | 'academic' | 'emergency'>('profile');
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
-  const [isEditingGrades, setIsEditingGrades] = useState(false);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const DEFAULT_SUBJECT_NAMES: Record<string, string> = {
+    math: 'Toán học (Khối A)',
+    physics: 'Vật lý (Khối A)',
+    chemistry: 'Hóa học (Khối A)',
+    biology: 'Sinh học',
+    english: 'Tiếng Anh',
+    literature: 'Ngữ văn',
+    history: 'Lịch sử',
+    geography: 'Địa lý',
+    informatics: 'Tin học',
+  };
+
+  const [subjectNames, setSubjectNames] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('custom_subject_names');
+      return saved ? { ...DEFAULT_SUBJECT_NAMES, ...JSON.parse(saved) } : DEFAULT_SUBJECT_NAMES;
+    } catch {
+      return DEFAULT_SUBJECT_NAMES;
+    }
+  });
+
+  const [editingSubjectKey, setEditingSubjectKey] = useState<string | null>(null);
+  const [editingSubjectName, setEditingSubjectName] = useState<string>('');
+
+  const handleSaveSubjectName = (key: string) => {
+    if (!editingSubjectName.trim()) {
+      setEditingSubjectKey(null);
+      return;
+    }
+    const updated = { ...subjectNames, [key]: editingSubjectName.trim() };
+    setSubjectNames(updated);
+    try {
+      localStorage.setItem('custom_subject_names', JSON.stringify(updated));
+    } catch (e) {
+      console.error(e);
+    }
+    setEditingSubjectKey(null);
+  };
 
   useEffect(() => {
     if (student) {
@@ -517,20 +549,35 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                 </div>
 
                 {isGVCN && (
-                  <button
-                    type="button"
-                    id="btn-toggle-edit-grades"
-                    onClick={() => setIsEditingGrades(!isEditingGrades)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
-                      isEditingGrades
-                        ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                        : 'bg-white border border-blue-300 text-[#003366] hover:bg-blue-100'
-                    }`}
-                    title="Nhấp vào đây hoặc biểu tượng cây bút để sửa điểm trực tiếp"
-                  >
-                    <Edit3 className="w-3.5 h-3.5" />
-                    <span>{isEditingGrades ? 'Hoàn tất sửa điểm' : 'Sửa điểm số'}</span>
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSubjectNames(DEFAULT_SUBJECT_NAMES);
+                        try {
+                          localStorage.removeItem('custom_subject_names');
+                        } catch (e) {}
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl text-[11px] font-semibold text-slate-500 hover:text-slate-800 hover:bg-blue-100/50 transition-colors cursor-pointer"
+                      title="Khôi phục lại tên các môn học mặc định ban đầu"
+                    >
+                      🔄 Khôi phục tên môn
+                    </button>
+                    <button
+                      type="button"
+                      id="btn-toggle-edit-grades"
+                      onClick={() => setIsEditingGrades(!isEditingGrades)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                        isEditingGrades
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                          : 'bg-white border border-blue-300 text-[#003366] hover:bg-blue-100'
+                      }`}
+                      title="Nhấp vào đây hoặc biểu tượng cây bút để sửa điểm trực tiếp"
+                    >
+                      <Edit3 className="w-3.5 h-3.5" />
+                      <span>{isEditingGrades ? 'Hoàn tất sửa điểm' : 'Sửa điểm số'}</span>
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -567,17 +614,56 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                       };
                       return (
                         <tr key={subject.key} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-2.5 px-3 font-bold text-[#003366] flex items-center justify-between gap-2">
-                            <span>{subject.name}</span>
-                            {isGVCN && (
-                              <button
-                                type="button"
-                                onClick={() => setIsEditingGrades(!isEditingGrades)}
-                                title="Nhấp vào biểu tượng cây bút để chỉnh sửa điểm"
-                                className="p-1 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition-colors cursor-pointer"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </button>
+                          <td className="py-2.5 px-3 font-bold text-[#003366] min-w-[210px]">
+                            {editingSubjectKey === subject.key ? (
+                              <div className="flex items-center gap-1.5 animate-in fade-in duration-150">
+                                <input
+                                  type="text"
+                                  list="subject-name-presets"
+                                  value={editingSubjectName}
+                                  onChange={(e) => setEditingSubjectName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveSubjectName(subject.key);
+                                    if (e.key === 'Escape') setEditingSubjectKey(null);
+                                  }}
+                                  autoFocus
+                                  placeholder="Nhập tên môn..."
+                                  className="w-full px-2 py-1 bg-white border border-blue-400 rounded-lg text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveSubjectName(subject.key)}
+                                  className="p-1 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white transition-colors cursor-pointer shrink-0"
+                                  title="Lưu tên môn học"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingSubjectKey(null)}
+                                  className="p-1 rounded-md bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors cursor-pointer shrink-0"
+                                  title="Hủy"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-between gap-2 group">
+                                <span className="truncate">{subjectNames[subject.key] || subject.name}</span>
+                                {isGVCN && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingSubjectKey(subject.key);
+                                      setEditingSubjectName(subjectNames[subject.key] || subject.name);
+                                    }}
+                                    title="Nhấp để điều chỉnh tên môn học (VD: Toán (Khối A) -> Văn (Khối D)...)"
+                                    className="p-1 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-100 transition-colors cursor-pointer"
+                                  >
+                                    <Edit3 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </td>
                           {isEditingGrades && isGVCN ? (
@@ -732,6 +818,25 @@ export const StudentModal: React.FC<StudentModalProps> = ({
           confirmText="Xoá Học Sinh"
         />
       )}
+
+      {/* Subject Name Presets Datalist */}
+      <datalist id="subject-name-presets">
+        <option value="Toán học (Khối A)" />
+        <option value="Toán học (Khối A1)" />
+        <option value="Toán học (Khối B)" />
+        <option value="Vật lý (Khối A)" />
+        <option value="Vật lý (Khối A1)" />
+        <option value="Hóa học (Khối A)" />
+        <option value="Hóa học (Khối B)" />
+        <option value="Ngữ văn (Khối D)" />
+        <option value="Ngữ văn (Khối C)" />
+        <option value="Tiếng Anh (Khối D)" />
+        <option value="Tiếng Anh (Khối A1)" />
+        <option value="Lịch sử (Khối C)" />
+        <option value="Địa lý (Khối C)" />
+        <option value="Tin học" />
+        <option value="Sinh học (Khối B)" />
+      </datalist>
     </div>
   );
 };
