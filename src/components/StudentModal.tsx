@@ -69,7 +69,16 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   };
 
   const handleGradeChange = (
-    subjectKey: 'math' | 'physics' | 'chemistry' | 'biology' | 'english' | 'literature',
+    subjectKey:
+      | 'math'
+      | 'physics'
+      | 'chemistry'
+      | 'biology'
+      | 'english'
+      | 'literature'
+      | 'history'
+      | 'geography'
+      | 'informatics',
     field: 'tx1' | 'tx2' | 'gk' | 'ck',
     rawVal: string
   ) => {
@@ -77,7 +86,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
     const numVal = isNaN(val) ? 0 : Math.min(10, Math.max(0, val));
 
     setFormData((prev) => {
-      const currentSubject = (prev.grades as any)[subjectKey] || { tx1: 0, tx2: 0, gk: 0, ck: 0, avg: 0 };
+      const currentSubject = (prev.grades as any)[subjectKey] || { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 };
       const updatedSubject = {
         ...currentSubject,
         [field]: numVal,
@@ -96,10 +105,24 @@ export const StudentModal: React.FC<StudentModalProps> = ({
         [subjectKey]: updatedSubject,
       };
 
-      const subjects = ['math', 'physics', 'chemistry', 'biology', 'english', 'literature'] as const;
-      const totalAvg = subjects.reduce((sum, key) => sum + ((newGrades as any)[key]?.avg || 0), 0);
-      const gpa = Number((totalAvg / subjects.length).toFixed(1));
+      const subjects = [
+        'math',
+        'physics',
+        'chemistry',
+        'biology',
+        'english',
+        'literature',
+        'history',
+        'geography',
+        'informatics',
+      ] as const;
 
+      const totalAvg = subjects.reduce((sum, key) => {
+        const subj = (newGrades as any)[key] || { avg: 8.0 };
+        return sum + (subj.avg || 0);
+      }, 0);
+
+      const gpa = Number((totalAvg / subjects.length).toFixed(2));
       newGrades.gpa = gpa;
 
       return {
@@ -477,7 +500,19 @@ export const StudentModal: React.FC<StudentModalProps> = ({
             <div className="space-y-4">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl text-xs text-blue-900 flex items-center justify-between gap-2 flex-wrap">
                 <div className="flex items-center gap-4">
-                  <span>Điểm trung bình các môn (ĐTB): <strong className="text-sm font-black text-[#003366]">{formData.grades.gpa}</strong></span>
+                  <span>
+                    Điểm trung bình các môn (ĐTB):{' '}
+                    <strong className="text-sm font-black text-[#003366]">
+                      {Number(
+                        (
+                          ['math', 'physics', 'chemistry', 'biology', 'english', 'literature', 'history', 'geography', 'informatics'].reduce((sum, k) => {
+                            const g = (formData.grades as any)[k];
+                            return sum + (g?.avg ?? 8.0);
+                          }, 0) / 9
+                        ).toFixed(2)
+                      )}
+                    </strong>
+                  </span>
                   <span>Hạnh kiểm: <strong className="text-emerald-700 font-bold">{formData.conductRating}</strong> ({formData.conductScore}đ)</span>
                 </div>
 
@@ -513,14 +548,23 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {[
-                      { key: 'math', name: 'Toán học (Khối A)' },
-                      { key: 'physics', name: 'Vật lý (Khối A)' },
-                      { key: 'chemistry', name: 'Hóa học (Khối A)' },
-                      { key: 'biology', name: 'Sinh học' },
-                      { key: 'english', name: 'Tiếng Anh' },
-                      { key: 'literature', name: 'Ngữ văn' },
+                      { key: 'math', name: 'Toán học (Khối A)', defaultAvg: 7.3 },
+                      { key: 'physics', name: 'Vật lý (Khối A)', defaultAvg: 8.2 },
+                      { key: 'chemistry', name: 'Hóa học (Khối A)', defaultAvg: 7.7 },
+                      { key: 'biology', name: 'Sinh học', defaultAvg: 7.0 },
+                      { key: 'english', name: 'Tiếng Anh', defaultAvg: 8.3 },
+                      { key: 'literature', name: 'Ngữ văn', defaultAvg: 7.1 },
+                      { key: 'history', name: 'Lịch sử', defaultAvg: 7.8 },
+                      { key: 'geography', name: 'Địa lý', defaultAvg: 8.0 },
+                      { key: 'informatics', name: 'Tin học', defaultAvg: 8.2 },
                     ].map((subject) => {
-                      const grade = (formData.grades as any)[subject.key] || { tx1: 0, tx2: 0, gk: 0, ck: 0, avg: 0 };
+                      const grade = (formData.grades as any)[subject.key] || {
+                        tx1: subject.defaultAvg,
+                        tx2: subject.defaultAvg,
+                        gk: subject.defaultAvg,
+                        ck: subject.defaultAvg,
+                        avg: subject.defaultAvg,
+                      };
                       return (
                         <tr key={subject.key} className="hover:bg-slate-50 transition-colors">
                           <td className="py-2.5 px-3 font-bold text-[#003366] flex items-center justify-between gap-2">
