@@ -436,6 +436,34 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
     if (onUpdateStudents) onUpdateStudents(updated);
   };
 
+  // Dynamic Subject Columns sync with AcademicView
+  const ALL_SUBJECT_MAP: Record<string, { name: string; short: string; colorClass: string }> = {
+    math: { name: 'Toán Học', short: 'Toán', colorClass: 'text-blue-700 font-bold' },
+    physics: { name: 'Vật Lý', short: 'Vật Lý', colorClass: 'text-amber-700 font-bold' },
+    chemistry: { name: 'Hóa Học', short: 'Hóa Học', colorClass: 'text-emerald-700 font-bold' },
+    biology: { name: 'Sinh Học', short: 'Sinh', colorClass: 'text-teal-700 font-bold' },
+    literature: { name: 'Ngữ Văn', short: 'Ngữ Văn', colorClass: 'text-rose-700 font-bold' },
+    history: { name: 'Lịch Sử', short: 'Lịch Sử', colorClass: 'text-amber-600 font-bold' },
+    geography: { name: 'Địa Lý', short: 'Địa Lý', colorClass: 'text-lime-700 font-bold' },
+    gdcd: { name: 'GDCD', short: 'GDCD', colorClass: 'text-cyan-700 font-bold' },
+    english: { name: 'Tiếng Anh', short: 'Tiếng Anh', colorClass: 'text-purple-700 font-bold' },
+    informatics: { name: 'Tin Học', short: 'Tin Học', colorClass: 'text-indigo-700 font-bold' },
+  };
+
+  const activeSubjectKeys = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('tbm_active_subject_columns');
+      if (saved) return JSON.parse(saved) as string[];
+    } catch (e) {}
+    return ['math', 'physics', 'chemistry', 'biology', 'literature', 'english'];
+  }, []);
+
+  const activeSubjects = useMemo(() => {
+    return activeSubjectKeys
+      .filter((k) => ALL_SUBJECT_MAP[k])
+      .map((k) => ({ key: k, ...ALL_SUBJECT_MAP[k] }));
+  }, [activeSubjectKeys]);
+
   return (
     <div className="space-y-6">
       {/* Section Header */}
@@ -449,7 +477,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
               PHẦN 6: BẢNG ĐIỂM TOÀN DIỆN & MA TRẬN ĐÁNH GIÁ 2 MẶT GIÁO DỤC
             </h3>
             <p className="text-xs text-slate-500 font-medium">
-              Thống kê kết quả học tập 6 môn cơ bản (Toán, Lý, Hóa, Sinh, Văn, Anh) và xếp loại rèn luyện
+              Thống kê kết quả học tập các môn học ({activeSubjects.map((s) => s.short).join(', ')}) và xếp loại rèn luyện
             </p>
           </div>
         </div>
@@ -498,46 +526,38 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
               <tr className="bg-slate-100 font-bold text-slate-700 uppercase text-[11px]">
                 <th rowSpan={2} className="py-2.5 px-3 border border-slate-200 text-left">Kết Quả Rèn Luyện</th>
                 <th colSpan={4} className="py-2.5 px-3 border border-slate-200">Kết Quả Học Tập (Học Lực)</th>
-                <th rowSpan={2} className="py-2.5 px-3 border border-slate-200 bg-blue-50 text-[#003366]">Tổng Số</th>
+                <th rowSpan={2} className="py-2.5 px-3 border border-slate-200 bg-blue-50 text-[#003366]">Tổng Cộng</th>
               </tr>
-              <tr className="bg-slate-50 font-semibold text-slate-600">
-                <th className="py-1.5 px-2 border border-slate-200 text-emerald-700">Xuất Sắc (≥ 9.0)</th>
-                <th className="py-1.5 px-2 border border-slate-200 text-blue-700">Giỏi (≥ 8.0)</th>
-                <th className="py-1.5 px-2 border border-slate-200 text-indigo-700">Khá (≥ 6.5)</th>
-                <th className="py-1.5 px-2 border border-slate-200 text-slate-500">Đạt (≥ 5.0)</th>
+              <tr className="bg-slate-50 font-bold text-slate-600 uppercase text-[10px]">
+                <th className="py-2 px-2 border border-slate-200 text-emerald-700">Xuất Sắc</th>
+                <th className="py-2 px-2 border border-slate-200 text-blue-700">Giỏi</th>
+                <th className="py-2 px-2 border border-slate-200 text-indigo-700">Khá</th>
+                <th className="py-2 px-2 border border-slate-200 text-slate-500">Đạt / Phụ Đạo</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td className="py-2 px-3 border border-slate-200 font-bold text-left text-emerald-800">
-                  Tốt (90 - 100đ)
+                <td className="py-2 px-3 border border-slate-200 text-left font-bold text-purple-900 bg-purple-50/30">
+                  Tốt (Đạt chuẩn)
                 </td>
-                <td className="py-2 px-3 border border-slate-200 font-black text-emerald-700 bg-emerald-50/40">
-                  {stats.excellentCount} HS
-                </td>
-                <td className="py-2 px-3 border border-slate-200 font-black text-blue-700">
-                  {stats.goodCount} HS
-                </td>
-                <td className="py-2 px-3 border border-slate-200 font-black text-indigo-700">
-                  {Math.max(0, stats.fairCount - 1)} HS
-                </td>
+                <td className="py-2 px-3 border border-slate-200 text-emerald-700 font-bold">{stats.excellentCount} HS</td>
+                <td className="py-2 px-3 border border-slate-200 text-blue-700 font-bold">{stats.goodCount} HS</td>
+                <td className="py-2 px-3 border border-slate-200 text-indigo-700 font-bold">{stats.fairCount - stats.conductFair} HS</td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
-                <td className="py-2 px-3 border border-slate-200 font-black text-[#003366] bg-blue-50">
-                  {stats.conductGood} HS (97.2%)
+                <td className="py-2 px-3 border border-slate-200 font-bold text-purple-900 bg-purple-50/50">
+                  {stats.conductGood} HS ({(((stats.conductGood) / (students.length || 1)) * 100).toFixed(1)}%)
                 </td>
               </tr>
               <tr>
-                <td className="py-2 px-3 border border-slate-200 font-bold text-left text-blue-800">
-                  Khá (70 - 89đ)
+                <td className="py-2 px-3 border border-slate-200 text-left font-bold text-amber-900 bg-amber-50/30">
+                  Khá (Cần rèn luyện)
                 </td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
-                <td className="py-2 px-3 border border-slate-200 font-bold text-indigo-700">
-                  1 HS
-                </td>
+                <td className="py-2 px-3 border border-slate-200 text-amber-700 font-bold">{stats.conductFair} HS</td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
-                <td className="py-2 px-3 border border-slate-200 font-black text-[#003366] bg-blue-50">
-                  {stats.conductFair} HS (2.8%)
+                <td className="py-2 px-3 border border-slate-200 font-bold text-amber-900 bg-amber-50/50">
+                  {stats.conductFair} HS ({(((stats.conductFair) / (students.length || 1)) * 100).toFixed(1)}%)
                 </td>
               </tr>
               <tr className="bg-slate-100 font-black text-slate-900">
@@ -560,7 +580,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
         <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center justify-between">
           <span className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-600" />
-            Bảng Điểm Chi Tiết 6 Môn & Đánh Giá Từng Học Sinh ({students.length} HS)
+            Bảng Điểm Chi Tiết {activeSubjects.length} Môn & Đánh Giá Từng Học Sinh ({students.length} HS)
           </span>
         </h4>
 
@@ -571,12 +591,11 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
                 <th className="py-2.5 px-3 border border-slate-200 text-center">STT</th>
                 <th className="py-2.5 px-3 border border-slate-200">Họ và Tên</th>
                 <th className="py-2.5 px-3 border border-slate-200 text-center">Tổ</th>
-                <th className="py-2.5 px-3 border border-slate-200 text-center text-blue-800">Toán</th>
-                <th className="py-2.5 px-3 border border-slate-200 text-center text-amber-800">Vật Lý</th>
-                <th className="py-2.5 px-3 border border-slate-200 text-center text-emerald-800">Hóa Học</th>
-                <th className="py-2.5 px-3 border border-slate-200 text-center">Sinh</th>
-                <th className="py-2.5 px-3 border border-slate-200 text-center text-purple-800">Anh</th>
-                <th className="py-2.5 px-3 border border-slate-200 text-center text-rose-800">Văn</th>
+                {activeSubjects.map((subj) => (
+                  <th key={subj.key} className={`py-2.5 px-3 border border-slate-200 text-center ${subj.colorClass}`}>
+                    {subj.short}
+                  </th>
+                ))}
                 <th className="py-2.5 px-3 border border-slate-200 text-center bg-blue-50 text-[#003366]">ĐTB Môn</th>
                 <th className="py-2.5 px-3 border border-slate-200 text-center bg-purple-50 text-purple-900">Rèn Luyện</th>
                 <th className="py-2.5 px-3 border border-slate-200">GVCN Nhận Xét</th>
@@ -597,24 +616,15 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
                       {student.name}
                     </td>
                     <td className="py-2 px-3 border border-slate-200 text-center">Tổ {student.group}</td>
-                    <td className="py-2 px-3 border border-slate-200 text-center font-bold text-blue-700">
-                      {student.grades?.math?.avg || 8.0}
-                    </td>
-                    <td className="py-2 px-3 border border-slate-200 text-center font-bold text-amber-700">
-                      {student.grades?.physics?.avg || 8.0}
-                    </td>
-                    <td className="py-2 px-3 border border-slate-200 text-center font-bold text-emerald-700">
-                      {student.grades?.chemistry?.avg || 8.0}
-                    </td>
-                    <td className="py-2 px-3 border border-slate-200 text-center">
-                      {student.grades?.biology?.avg || 8.0}
-                    </td>
-                    <td className="py-2 px-3 border border-slate-200 text-center font-bold text-purple-700">
-                      {student.grades?.english?.avg || 8.0}
-                    </td>
-                    <td className="py-2 px-3 border border-slate-200 text-center font-bold text-rose-700">
-                      {student.grades?.literature?.avg || 8.0}
-                    </td>
+                    {activeSubjects.map((subj) => {
+                      const g = (student.grades as any)?.[subj.key];
+                      const val = typeof g === 'number' ? g : (g?.avg ?? 8.0);
+                      return (
+                        <td key={subj.key} className={`py-2 px-3 border border-slate-200 text-center ${subj.colorClass}`}>
+                          {val}
+                        </td>
+                      );
+                    })}
                     <td className="py-2 px-3 border border-slate-200 text-center font-black text-[#003366] bg-blue-50/50">
                       {gpa.toFixed(1)}
                     </td>
