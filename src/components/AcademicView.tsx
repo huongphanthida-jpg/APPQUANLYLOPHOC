@@ -334,7 +334,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     })(),
   ];
 
-  // 2. Data for "group_emulation" Bar Chart Mode (Shows 4 Groups on X-axis with all subjects)
+  // 2. Data for "group_emulation" Bar Chart Mode (Shows 4 Groups on X-axis with active subjects)
   const groupEmulationBarData = [1, 2, 3, 4].map((grpNum) => {
     const grpStudents = students.filter((s) => {
       const gVal = typeof s.group === 'number' ? s.group : parseInt(String(s.group || 1).replace(/[^0-9]/g, ''), 10);
@@ -350,74 +350,59 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     const grpGpaSum = grpStudents.reduce((acc, s) => acc + (s.grades.gpa || 0), 0);
     const grpGpa = Number((grpGpaSum / grpCount).toFixed(2));
 
-    return {
+    const item: Record<string, number | string> = {
       groupName: `Tổ ${grpNum} (${grpStudents.length} HS)`,
-      'Toán Học': calcGrpSubjAvg('math'),
-      'Vật Lý': calcGrpSubjAvg('physics'),
-      'Hóa Học': calcGrpSubjAvg('chemistry'),
-      'Sinh Học': calcGrpSubjAvg('biology'),
-      'Ngữ Văn': calcGrpSubjAvg('literature'),
-      'Tiếng Anh': calcGrpSubjAvg('english'),
-      'ĐTB Toàn Tổ': grpGpa,
     };
+    subjectsList.forEach((subj) => {
+      item[subj.name] = calcGrpSubjAvg(subj.key);
+    });
+    item['ĐTB Toàn Tổ'] = grpGpa;
+
+    return item;
   });
 
-  // 3. Data for "periods_progress" Bar Chart Mode (Shows Periods on X-axis with all subjects)
+  // 3. Data for "periods_progress" Bar Chart Mode (Shows Periods on X-axis with active subjects)
   const periodsProgressBarData = periods.map((period, index) => {
     if (selectedStudentForChart === 'all') {
-      let mathTot = 0, physTot = 0, chemTot = 0, bioTot = 0, litTot = 0, engTot = 0, count = 0;
-      students.forEach((s) => {
-        const hist = s.progressHistory?.find((p) => p.period === period);
-        if (hist) {
-          mathTot += hist.math || 0;
-          physTot += hist.physics || 0;
-          chemTot += hist.chemistry || 0;
-          bioTot += hist.biology !== undefined ? hist.biology : (s.grades.biology.avg - (periods.length - 1 - index) * 0.12);
-          litTot += hist.literature !== undefined ? hist.literature : (s.grades.literature.avg - (periods.length - 1 - index) * 0.1);
-          engTot += hist.english !== undefined ? hist.english : (s.grades.english.avg - (periods.length - 1 - index) * 0.15);
-          count++;
-        }
-      });
-      const validCount = count || 1;
-      const mathAvg = Number((mathTot / validCount).toFixed(2));
-      const physAvg = Number((physTot / validCount).toFixed(2));
-      const chemAvg = Number((chemTot / validCount).toFixed(2));
-      const bioAvg = Number((bioTot / validCount).toFixed(2));
-      const litAvg = Number((litTot / validCount).toFixed(2));
-      const engAvg = Number((engTot / validCount).toFixed(2));
-      const gpaAvg = Number(((mathAvg + physAvg + chemAvg) / 3).toFixed(2));
+      const item: Record<string, number | string> = { period };
+      let sumSubjAvg = 0;
 
-      return {
-        period,
-        'Toán Học': mathAvg,
-        'Vật Lý': physAvg,
-        'Hóa Học': chemAvg,
-        'Sinh Học': bioAvg,
-        'Ngữ Văn': litAvg,
-        'Tiếng Anh': engAvg,
-        'ĐTB Khối': gpaAvg,
-      };
+      subjectsList.forEach((subj) => {
+        let tot = 0;
+        let count = 0;
+        students.forEach((s) => {
+          const hist = s.progressHistory?.find((p) => p.period === period);
+          const subjGrade = (s.grades as any)[subj.key]?.avg || 0;
+          if (hist) {
+            const histVal = (hist as any)[subj.key];
+            tot += histVal !== undefined ? histVal : Math.max(0, subjGrade - (periods.length - 1 - index) * 0.1);
+            count++;
+          }
+        });
+        const validCount = count || 1;
+        const avg = Number((tot / validCount).toFixed(2));
+        item[subj.name] = avg;
+        sumSubjAvg += avg;
+      });
+
+      item['ĐTB Khối'] = Number((sumSubjAvg / (subjectsList.length || 1)).toFixed(2));
+      return item;
     } else {
       const student = students.find((s) => s.id === selectedStudentForChart);
-      const hist = student?.progressHistory?.find((p) => p.period === period);
-      const mVal = hist?.math !== undefined ? hist.math : (student?.grades.math.avg || 0);
-      const pVal = hist?.physics !== undefined ? hist.physics : (student?.grades.physics.avg || 0);
-      const cVal = hist?.chemistry !== undefined ? hist.chemistry : (student?.grades.chemistry.avg || 0);
-      const bVal = hist?.biology !== undefined ? hist.biology : Number(((student?.grades.biology.avg || 8.0) - (periods.length - 1 - index) * 0.12).toFixed(2));
-      const lVal = hist?.literature !== undefined ? hist.literature : Number(((student?.grades.literature.avg || 7.8) - (periods.length - 1 - index) * 0.1).toFixed(2));
-      const eVal = hist?.english !== undefined ? hist.english : Number(((student?.grades.english.avg || 8.5) - (periods.length - 1 - index) * 0.15).toFixed(2));
-      const gVal = Number(((mVal + pVal + cVal) / 3).toFixed(2));
+      const item: Record<string, number | string> = { period };
+      let sumSubjVal = 0;
 
-      return {
-        period,
-        'Toán Học': mVal,
-        'Vật Lý': pVal,
-        'Hóa Học': cVal,
-        'Sinh Học': bVal,
-        'Ngữ Văn': lVal,
-        'Tiếng Anh': eVal,
-        'ĐTB Khối': gVal,
-      };
+      subjectsList.forEach((subj) => {
+        const hist = student?.progressHistory?.find((p) => p.period === period);
+        const subjGrade = (student?.grades as any)?.[subj.key]?.avg || 0;
+        const histVal = hist ? (hist as any)[subj.key] : undefined;
+        const val = histVal !== undefined ? histVal : Number(Math.max(0, subjGrade - (periods.length - 1 - index) * 0.1).toFixed(2));
+        item[subj.name] = val;
+        sumSubjVal += val;
+      });
+
+      item['ĐTB Khối'] = Number((sumSubjVal / (subjectsList.length || 1)).toFixed(2));
+      return item;
     }
   });
 
@@ -828,12 +813,9 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '14px' }} iconType="circle" />
 
-                  <Bar dataKey="Toán Học" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={20} />
-                  <Bar dataKey="Vật Lý" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={20} />
-                  <Bar dataKey="Hóa Học" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={20} />
-                  <Bar dataKey="Sinh Học" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={20} />
-                  <Bar dataKey="Ngữ Văn" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={20} />
-                  <Bar dataKey="Tiếng Anh" fill="#ec4899" radius={[4, 4, 0, 0]} maxBarSize={20} />
+                  {subjectsList.map((subj) => (
+                    <Bar key={subj.key} dataKey={subj.name} fill={subj.color} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                  ))}
                   <Bar dataKey="ĐTB Toàn Tổ" fill="#003366" radius={[6, 6, 0, 0]} maxBarSize={24} />
                 </BarChart>
               </ResponsiveContainer>
@@ -841,7 +823,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
 
             <div className="flex items-center justify-between text-[11px] text-slate-500 bg-slate-50 rounded-xl p-2.5">
               <span>🏆 Bảng xếp hạng thi đua học tập giữa các tổ trong lớp học kỳ 2</span>
-              <span className="font-bold text-[#003366]">ĐTB Khối A & Khối Toàn Diện</span>
+              <span className="font-bold text-[#003366]">ĐTB Các Môn & Khối Toàn Diện</span>
             </div>
           </div>
         )}
@@ -901,12 +883,9 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '14px' }} iconType="circle" />
 
-                  <Bar dataKey="Toán Học" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={18} />
-                  <Bar dataKey="Vật Lý" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={18} />
-                  <Bar dataKey="Hóa Học" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={18} />
-                  <Bar dataKey="Sinh Học" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={18} />
-                  <Bar dataKey="Ngữ Văn" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={18} />
-                  <Bar dataKey="Tiếng Anh" fill="#ec4899" radius={[4, 4, 0, 0]} maxBarSize={18} />
+                  {subjectsList.map((subj) => (
+                    <Bar key={subj.key} dataKey={subj.name} fill={subj.color} radius={[4, 4, 0, 0]} maxBarSize={18} />
+                  ))}
                   <Bar dataKey="ĐTB Khối" fill="#003366" radius={[6, 6, 0, 0]} maxBarSize={22} />
                 </BarChart>
               </ResponsiveContainer>
@@ -928,12 +907,12 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
 
       {/* Radar Chart & University Entrance Score Predictor */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
-        {/* Radar Chart: 6-Subject Balance */}
+        {/* Radar Chart: Subject Balance */}
         <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs space-y-3">
           <div className="flex items-center justify-between pb-2 border-b border-slate-100">
             <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Star className="w-4 h-4 text-amber-500" />
-              Biểu Đồ Radar Cân Bằng 6 Môn Học
+              Biểu Đồ Radar Cân Bằng Các Môn Học ({subjectsList.length} Môn)
             </h4>
             <span className="text-[11px] font-bold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200">
               D3 & Recharts Visual
@@ -942,14 +921,10 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
 
           <div className="h-64 w-full flex items-center justify-center">
             <ResponsiveContainer width="100%" height="100%">
-              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={[
-                { subject: 'Toán', A: calcClassSubjectAvg('math', 'avg') },
-                { subject: 'Vật Lý', A: calcClassSubjectAvg('physics', 'avg') },
-                { subject: 'Hóa Học', A: calcClassSubjectAvg('chemistry', 'avg') },
-                { subject: 'Sinh Học', A: calcClassSubjectAvg('biology', 'avg') },
-                { subject: 'Ngữ Văn', A: calcClassSubjectAvg('literature', 'avg') },
-                { subject: 'Tiếng Anh', A: calcClassSubjectAvg('english', 'avg') },
-              ]}>
+              <RadarChart cx="50%" cy="50%" outerRadius="75%" data={subjectsList.map((s) => ({
+                subject: s.short,
+                A: calcClassSubjectAvg(s.key, 'avg'),
+              }))}>
                 <PolarGrid stroke="#e2e8f0" />
                 <PolarAngleAxis dataKey="subject" stroke="#334155" fontSize={11} />
                 <PolarRadiusAxis angle={30} domain={[0, 10]} stroke="#94a3b8" fontSize={10} />
