@@ -568,7 +568,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
               students={students || []}
               role={role}
               onUpdateSpecialStudents={handleUpdateSpecialStudents}
-              onUpdateLeaveRequests={onUpdateLeaveRequests}
+              onUpdateLeaveRequests={handleUpdateLeaveRequests}
             />
           )}
 
@@ -662,3 +662,5 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
     </div>
   );
 };
+
+export default HomeroomBookView;
