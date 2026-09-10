@@ -267,3 +267,5 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
     </div>
   );
 };
+
+export default HomeroomBookCover;
