@@ -18,18 +18,23 @@ import {
   ClipboardCheck,
   Trash2
 } from 'lucide-react';
-import { DisciplineEntry, ClassJournalEntry, Student, UserRole } from '../types';
+import { DisciplineEntry, ClassJournalEntry, Student, UserRole, LeaveRequest, ClassInfo, TeacherInfo } from '../types';
 import { ConfirmModal } from './ConfirmModal';
+import { ClassEmulationSummary2Aspects } from './ClassEmulationSummary2Aspects';
 
 interface DisciplineViewProps {
   students: Student[];
   disciplineLogs: DisciplineEntry[];
   journal: ClassJournalEntry[];
-  onOpenAddDiscipline: () => void;
+  onOpenAddDiscipline: (studentId?: string) => void;
   onAddJournalEntry: (entry: Omit<ClassJournalEntry, 'id'>) => void;
   onDeleteDisciplineLog?: (id: string) => void;
   onDeleteJournalEntry?: (id: string) => void;
   role: UserRole;
+  leaveRequests?: LeaveRequest[];
+  classInfo?: ClassInfo;
+  teacherInfo?: TeacherInfo;
+  onSelectStudent?: (student: Student) => void;
 }
 
 export const DisciplineView: React.FC<DisciplineViewProps> = ({
@@ -41,7 +46,12 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
   onDeleteDisciplineLog,
   onDeleteJournalEntry,
   role,
+  leaveRequests = [],
+  classInfo,
+  teacherInfo,
+  onSelectStudent,
 }) => {
+  const [activeSubTab, setActiveSubTab] = useState<'realtime_discipline' | 'two_aspects_emulation'>('realtime_discipline');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'bonus' | 'penalty'>('all');
   const [bghSigned, setBghSigned] = useState(true);
   const [bghDirectiveText, setBghDirectiveText] = useState('Ban Giám Hiệu ghi nhận: Nề nếp chuyên cần của lớp tốt. Đề nghị GVCN tiếp tục động viên học sinh giữ vững kỷ luật trong giai đoạn thi đua nước rút.');
@@ -99,7 +109,7 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
 
   return (
     <div id="discipline-view" className="space-y-6 pb-12">
-      {/* Header */}
+      {/* Header with Sub-tab Switcher */}
       <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
@@ -116,40 +126,62 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
           </p>
         </div>
 
-        {role === 'bgh' && (
-          <div className="flex items-center gap-2">
+        {/* Tab Switcher: Real-time vs Thi Đua 2 Mặt */}
+        <div className="flex items-center gap-2">
+          <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
             <button
-              id="btn-bgh-sign-journal"
-              onClick={handleSignWeeklyJournal}
-              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black transition-all shadow-md"
+              type="button"
+              onClick={() => setActiveSubTab('realtime_discipline')}
+              className={`px-3.5 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                activeSubTab === 'realtime_discipline'
+                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-orange-600'
+              }`}
             >
-              <BookmarkCheck className="w-4 h-4" />
-              <span>{bghSigned ? '✓ BGH Đã Phê Duyệt Nề Nếp Tuần 24' : 'Ký Số & Phê Duyệt Nề Nếp'}</span>
+              <Award className="w-4 h-4" />
+              <span>Nề Nếp Thời Gian Thực</span>
             </button>
+
             <button
-              id="btn-bgh-add-directive"
-              onClick={() => setShowDirectiveEdit(!showDirectiveEdit)}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-blue-50 border border-blue-200 text-[#003366] text-xs font-bold hover:bg-blue-100 transition-colors"
+              type="button"
+              onClick={() => setActiveSubTab('two_aspects_emulation')}
+              className={`px-3.5 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${
+                activeSubTab === 'two_aspects_emulation'
+                  ? 'bg-gradient-to-r from-orange-600 to-amber-600 text-white shadow-xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-orange-600'
+              }`}
             >
-              <Landmark className="w-4 h-4 text-blue-700" />
-              <span>Chỉ Đạo Sư Phạm BGH</span>
+              <ShieldCheck className="w-4 h-4" />
+              <span>Thi Đua 2 Mặt (Chuyên Cần & Nề Nếp)</span>
             </button>
           </div>
-        )}
 
-        {(role === 'gvcn' || role === 'csl') && (
-          <div className="flex items-center gap-2">
+          {(role === 'gvcn' || role === 'csl') && activeSubTab === 'realtime_discipline' && (
             <button
               id="btn-open-add-discipline"
-              onClick={onOpenAddDiscipline}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-md"
+              onClick={() => onOpenAddDiscipline()}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-md shrink-0 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Cộng / Trừ Điểm Thi Đua</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {activeSubTab === 'two_aspects_emulation' ? (
+        <ClassEmulationSummary2Aspects
+          students={students}
+          disciplineLogs={disciplineLogs}
+          leaveRequests={leaveRequests}
+          role={role}
+          classInfo={classInfo}
+          teacherInfo={teacherInfo}
+          onOpenAddDiscipline={onOpenAddDiscipline}
+          onSelectStudent={onSelectStudent}
+        />
+      ) : (
+        <>
 
       {/* BGH Toast Notification */}
       {bghToast && (
@@ -364,6 +396,8 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
           title={confirmModalState.title}
           message={confirmModalState.message}
         />
+      )}
+        </>
       )}
     </div>
   );
