@@ -339,6 +339,10 @@ export const getStoredTimetable = (): TimetableData => {
       return {
         academicYear: parsed.academicYear || INITIAL_TIMETABLE.academicYear,
         appliedDate: parsed.appliedDate || INITIAL_TIMETABLE.appliedDate,
+        morningTime: parsed.morningTime || INITIAL_TIMETABLE.morningTime,
+        morningLabel: parsed.morningLabel || INITIAL_TIMETABLE.morningLabel,
+        afternoonTime: parsed.afternoonTime || INITIAL_TIMETABLE.afternoonTime,
+        afternoonLabel: parsed.afternoonLabel || INITIAL_TIMETABLE.afternoonLabel,
         days: parsed.days,
       };
     }
