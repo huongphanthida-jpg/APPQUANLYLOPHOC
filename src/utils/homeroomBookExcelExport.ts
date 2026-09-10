@@ -58,7 +58,7 @@ export function exportHomeroomMasterExcel(params: HomeroomBookExportParams) {
     [`TRƯỜNG: ${classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'}`],
     [''],
     ['SỔ THEO DÕI VÀ ĐÁNH GIÁ HỌC SINH / SỔ CHỦ NHIỆM'],
-    [`NĂM HỌC: ${bookData.academicYear || '2025 - 2026'}`],
+    [`NĂM HỌC: ${classInfo.academicYear || bookData.academicYear || '2025 - 2026'}`],
     [''],
     ['LỚP:', classInfo.className || 'LỚP 12A1'],
     ['PHÒNG HỌC:', classInfo.roomName || 'Phòng 302 - Dãy A'],
@@ -133,7 +133,7 @@ export function exportHomeroomMasterExcel(params: HomeroomBookExportParams) {
   const excelTotalStudents = students && students.length > 0 ? students.length : bookData.plan.totalStudentsStart;
 
   const planData = [
-    ['KẾ HOẠCH CÔNG TÁC CHỦ NHIỆM NĂM HỌC', bookData.academicYear],
+    ['KẾ HOẠCH CÔNG TÁC CHỦ NHIỆM NĂM HỌC', classInfo.academicYear || bookData.academicYear],
     ['LỚP:', classInfo.className, 'SĨ SỐ:', `${excelTotalStudents} học sinh (Nam: ${excelMaleCount}, Nữ: ${excelFemaleCount})`],
     [''],
     ['I. ĐẶC ĐIỂM TÌNH HÌNH LỚP'],
@@ -315,6 +315,6 @@ export function exportHomeroomMasterExcel(params: HomeroomBookExportParams) {
   XLSX.utils.book_append_sheet(wb, wsSpecial, 'HS_Can_Quan_Tam_Dac_Biet');
 
   // Write file
-  const fileName = `SO_CHU_NHIEM_TOAN_DIEN_${(classInfo.className || '12A1').replace(/\s+/g, '_')}_NAM_HOC_2025_2026.xlsx`;
+  const fileName = `SO_CHU_NHIEM_TOAN_DIEN_${(classInfo.className || '12A1').replace(/\s+/g, '_')}_NAM_HOC_${(classInfo.academicYear || bookData.academicYear || '2025_2026').replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`;
   XLSX.writeFile(wb, fileName);
 }
