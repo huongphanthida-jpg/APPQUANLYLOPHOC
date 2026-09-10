@@ -421,19 +421,19 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'plan' && (
           <HomeroomBookPlanSection
-            plan={bookData.plan}
-            academicYear={classInfo.academicYear || bookData.academicYear}
+            plan={bookData?.plan}
+            academicYear={classInfo.academicYear || bookData?.academicYear || '2025 - 2026'}
             role={role}
-            students={students}
+            students={students || []}
             onUpdatePlan={handleUpdatePlan}
           />
         )}
 
         {activeTab === 'org' && (
           <HomeroomBookOrganizationSection
-            committee={bookData.committee}
-            parentsBoard={bookData.parentsBoard}
-            students={students}
+            committee={bookData?.committee || []}
+            parentsBoard={bookData?.parentsBoard || []}
+            students={students || []}
             className={classInfo.className}
             role={role}
             onUpdateCommittee={handleUpdateCommittee}
@@ -443,7 +443,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'registry' && (
           <HomeroomBookStudentRegistry
-            students={students}
+            students={students || []}
             className={classInfo.className}
             role={role}
             onSelectStudent={onSelectStudent}
@@ -455,9 +455,9 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
           <HomeroomBookSeatingAndSchedule
             seatingChart={seatingChart}
             timetable={timetable}
-            studyPairs={studyPairs}
-            subjectTeachers={bookData.subjectTeachers}
-            students={students}
+            studyPairs={studyPairs || []}
+            subjectTeachers={bookData?.subjectTeachers || []}
+            students={students || []}
             className={classInfo.className}
             role={role}
             onUpdateSubjectTeachers={handleUpdateSubjectTeachers}
@@ -469,9 +469,9 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'discipline-journal' && (
           <HomeroomBookDisciplineAndJournal
-            disciplineLogs={disciplineLogs}
-            journal={journal}
-            students={students}
+            disciplineLogs={disciplineLogs || []}
+            journal={journal || []}
+            students={students || []}
             role={role}
             onUpdateDisciplineLogs={onUpdateDisciplineLogs}
             onUpdateJournal={onUpdateJournal}
@@ -480,7 +480,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'academic' && (
           <HomeroomBookAcademicSummary
-            students={students}
+            students={students || []}
             role={role}
             onUpdateStudents={onUpdateStudents}
           />
@@ -488,9 +488,9 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'duty-emulation' && (
           <HomeroomBookDutyAndEmulation
-            dutySchedule={dutySchedule}
-            emulationLogs={emulationLogs}
-            students={students}
+            dutySchedule={dutySchedule || []}
+            emulationLogs={emulationLogs || []}
+            students={students || []}
             className={classInfo.className}
             role={role}
             onUpdateDutySchedule={onUpdateDutySchedule}
@@ -500,9 +500,9 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'special-care' && (
           <HomeroomBookSpecialCareAndLeaves
-            specialStudents={bookData.specialStudents}
-            leaveRequests={leaveRequests}
-            students={students}
+            specialStudents={bookData?.specialStudents || []}
+            leaveRequests={leaveRequests || []}
+            students={students || []}
             role={role}
             onUpdateSpecialStudents={handleUpdateSpecialStudents}
             onUpdateLeaveRequests={onUpdateLeaveRequests}
@@ -511,8 +511,8 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'minutes-bgh' && (
           <HomeroomBookMinutesAndBgh
-            meetingMinutes={bookData.meetingMinutes}
-            inspections={bookData.inspections}
+            meetingMinutes={bookData?.meetingMinutes || []}
+            inspections={bookData?.inspections || []}
             role={role}
             onUpdateMinutes={handleUpdateMinutes}
             onUpdateInspections={handleUpdateInspections}
@@ -521,8 +521,8 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {activeTab === 'archive' && (
           <HomeroomBookArchiveAndExport
-            snapshots={bookData.snapshots || []}
-            academicYear={classInfo.academicYear || bookData.academicYear}
+            snapshots={bookData?.snapshots || []}
+            academicYear={classInfo.academicYear || bookData?.academicYear || '2025 - 2026'}
             role={role}
             onExportExcel={handleExportExcel}
             onPrintBook={handlePrintBook}
