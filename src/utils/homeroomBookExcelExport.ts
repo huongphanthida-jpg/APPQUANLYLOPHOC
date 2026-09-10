@@ -161,23 +161,49 @@ export function exportHomeroomMasterExcel(params: HomeroomBookExportParams) {
   XLSX.utils.book_append_sheet(wb, wsPlan, 'Ke_Hoach_Va_Chi_Tieu');
 
   // 5. Sheet: Bảng Điểm & Học Lực
-  const gradeRows = students.map((s, idx) => ({
-    'STT': idx + 1,
-    'Mã HS': s.code,
-    'Họ và Tên': s.name,
-    'Tổ': s.group,
-    'Toán TB': s.grades?.math?.avg ?? '',
-    'Vật Lý TB': s.grades?.physics?.avg ?? '',
-    'Hóa Học TB': s.grades?.chemistry?.avg ?? '',
-    'Sinh Học TB': s.grades?.biology?.avg ?? '',
-    'Ngữ Văn TB': s.grades?.literature?.avg ?? '',
-    'Tiếng Anh TB': s.grades?.english?.avg ?? '',
-    'Điểm GPA': s.grades?.gpa ?? '',
-    'Xếp Loại Học Lực': (s.grades?.gpa ?? 0) >= 9.0 ? 'Xuất sắc' : (s.grades?.gpa ?? 0) >= 8.0 ? 'Giỏi' : (s.grades?.gpa ?? 0) >= 6.5 ? 'Khá' : 'Đạt',
-    'Điểm Rèn Luyện': s.conductScore ?? 100,
-    'Xếp Loại Rèn Luyện': s.conductRating ?? 'Tốt',
-    'Xếp Hạng': idx + 1,
-  }));
+  const activeSubjectKeysExcel: string[] = (() => {
+    try {
+      const saved = localStorage.getItem('tbm_active_subject_columns');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return ['math', 'physics', 'chemistry', 'biology', 'literature', 'english'];
+  })();
+
+  const EXCEL_SUBJ_MAP: Record<string, string> = {
+    math: 'Toán TB',
+    physics: 'Vật Lý TB',
+    chemistry: 'Hóa Học TB',
+    biology: 'Sinh Học TB',
+    literature: 'Ngữ Văn TB',
+    history: 'Lịch Sử TB',
+    geography: 'Địa Lý TB',
+    gdcd: 'GDCD TB',
+    english: 'Tiếng Anh TB',
+    informatics: 'Tin Học TB',
+  };
+
+  const gradeRows = students.map((s, idx) => {
+    const row: Record<string, any> = {
+      'STT': idx + 1,
+      'Mã HS': s.code,
+      'Họ và Tên': s.name,
+      'Tổ': s.group,
+    };
+
+    activeSubjectKeysExcel.forEach((key) => {
+      if (EXCEL_SUBJ_MAP[key]) {
+        const g = (s.grades as any)?.[key];
+        row[EXCEL_SUBJ_MAP[key]] = typeof g === 'number' ? g : (g?.avg ?? '');
+      }
+    });
+
+    row['Điểm GPA'] = s.grades?.gpa ?? '';
+    row['Xếp Loại Học Lực'] = (s.grades?.gpa ?? 0) >= 9.0 ? 'Xuất sắc' : (s.grades?.gpa ?? 0) >= 8.0 ? 'Giỏi' : (s.grades?.gpa ?? 0) >= 6.5 ? 'Khá' : 'Đạt';
+    row['Điểm Rèn Luyện'] = s.conductScore ?? 100;
+    row['Xếp Loại Rèn Luyện'] = s.conductRating ?? 'Tốt';
+    row['Xếp Hạng'] = idx + 1;
+    return row;
+  });
   const wsGrades = XLSX.utils.json_to_sheet(gradeRows);
   XLSX.utils.book_append_sheet(wb, wsGrades, 'Bang_Diem_Hoc_Luc');
 
