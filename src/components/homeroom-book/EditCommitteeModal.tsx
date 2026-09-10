@@ -168,3 +168,5 @@ export const EditCommitteeModal: React.FC<EditCommitteeModalProps> = ({
     </div>
   );
 };
+
+export default EditCommitteeModal;
