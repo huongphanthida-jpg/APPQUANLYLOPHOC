@@ -305,23 +305,18 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       const attendanceDeductions = (excusedAbsences * 2 + unexcusedAbsences * 5 + lateArrivals * 2);
       const totalAttendance = attendanceBonuses - attendanceDeductions;
 
-      // 4. Duty Score: Đã hoàn thành (+0đ), Đang thực hiện (+0đ), Chưa hoàn thành (-5đ / 1 HS)
+      // 4. Duty Score: Đã hoàn thành (+0đ), Đang thực hiện (+0đ), Chưa bắt đầu (+0đ), Chưa hoàn thành (-5đ / 1 HS)
       const groupDuties = dutySchedule.filter(
         (d) => getStudentGroupNumber(d.assignedGroup || (d as any).group) === groupNum
       );
       
       let incompleteStudentCount = 0;
       groupDuties.forEach((d) => {
-        if (d.assignedStudents && d.assignedStudents.length > 0) {
-          if (d.status === 'Chưa hoàn thành' || (d.status as any) === 'incomplete') {
+        if (d.status === 'Chưa hoàn thành' || (d.status as any) === 'incomplete') {
+          if (d.assignedStudents && d.assignedStudents.length > 0) {
             const uncompletedInShift = d.assignedStudents.filter((s) => s.isCompleted !== true).length;
             incompleteStudentCount += (uncompletedInShift > 0 ? uncompletedInShift : d.assignedStudents.length);
           } else {
-            const uncompletedInShift = d.assignedStudents.filter((s) => s.isCompleted === false).length;
-            incompleteStudentCount += uncompletedInShift;
-          }
-        } else {
-          if (d.status === 'Chưa hoàn thành' || (d.status as any) === 'incomplete') {
             incompleteStudentCount += 1;
           }
         }
@@ -519,7 +514,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
             ⚠️ <strong>GPA &lt; 5.0:</strong> <strong className="text-rose-700 dark:text-rose-400 font-black">-2đ / HS</strong> (Phụ đạo)
           </span>
           <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 px-2.5 py-1 rounded-xl border border-amber-300 dark:border-amber-700 flex items-center gap-1 shadow-2xs">
-            🧹 <strong>Trực Nhật:</strong> Xong (+0đ) • Đang làm (+0đ) • Chưa xong (<strong className="text-rose-600 font-black">-5đ/1HS</strong>)
+            🧹 <strong>Trực Nhật:</strong> Xong (+0đ) • Đang làm (+0đ) • Chưa làm (+0đ) • Chưa xong (<strong className="text-rose-600 font-black">-5đ/1HS</strong>)
           </span>
         </div>
       </div>
