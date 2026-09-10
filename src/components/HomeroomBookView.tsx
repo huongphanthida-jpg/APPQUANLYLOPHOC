@@ -379,7 +379,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-[#003366] tracking-tight">
-              SỔ CHỦ NHIỆM - LỚP {classInfo?.className || '12A1'}
+              SỔ CHỦ NHIỆM - LỚP {(classInfo?.className || '12A1').replace(/^LỚP\s+/i, '')}
             </h1>
             <p className="text-xs text-slate-500 font-medium">
               Năm học {classInfo?.academicYear || bookData?.academicYear || '2025-2026'} • GVCN: {teacherInfo?.name || 'Nguyễn Văn A'} • Phó Hiệu Trưởng: {bghInfo?.name || 'TS. Lê Thị Mai'}
@@ -568,7 +568,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
               students={students || []}
               role={role}
               onUpdateSpecialStudents={handleUpdateSpecialStudents}
-              onUpdateLeaveRequests={handleUpdateLeaveRequests}
+              onUpdateLeaveRequests={onUpdateLeaveRequests}
             />
           )}
 
@@ -662,5 +662,3 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
     </div>
   );
 };
-
-export default HomeroomBookView;
