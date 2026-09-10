@@ -58,6 +58,7 @@ interface HomeroomBookExportPreviewModalProps {
   onPrintBook?: () => void;
   onTriggerPrint?: () => void;
   onExportWord?: () => void;
+  onOpenFullReader?: () => void;
 }
 
 export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewModalProps> = ({
@@ -80,6 +81,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
   onPrintBook,
   onTriggerPrint,
   onExportWord,
+  onOpenFullReader,
 }) => {
   const [activeTab, setActiveTab] = useState<'excel' | 'pdf' | 'snapshot'>('excel');
   const [selectedExcelSheet, setSelectedExcelSheet] = useState<number>(0);
@@ -209,7 +211,22 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
 
         {/* Modal Mode Selector Bar */}
         <div className="bg-slate-50 border-b border-slate-200 px-6 py-2 flex flex-wrap items-center justify-between gap-3 shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {onOpenFullReader && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenFullReader();
+                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black bg-amber-400 hover:bg-amber-500 text-slate-950 shadow-sm cursor-pointer transition-all border border-amber-300 active:scale-95"
+                title="Chuyển sang giao diện xem & chỉnh sửa trực tiếp 10 trang sổ"
+              >
+                <Layers className="w-4 h-4 text-slate-950" />
+                <span>📖 Chỉnh Sửa Chi Tiết 10 Trang</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={() => setActiveTab('excel')}
