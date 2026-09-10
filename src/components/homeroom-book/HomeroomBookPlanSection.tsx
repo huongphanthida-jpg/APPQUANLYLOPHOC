@@ -242,7 +242,7 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
             <div className="space-y-1 text-xs">
               <div className="flex justify-between font-semibold">
                 <span className="text-slate-600">Tốt nghiệp THPT:</span>
-                <span className="font-bold text-emerald-700">{plan.graduationTargetPercent || 100}% (36/36 HS)</span>
+                <span className="font-bold text-emerald-700">{plan.graduationTargetPercent || 100}% ({totalCount}/{totalCount} HS)</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span className="text-slate-600">Đỗ ĐH NV1:</span>
