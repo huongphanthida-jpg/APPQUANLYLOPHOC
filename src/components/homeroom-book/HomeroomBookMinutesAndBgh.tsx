@@ -316,3 +316,5 @@ export const HomeroomBookMinutesAndBgh: React.FC<HomeroomBookMinutesAndBghProps>
     </div>
   );
 };
+
+export default HomeroomBookMinutesAndBgh;
