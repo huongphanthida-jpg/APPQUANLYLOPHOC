@@ -343,3 +343,5 @@ export const HomeroomBookSpecialCareAndLeaves: React.FC<HomeroomBookSpecialCareA
     </div>
   );
 };
+
+export default HomeroomBookSpecialCareAndLeaves;
