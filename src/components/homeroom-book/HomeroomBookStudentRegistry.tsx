@@ -293,3 +293,5 @@ export const HomeroomBookStudentRegistry: React.FC<HomeroomBookStudentRegistryPr
     </div>
   );
 };
+
+export default HomeroomBookStudentRegistry;
