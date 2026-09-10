@@ -1318,7 +1318,7 @@ export default function App() {
 
           {currentTab === 'discipline' && (
             <DisciplineView
-              students={visibleStudents}
+              students={students}
               disciplineLogs={disciplineLogs}
               journal={journal}
               onOpenAddDiscipline={() => setIsAddDisciplineOpen(true)}
