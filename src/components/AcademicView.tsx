@@ -355,8 +355,8 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight truncate">
                 {activeMainTab === 'two_aspects_emulation'
-                  ? 'Bảng Tổng Hợp Thi Đua 2 Mặt'
-                  : 'Bảng Điểm Học Tập Các Môn'}
+                  ? 'Bảng Điểm TBM & Thi Đua 2 Mặt'
+                  : 'Bảng Điểm TBM & Học Tập Các Môn'}
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-200 shrink-0">
                 {classInfo?.className || 'Lớp 11D5'} • {students.length} Học Sinh
