@@ -151,7 +151,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
     { id: 0, name: '1. Bìa Sổ & Thông Tin', icon: BookOpen, desc: 'Thông tin hành chính, nhà trường, GVCN & BGH' },
     { id: 1, name: '2. Kế Hoạch & Chỉ Tiêu', icon: Layers, desc: 'Sĩ số cơ cấu, chỉ tiêu học tập, rèn luyện & giải pháp' },
     { id: 2, name: '3. Ban Cán Sự & CMHS', icon: Users, desc: 'Cơ cấu cán sự lớp, BCH Chi đoàn và đại diện cha mẹ' },
-    { id: 3, name: `4. Sơ Yếu ${students.length} Học Sinh`, icon: FileText, desc: 'Họ tên, ngày sinh, giới tính, đoàn viên, SĐT, liên hệ' },
+    { id: 3, name: `4. Sơ Yếu ${(students || []).length} Học Sinh`, icon: FileText, desc: 'Họ tên, ngày sinh, giới tính, đoàn viên, SĐT, liên hệ' },
     { id: 4, name: '5. Sơ Đồ Lớp & TKB', icon: Grid, desc: 'Bố trí 4 dãy x 6 bàn, đôi bạn cùng tiến & TKB 2 buổi' },
     { id: 5, name: '6. Nề Nếp & Sổ Đầu Bài', icon: ShieldCheck, desc: 'Nhật ký khen thưởng, vi phạm & phân loại tiết dạy' },
     { id: 6, name: '7. Bảng Điểm & 2 Mặt GD', icon: Award, desc: 'Điểm tổng kết các môn, xếp loại học lực & hạnh kiểm' },
@@ -166,7 +166,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
     { id: 1, title: 'Trang 1: Bìa Sổ Chủ Nhiệm Chuẩn Bộ GD&ĐT', section: 'Bìa & Hành chính' },
     { id: 2, title: 'Trang 2: Kế Hoạch Năm Học & Hệ Thống Chỉ Tiêu', section: 'Kế hoạch & Mục tiêu' },
     { id: 3, title: 'Trang 3: Ban Cán Sự, Ban Đại Diện CMHS & 4 Tổ', section: 'Tổ chức & Bộ máy' },
-    { id: 4, title: `Trang 4: Sơ Yếu Lý Lịch Trích Ngang ${students.length} Học Sinh`, section: 'Lý lịch học sinh' },
+    { id: 4, title: `Trang 4: Sơ Yếu Lý Lịch Trích Ngang ${(students || []).length} Học Sinh`, section: 'Lý lịch học sinh' },
     { id: 5, title: 'Trang 5: Sơ Đồ Lớp, Đôi Bạn Cùng Tiến & TKB Chuẩn', section: 'Không gian & Giảng dạy' },
     { id: 6, title: 'Trang 6: Theo Dõi Nề Nếp Kỷ Luật & Sổ Đầu Bài', section: 'Kỷ luật & Tiết học' },
     { id: 7, title: 'Trang 7: Bảng Điểm Tổng Hợp & Ma Trận 2 Mặt GD', section: 'Học tập & Hạnh kiểm' },
@@ -191,7 +191,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                   TRUNG TÂM XEM TRƯỚC XUẤT BẢN
                 </span>
                 <span className="text-xs text-white/50">•</span>
-                <span className="text-xs text-blue-200 font-semibold">Lớp {classInfo.className}</span>
+                <span className="text-xs text-blue-200 font-semibold">Lớp {classInfo?.className || '12A1'}</span>
               </div>
               <h2 className="text-lg sm:text-xl font-black text-white">
                 Xem Trước Dữ Liệu Trước Khi Tải Xuống / In Ấn
@@ -291,7 +291,9 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                   </div>
                   <div>
                     <h4 className="font-black text-emerald-950 text-sm">
-                      So_Chu_Nhiem_{classInfo.className}_{(classInfo.academicYear || bookData.academicYear).replace(/[^a-zA-Z0-9]/g, '_')}_Chuan.xlsx
+                      So_Chu_Nhiem_{classInfo?.className || '12A1'}_
+                      {(classInfo?.academicYear || bookData?.academicYear || '2025-2026').replace(/[^a-zA-Z0-9]/g, '_')}
+                      _Chuan.xlsx
                     </h4>
                     <p className="text-emerald-700 font-medium">
                       Định dạng chuẩn Excel OpenXML (.xlsx) • 12 Sheet chuẩn hóa • Công thức tự động • Tương thích 100%
@@ -366,15 +368,15 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                           TRƯỜNG TRUNG HỌC PHỔ THÔNG TÂY NGUYỄN HUỆ
                         </span>
                         <h3 className="text-lg font-black text-blue-900 pt-2">
-                          SỔ CHỦ NHIỆM LỚP {classInfo.className}
+                          SỔ CHỦ NHIỆM LỚP {classInfo?.className || '12A1'}
                         </h3>
-                        <p className="text-slate-600 font-semibold">{classInfo.academicYear || bookData.academicYear}</p>
+                        <p className="text-slate-600 font-semibold">{classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
                           <span className="font-bold text-slate-700 block">Giáo viên chủ nhiệm:</span>
-                          <span className="font-black text-slate-900">{teacherInfo.name}</span>
-                          <span className="text-slate-500 block text-[11px]">{teacherInfo.phone} • {teacherInfo.email}</span>
+                          <span className="font-black text-slate-900">{teacherInfo?.name || 'Nguyễn Văn A'}</span>
+                          <span className="text-slate-500 block text-[11px]">{teacherInfo?.phone || ''} • {teacherInfo?.email || ''}</span>
                         </div>
                         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
                           <span className="font-bold text-slate-700 block">Ban Giám Hiệu phụ trách:</span>
@@ -524,7 +526,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                     <span className="font-black text-[#003366] text-xs uppercase block">
                       TRƯỜNG THPT TÂY NGUYỄN HUỆ
                     </span>
-                    <span className="text-[10px] text-slate-500 block">Số hiệu lưu trữ: SCN-{classInfo.className.replace(/\s+/g, '')}/{(classInfo.academicYear || bookData.academicYear).replace(/[^a-zA-Z0-9]/g, '_')}</span>
+                    <span className="text-[10px] text-slate-500 block">Số hiệu lưu trữ: SCN-{(classInfo?.className || '12A1').replace(/\s+/g, '')}/{(classInfo?.academicYear || bookData?.academicYear || '2025-2026').replace(/[^a-zA-Z0-9]/g, '_')}</span>
                   </div>
                   <div className="w-1/2">
                     <span className="font-black text-xs uppercase block">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</span>
@@ -539,7 +541,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                     {pdfPages[selectedPdfPage - 1]?.title}
                   </h3>
                   <p className="text-[11px] text-slate-500 font-semibold">
-                    Lớp: {classInfo.className} • {classInfo.academicYear || bookData.academicYear} • GVCN: {teacherInfo.name}
+                    Lớp: {classInfo?.className || '12A1'} • {classInfo?.academicYear || bookData?.academicYear || '2025-2026'} • GVCN: {teacherInfo?.name || 'Nguyễn Văn A'}
                   </p>
                 </div>
 
@@ -559,7 +561,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                     <div className="p-2.5 bg-white rounded-lg border border-slate-200">
                       <span className="font-bold text-slate-700 block text-[11px]">Sĩ số học sinh:</span>
                       <span className="text-sm font-black text-[#003366]">
-                        {students.length} Học sinh ({students.filter((s) => s.gender === 'Nam').length} Nam / {students.filter((s) => s.gender === 'Nữ').length} Nữ)
+                        {(students || []).length} Học sinh ({(students || []).filter((s) => s && s.gender === 'Nam').length} Nam / {(students || []).filter((s) => s && s.gender === 'Nữ').length} Nữ)
                       </span>
                     </div>
                     <div className="p-2.5 bg-white rounded-lg border border-slate-200">
@@ -578,7 +580,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                         <span className="text-[10px] text-slate-400 italic">(Ký và ghi rõ họ tên)</span>
                       </div>
                       <div>
-                        <span className="font-bold text-slate-900 block">{teacherInfo.name}</span>
+                        <span className="font-bold text-slate-900 block">{teacherInfo?.name || 'Nguyễn Văn A'}</span>
                         <span className="text-[10px] text-emerald-700 font-mono">Đã xác thực chữ ký điện tử</span>
                       </div>
                     </div>
@@ -598,7 +600,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
 
                 {/* A4 Footer */}
                 <div className="flex justify-between items-center text-[10px] text-slate-400 pt-4 border-t border-slate-100">
-                  <span>{classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'} - Sổ Chủ Nhiệm Số Hóa</span>
+                  <span>{classInfo?.schoolName || 'THPT TRẦN NGUYÊN HÃN'} - Sổ Chủ Nhiệm Số Hóa</span>
                   <span>Trang {selectedPdfPage} / 10</span>
                 </div>
               </div>
