@@ -183,3 +183,5 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
     </div>
   );
 };
+
+export default EditSeatingModal;
