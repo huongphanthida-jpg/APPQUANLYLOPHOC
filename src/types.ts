@@ -253,7 +253,7 @@ export interface DutySchedule {
   assignedGroup: 1 | 2 | 3 | 4;
   leaderName: string;
   tasks: string[]; // ['Quét dọn lớp', 'Lau bảng & giặt giẻ', 'Kê lại bàn ghế', 'Tắt quạt, điện và khóa cửa']
-  status: 'Đã hoàn thành' | 'Đang thực hiện' | 'Chưa bắt đầu';
+  status: 'Đã hoàn thành' | 'Chưa hoàn thành' | 'Đang thực hiện' | 'Chưa bắt đầu';
   inspectedBy?: string;
   assignedStudents?: DutyMemberAssignment[]; // Phân công cụ thể cho từng học sinh
   notes?: string;
