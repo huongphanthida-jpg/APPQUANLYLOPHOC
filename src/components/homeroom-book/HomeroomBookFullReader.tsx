@@ -18,6 +18,8 @@ import {
   Download,
   Share2,
   CheckCircle2,
+  Trash2,
+  RotateCcw,
 } from 'lucide-react';
 import {
   ClassInfo,
@@ -135,6 +137,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
   onExportWord,
   onPrintBook,
 }) => {
+  const [deletedPageCodes, setDeletedPageCodes] = useState<string[]>([]);
   const [viewMode, setViewMode] = useState<'continuous' | 'paginated' | 'grid'>('continuous');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoomScale, setZoomScale] = useState<number>(100);
@@ -297,12 +300,27 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
     },
   ];
 
+  const visiblePages = bookPages.filter((p) => !deletedPageCodes.includes(p.code));
+  const totalPages = visiblePages.length;
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), Math.max(visiblePages.length, 1));
+  const activePageItem = visiblePages[safeCurrentPage - 1];
+
+  const handleDeletePage = (code: string, title: string) => {
+    if (window.confirm(`Bạn có chắc chắn muốn xóa "${title}" khỏi danh sách các trang hiển thị?`)) {
+      setDeletedPageCodes((prev) => [...prev, code]);
+    }
+  };
+
+  const handleRestoreAllPages = () => {
+    setDeletedPageCodes([]);
+  };
+
   const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage((prev) => prev + 1);
+    if (safeCurrentPage < totalPages) setCurrentPage((prev) => prev + 1);
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage((prev) => prev - 1);
+    if (safeCurrentPage > 1) setCurrentPage((prev) => prev - 1);
   };
 
   const handleZoomIn = () => {
@@ -377,7 +395,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-bold text-slate-500 hidden sm:inline">Chuyển đến:</span>
             <select
-              value={currentPage}
+              value={safeCurrentPage}
               onChange={(e) => {
                 const p = Number(e.target.value);
                 setCurrentPage(p);
@@ -388,22 +406,35 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
               }}
               className="py-1.5 px-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {bookPages.map((p) => (
-                <option key={p.page} value={p.page}>
-                  Trang {p.page}: {p.title}
+              {visiblePages.map((p, idx) => (
+                <option key={p.code} value={idx + 1}>
+                  Trang {idx + 1}: {p.title}
                 </option>
               ))}
             </select>
           </div>
+
+          {/* Restore Deleted Pages Button */}
+          {deletedPageCodes.length > 0 && (
+            <button
+              type="button"
+              onClick={handleRestoreAllPages}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-100 hover:bg-amber-200 text-amber-900 text-xs font-bold border border-amber-300 shadow-xs transition-all cursor-pointer"
+              title="Khôi phục lại các trang đã xóa"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-700" />
+              <span>Khôi phục {deletedPageCodes.length} trang đã xóa</span>
+            </button>
+          )}
         </div>
 
         {/* Center: Pagination & Zoom Controls */}
         <div className="flex items-center gap-3">
-          {viewMode === 'paginated' && (
+          {viewMode === 'paginated' && visiblePages.length > 0 && (
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
               <button
                 type="button"
-                disabled={currentPage <= 1}
+                disabled={safeCurrentPage <= 1}
                 onClick={handlePrevPage}
                 className="p-1.5 rounded-xl text-slate-700 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
                 title="Trang trước"
@@ -412,12 +443,12 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
               </button>
 
               <span className="px-3 text-xs font-black text-[#003366]">
-                Trang {currentPage} / {totalPages}
+                Trang {safeCurrentPage} / {totalPages}
               </span>
 
               <button
                 type="button"
-                disabled={currentPage >= totalPages}
+                disabled={safeCurrentPage >= totalPages}
                 onClick={handleNextPage}
                 className="p-1.5 rounded-xl text-slate-700 hover:bg-white disabled:opacity-30 disabled:cursor-not-allowed transition-all cursor-pointer"
                 title="Trang kế tiếp"
@@ -523,20 +554,43 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           maxWidth: zoomScale > 100 ? `${100 * (zoomScale / 100)}%` : '100%',
         }}
       >
+        {/* EMPTY STATE IF ALL PAGES ARE DELETED */}
+        {visiblePages.length === 0 && (
+          <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm space-y-4">
+            <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 mx-auto flex items-center justify-center shadow-inner">
+              <Trash2 className="w-8 h-8" />
+            </div>
+            <h3 className="text-lg font-black text-slate-900">
+              Tất cả các trang Sổ Chủ Nhiệm đã bị ẩn/xóa khỏi chế độ xem
+            </h3>
+            <p className="text-sm text-slate-500 max-w-md mx-auto">
+              Bạn đã xóa {bookPages.length} trang. Hãy nhấn nút bên dưới để khôi phục lại toàn bộ các trang ban đầu.
+            </p>
+            <button
+              type="button"
+              onClick={handleRestoreAllPages}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#003366] hover:bg-blue-900 text-white font-bold text-xs shadow-md transition-all cursor-pointer active:scale-95"
+            >
+              <RotateCcw className="w-4 h-4 text-amber-300" />
+              <span>Khôi Phục Lại Tất Cả 10 Trang</span>
+            </button>
+          </div>
+        )}
+
         {/* MODE 1: CONTINUOUS SCROLL (Stacked Formal A4 Book Pages) */}
-        {viewMode === 'continuous' && (
+        {viewMode === 'continuous' && visiblePages.length > 0 && (
           <div className="space-y-12">
-            {bookPages.map((pageItem) => (
+            {visiblePages.map((pageItem, idx) => (
               <div
-                key={pageItem.page}
-                id={`full-book-page-${pageItem.page}`}
+                key={pageItem.code}
+                id={`full-book-page-${idx + 1}`}
                 className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-md relative print:shadow-none print:border-none print:p-0 print-page-break"
               >
                 {/* Official Page Header */}
                 <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-200 print:mb-4">
                   <div className="flex items-center gap-2">
                     <span className="w-7 h-7 rounded-xl bg-[#003366] text-amber-300 text-xs font-black flex items-center justify-center shadow-xs">
-                      {pageItem.page}
+                      {idx + 1}
                     </span>
                     <div>
                       <h4 className="text-xs font-black text-[#003366] uppercase tracking-wider">
@@ -548,9 +602,19 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
                     </div>
                   </div>
 
-                  <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
-                    Trang {pageItem.page} / {totalPages}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[11px] font-bold">
+                      Trang {idx + 1} / {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePage(pageItem.code, pageItem.title)}
+                      className="p-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 transition-all cursor-pointer print:hidden"
+                      title="Xóa trang này"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Page Actual Content */}
@@ -560,7 +624,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
                 <div className="flex items-center justify-between pt-6 mt-8 border-t border-slate-200 text-[10px] text-slate-400 font-medium print:mt-4">
                   <span>Hệ Thống Sổ Chủ Nhiệm Điện Tử - {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'}</span>
                   <span className="font-bold text-slate-500">
-                    Trang {pageItem.page} / {totalPages}
+                    Trang {idx + 1} / {totalPages}
                   </span>
                 </div>
               </div>
@@ -569,16 +633,16 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
         )}
 
         {/* MODE 2: PAGINATED READER (Single Focus Page with Controls) */}
-        {viewMode === 'paginated' && (
+        {viewMode === 'paginated' && visiblePages.length > 0 && (
           <div className="bg-white rounded-3xl p-6 sm:p-10 border border-slate-200 shadow-md relative">
             <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <span className="w-8 h-8 rounded-2xl bg-[#003366] text-amber-300 text-sm font-black flex items-center justify-center shadow-xs">
-                  {currentPage}
+                  {safeCurrentPage}
                 </span>
                 <div>
                   <h3 className="text-sm font-black text-[#003366] uppercase tracking-wider">
-                    {bookPages[currentPage - 1]?.title}
+                    {activePageItem?.title}
                   </h3>
                   <p className="text-xs text-slate-400 font-medium">
                     {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'} • Lớp {classInfo.className} • {bookData.academicYear}
@@ -587,9 +651,21 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
+                {activePageItem && (
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePage(activePageItem.code, activePageItem.title)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 transition-all cursor-pointer text-xs font-bold mr-2"
+                    title="Xóa trang hiện tại"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Xóa Trang Này</span>
+                  </button>
+                )}
+
                 <button
                   type="button"
-                  disabled={currentPage <= 1}
+                  disabled={safeCurrentPage <= 1}
                   onClick={handlePrevPage}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 text-slate-700 text-xs font-bold hover:bg-slate-100 disabled:opacity-40 cursor-pointer"
                 >
@@ -597,7 +673,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
                 </button>
                 <button
                   type="button"
-                  disabled={currentPage >= totalPages}
+                  disabled={safeCurrentPage >= totalPages}
                   onClick={handleNextPage}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-[#003366] text-white text-xs font-bold hover:bg-blue-900 disabled:opacity-40 cursor-pointer"
                 >
@@ -607,47 +683,60 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
             </div>
 
             {/* Current Page Content */}
-            <div className="min-h-[600px]">{bookPages[currentPage - 1]?.component}</div>
+            <div className="min-h-[600px]">{activePageItem?.component}</div>
 
             {/* Footer */}
             <div className="flex items-center justify-between pt-6 mt-8 border-t border-slate-200 text-xs text-slate-500 font-medium">
               <span>Hệ Thống Sổ Chủ Nhiệm Điện Tử - {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'}</span>
               <span className="font-black text-[#003366]">
-                Trang {currentPage} / {totalPages}
+                Trang {safeCurrentPage} / {totalPages}
               </span>
             </div>
           </div>
         )}
 
         {/* MODE 3: THUMBNAIL GRID OVERVIEW (10 Pages Overview) */}
-        {viewMode === 'grid' && (
+        {viewMode === 'grid' && visiblePages.length > 0 && (
           <div className="space-y-4">
             <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-center justify-between">
               <span className="text-xs font-black text-slate-700 uppercase tracking-wide">
-                Tổng Quan Toàn Bộ 10 Trang Sổ Chủ Nhiệm
+                Tổng Quan {visiblePages.length} Trang Sổ Chủ Nhiệm
               </span>
               <span className="text-xs text-slate-500 font-semibold">
-                Nhấp vào bất kỳ trang nào để mở đọc chi tiết
+                Nhấp vào bất kỳ trang nào để mở đọc chi tiết hoặc bấm biểu tượng thùng rác để xóa trang
               </span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-              {bookPages.map((pageItem) => (
+              {visiblePages.map((pageItem, idx) => (
                 <div
-                  key={pageItem.page}
+                  key={pageItem.code}
                   onClick={() => {
-                    setCurrentPage(pageItem.page);
+                    setCurrentPage(idx + 1);
                     setViewMode('paginated');
                   }}
                   className="group bg-white p-4 rounded-2xl border border-slate-200 hover:border-blue-500 hover:shadow-lg transition-all cursor-pointer space-y-3 relative overflow-hidden"
                 >
                   <div className="flex items-center justify-between">
                     <span className="w-6 h-6 rounded-lg bg-blue-100 text-[#003366] text-xs font-black flex items-center justify-center group-hover:bg-[#003366] group-hover:text-amber-300 transition-colors">
-                      {pageItem.page}
+                      {idx + 1}
                     </span>
-                    <span className="text-[10px] text-slate-400 font-mono">
-                      Trang {pageItem.page}/10
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        Trang {idx + 1}/{visiblePages.length}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePage(pageItem.code, pageItem.title);
+                        }}
+                        className="p-1 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white border border-rose-200 hover:border-rose-600 transition-all cursor-pointer"
+                        title="Xóa trang này"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="h-28 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-3 text-center group-hover:bg-blue-50/50 transition-colors">
