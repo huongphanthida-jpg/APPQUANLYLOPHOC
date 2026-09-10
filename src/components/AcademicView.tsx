@@ -169,20 +169,40 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     setIsEditSubjectModalOpen(false);
   };
 
-  // Subject definition for all subjects with grades
-  const subjectsList = [
-    { key: 'math', name: 'Toán Học', short: 'Toán', color: '#2563eb', icon: '📐' },
-    { key: 'physics', name: 'Vật Lý', short: 'Lý', color: '#059669', icon: '⚡' },
-    { key: 'chemistry', name: 'Hóa Học', short: 'Hóa', color: '#d97706', icon: '🧪' },
-    { key: 'biology', name: 'Sinh Học', short: 'Sinh', color: '#10b981', icon: '🌿' },
-    { key: 'literature', name: 'Ngữ Văn', short: 'Văn', color: '#8b5cf6', icon: '📖' },
-    { key: 'english', name: 'Tiếng Anh', short: 'Anh', color: '#ec4899', icon: '🌐' },
-  ] as const;
+  const COLOR_PALETTE = ['#2563eb', '#059669', '#d97706', '#10b981', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4', '#6366f1', '#14b8a6'];
+  const ICON_MAP: Record<string, string> = {
+    math: '📐',
+    physics: '⚡',
+    chemistry: '🧪',
+    biology: '🌿',
+    literature: '📖',
+    history: '📜',
+    geography: '🗺️',
+    gdcd: '⚖️',
+    english: '🌐',
+    informatics: '💻',
+    technology: '⚙️',
+  };
 
-  // Compute Class Averages for All Subjects
-  const calcClassSubjectAvg = (subjKey: typeof subjectsList[number]['key'], field: 'tx1' | 'tx2' | 'gk' | 'ck' | 'avg') => {
-    if (!students.length) return 0;
-    const total = students.reduce((acc, s) => acc + (s.grades[subjKey]?.[field] || 0), 0);
+  // Subject definition for all subjects dynamically synchronized with activeSubjectCols
+  const subjectsList = activeSubjectCols.map((col, idx) => ({
+    key: col.key,
+    name: col.fullName || col.short,
+    short: col.short,
+    color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+    icon: ICON_MAP[col.key] || '📚',
+  }));
+
+  // Compute Class Averages for All Subjects dynamically
+  const calcClassSubjectAvg = (subjKey: string, field: 'tx1' | 'tx2' | 'gk' | 'ck' | 'avg') => {
+    if (!students || !students.length) return 0;
+    const total = students.reduce((acc, s) => {
+      const g = (s.grades as any)?.[subjKey];
+      if (g === undefined || g === null) return acc + 8.0;
+      if (typeof g === 'number') return acc + g;
+      const val = g?.[field] ?? g?.avg ?? 8.0;
+      return acc + (typeof val === 'number' ? val : 8.0);
+    }, 0);
     return Number((total / students.length).toFixed(2));
   };
 
@@ -535,39 +555,47 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
               </button>
             </div>
           </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {subjectsList.map((subj) => {
-          const avgScore = calcClassSubjectAvg(subj.key, 'avg');
-          const isTop = subj.name === highestSubj?.name;
-          return (
-            <div
-              key={subj.key}
-              className={`p-3.5 rounded-2xl border transition-all ${
-                isTop
-                  ? 'bg-blue-50/70 border-blue-200 shadow-xs'
-                  : 'bg-white border-slate-200 shadow-2xs hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm">{subj.icon}</span>
-                {isTop && (
-                  <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-blue-600 text-white">
-                    TOP 1
-                  </span>
-                )}
-              </div>
-              <p className="text-xs font-bold text-slate-800 mt-1">{subj.name}</p>
-              <div className="flex items-baseline gap-1 mt-0.5">
-                <span className="text-lg font-black text-[#003366]">{avgScore}</span>
-                <span className="text-[10px] text-slate-400">/ 10</span>
-              </div>
-              <p className="text-[10px] text-slate-500 mt-0.5">
-                {avgScore >= 8.5 ? 'Xuất sắc' : avgScore >= 7.5 ? 'Khá giỏi' : 'Cần bồi dưỡng'}
-              </p>
-            </div>
-          );
-        })}
-      </div>
+      {(() => {
+        const highestSubj = subjectsList.reduce((prev, current) => {
+          return calcClassSubjectAvg(current.key, 'avg') > calcClassSubjectAvg(prev.key, 'avg') ? current : prev;
+        }, subjectsList[0] || { key: 'math', name: 'Toán Học', short: 'Toán', color: '#2563eb', icon: '📐' });
+
+        return (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {subjectsList.map((subj) => {
+              const avgScore = calcClassSubjectAvg(subj.key, 'avg');
+              const isTop = subj.name === highestSubj?.name;
+              return (
+                <div
+                  key={subj.key}
+                  className={`p-3.5 rounded-2xl border transition-all ${
+                    isTop
+                      ? 'bg-blue-50/70 border-blue-200 shadow-xs'
+                      : 'bg-white border-slate-200 shadow-2xs hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm">{subj.icon}</span>
+                    {isTop && (
+                      <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded-full bg-blue-600 text-white">
+                        TOP 1
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-bold text-slate-800 mt-1">{subj.name}</p>
+                  <div className="flex items-baseline gap-1 mt-0.5">
+                    <span className="text-lg font-black text-[#003366]">{avgScore}</span>
+                    <span className="text-[10px] text-slate-400">/ 10</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    {avgScore >= 8.5 ? 'Xuất sắc' : avgScore >= 7.5 ? 'Khá giỏi' : 'Cần bồi dưỡng'}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
 
       {/* BGH Benchmark Card */}
       {role === 'bgh' && (
@@ -1090,13 +1118,12 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
               onChange={(e) => setSelectedSubjectFilter(e.target.value as any)}
               className="bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold text-[#003366] focus:outline-none cursor-pointer"
             >
-              <option value="all">Tất cả các môn (Toán, Lý, Hóa, Sinh, Văn, Anh)</option>
-              <option value="math">Chỉ môn Toán Học</option>
-              <option value="physics">Chỉ môn Vật Lý</option>
-              <option value="chemistry">Chỉ môn Hóa Học</option>
-              <option value="biology">Chỉ môn Sinh Học</option>
-              <option value="literature">Chỉ môn Ngữ Văn</option>
-              <option value="english">Chỉ môn Tiếng Anh</option>
+              <option value="all">Tất cả các môn ({subjectsList.map((s) => s.short).join(', ')})</option>
+              {subjectsList.map((subj) => (
+                <option key={subj.key} value={subj.key}>
+                  Chỉ môn {subj.name}
+                </option>
+              ))}
             </select>
           </div>
         </div>
