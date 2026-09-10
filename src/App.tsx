@@ -1326,6 +1326,10 @@ export default function App() {
               onDeleteDisciplineLog={handleDeleteDisciplineLog}
               onDeleteJournalEntry={handleDeleteJournalEntry}
               role={role}
+              leaveRequests={leaveRequests}
+              classInfo={classInfo}
+              teacherInfo={teacherInfo}
+              onSelectStudent={handleSelectStudent}
             />
           )}
 
