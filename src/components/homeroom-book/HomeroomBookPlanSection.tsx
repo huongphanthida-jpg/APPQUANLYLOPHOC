@@ -198,11 +198,11 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
             <div className="space-y-1 text-xs">
               <div className="flex justify-between font-semibold">
                 <span className="text-emerald-700">Xuất sắc & Giỏi:</span>
-                <span className="font-bold text-slate-900">{plan.academicTargets?.excellent || 75}%</span>
+                <span className="font-bold text-slate-900">{plan?.academicTargets?.excellent || 75}%</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span className="text-blue-700">Khá:</span>
-                <span className="font-bold text-slate-900">{plan.academicTargets?.good || 25}%</span>
+                <span className="font-bold text-slate-900">{plan?.academicTargets?.good || 25}%</span>
               </div>
               <div className="flex justify-between font-semibold text-slate-400">
                 <span>Đạt / Chưa đạt:</span>
@@ -220,11 +220,11 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
             <div className="space-y-1 text-xs">
               <div className="flex justify-between font-semibold">
                 <span className="text-emerald-700">Hạnh kiểm Tốt:</span>
-                <span className="font-bold text-slate-900">{plan.conductTargets?.good || 97.2}%</span>
+                <span className="font-bold text-slate-900">{plan?.conductTargets?.good || 97.2}%</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span className="text-blue-700">Hạnh kiểm Khá:</span>
-                <span className="font-bold text-slate-900">{plan.conductTargets?.fair || 2.8}%</span>
+                <span className="font-bold text-slate-900">{plan?.conductTargets?.fair || 2.8}%</span>
               </div>
               <div className="flex justify-between font-semibold text-slate-400">
                 <span>Đạt / Chưa đạt:</span>
