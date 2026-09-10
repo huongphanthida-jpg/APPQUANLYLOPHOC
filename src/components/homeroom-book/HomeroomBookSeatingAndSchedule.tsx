@@ -10,6 +10,7 @@ import {
   Edit2,
   Trash2,
   Edit3,
+  Calendar,
 } from 'lucide-react';
 import {
   SeatingChartData,
