@@ -1024,7 +1024,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <div className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-[#003366]" />
                 <h3 className="text-base font-bold text-[#003366]">
-                  Sổ Đầu Bài Kỹ Thuật Số (Hôm nay)
+                  Nề Nếp & Thi đua (Hôm nay)
                 </h3>
               </div>
               <button
@@ -1032,7 +1032,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                 onClick={() => onNavigate('discipline')}
                 className="text-xs font-semibold text-[#003366] hover:underline flex items-center gap-1"
               >
-                Toàn bộ sổ đầu bài <ChevronRight className="w-3.5 h-3.5" />
+                Toàn bộ nề nếp & thi đua <ChevronRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
@@ -1070,7 +1070,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                   {(!journal || journal.length === 0) && (
                     <tr>
                       <td colSpan={6} className="py-4 text-center text-slate-400">
-                        Chưa có dữ liệu sổ đầu bài hôm nay
+                        Chưa có dữ liệu nề nếp & thi đua hôm nay
                       </td>
                     </tr>
                   )}
