@@ -38,9 +38,9 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
 
   const canEdit = role === 'gvcn';
 
-  const totalCount = students && students.length > 0 ? students.length : plan.totalStudentsStart;
-  const maleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nam').length : plan.maleCount;
-  const femaleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nữ').length : plan.femaleCount;
+  const totalCount = students && students.length > 0 ? students.length : (plan?.totalStudentsStart || 36);
+  const maleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nam').length : (plan?.maleCount || 18);
+  const femaleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nữ').length : (plan?.femaleCount || 18);
   const malePct = totalCount > 0 ? ((maleCount / totalCount) * 100).toFixed(1) : '0';
   const femalePct = totalCount > 0 ? ((femaleCount / totalCount) * 100).toFixed(1) : '0';
 
@@ -108,27 +108,27 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
           </div>
           <div className="p-3 rounded-xl bg-red-50/70 border border-red-100">
             <span className="text-[11px] font-bold text-slate-500 block">Đoàn Viên</span>
-            <span className="text-xl font-black text-red-600">{plan.unionMembersCount}</span>
+            <span className="text-xl font-black text-red-600">{plan?.unionMembersCount ?? totalCount}</span>
             <span className="text-[10px] text-red-600 block font-semibold">100% Chi đoàn</span>
           </div>
           <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-100">
             <span className="text-[11px] font-bold text-slate-500 block">Dân Tộc T.Số</span>
-            <span className="text-xl font-black text-emerald-700">{plan.ethnicMinorityCount}</span>
+            <span className="text-xl font-black text-emerald-700">{plan?.ethnicMinorityCount ?? 1}</span>
             <span className="text-[10px] text-emerald-600 block font-semibold">1 em (Mường)</span>
           </div>
           <div className="p-3 rounded-xl bg-amber-50/70 border border-amber-100">
             <span className="text-[11px] font-bold text-slate-500 block">Con Chính Sách</span>
-            <span className="text-xl font-black text-amber-700">{plan.policyBeneficiaryCount}</span>
+            <span className="text-xl font-black text-amber-700">{plan?.policyBeneficiaryCount ?? 2}</span>
             <span className="text-[10px] text-amber-600 block font-semibold">2 em (TB-LS)</span>
           </div>
           <div className="p-3 rounded-xl bg-purple-50/70 border border-purple-100">
             <span className="text-[11px] font-bold text-slate-500 block">Hộ Cận Nghèo</span>
-            <span className="text-xl font-black text-purple-700">{plan.poorHouseholdCount}</span>
+            <span className="text-xl font-black text-purple-700">{plan?.poorHouseholdCount ?? 1}</span>
             <span className="text-[10px] text-purple-600 block font-semibold">Đã cấp học bổng</span>
           </div>
           <div className="p-3 rounded-xl bg-teal-50/70 border border-teal-100">
             <span className="text-[11px] font-bold text-slate-500 block">Lưu Ý Sức Khỏe</span>
-            <span className="text-xl font-black text-teal-700">{plan.specialHealthCount}</span>
+            <span className="text-xl font-black text-teal-700">{plan?.specialHealthCount ?? 3}</span>
             <span className="text-[10px] text-teal-600 block font-semibold">Cận / Hen suyễn</span>
           </div>
         </div>
@@ -241,12 +241,12 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
             </div>
             <div className="space-y-1 text-xs">
               <div className="flex justify-between font-semibold">
-                <span className="text-slate-600">Tốt nghiệp THPT:</span>
-                <span className="font-bold text-emerald-700">{plan.graduationTargetPercent || 100}% ({totalCount}/{totalCount} HS)</span>
+                <span className="text-[#003366]">Tốt nghiệp THPT:</span>
+                <span className="font-bold text-emerald-700">{plan?.graduationTargetPercent || 100}% ({totalCount}/{totalCount} HS)</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span className="text-slate-600">Đỗ ĐH NV1:</span>
-                <span className="font-bold text-blue-700">≥ {plan.universityAdmissionTargetPercent || 91.7}% (33+ HS)</span>
+                <span className="font-bold text-blue-700">≥ {plan?.universityAdmissionTargetPercent || 91.7}% (33+ HS)</span>
               </div>
               <div className="flex justify-between font-semibold text-purple-700">
                 <span>HSG Tỉnh:</span>
@@ -264,7 +264,7 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
             <div className="space-y-1 text-xs">
               <div className="p-2 rounded-lg bg-amber-50 border border-amber-200 text-center">
                 <span className="font-black text-amber-900 block text-xs">
-                  {plan.classEmulationTitleTarget || 'TẬP THỂ LỚP XUẤT SẮC'}
+                  {plan?.classEmulationTitleTarget || 'TẬP THỂ LỚP XUẤT SẮC'}
                 </span>
                 <span className="text-[10px] text-amber-700 font-semibold">Cờ thi đua dẫn đầu Khối 12</span>
               </div>
@@ -292,7 +292,7 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
               <span>Giáo dục Đạo đức, Tư tưởng & Nề nếp Kỷ luật</span>
             </div>
             <p className="text-slate-600 leading-relaxed pl-8">
-              {plan.keyMeasures?.morality || 'Phát huy tính tự giác, nêu gương của cán sự lớp...'}
+              {plan?.keyMeasures?.morality || 'Phát huy tính tự giác, nêu gương của cán sự lớp...'}
             </p>
           </div>
 
@@ -304,7 +304,7 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
               <span>Nâng cao Chất lượng Học tập & Ôn thi Tốt nghiệp THPT - ĐH</span>
             </div>
             <p className="text-slate-600 leading-relaxed pl-8">
-              {plan.keyMeasures?.studyQuality || 'Tổ chức ôn tập phân hóa, phong trào Đôi bạn cùng tiến...'}
+              {plan?.keyMeasures?.studyQuality || 'Tổ chức ôn tập phân hóa, phong trào Đôi bạn cùng tiến...'}
             </p>
           </div>
         </div>
