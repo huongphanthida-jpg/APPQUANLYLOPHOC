@@ -117,12 +117,19 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
   const [logPoints, setLogPoints] = useState<number>(10);
   const [logDesc, setLogDesc] = useState<string>('');
 
-  // Default Leaders fallback map
+  // Default Leaders fallback map (Synchronized with Ban Cán Sự Lớp in Sổ Chủ Nhiệm)
   const defaultLeadersMap: Record<number, string> = {
     1: 'Nguyễn Hoàng Long',
-    2: 'Phạm Đức Anh',
-    3: 'Đỗ Hải Đăng',
-    4: 'Bùi Minh Triết',
+    2: 'Đỗ Hải Đăng',
+    3: 'Vũ Đức Trọng',
+    4: 'Hoàng Nhật Minh',
+  };
+
+  // Synchronize student group changes with parent state & storage
+  const handleChangeStudentGroup = (studentId: string, newGroup: 1 | 2 | 3 | 4) => {
+    if (!onUpdateStudents) return;
+    const updated = students.map((s) => (s.id === studentId ? { ...s, group: newGroup } : s));
+    onUpdateStudents(updated);
   };
 
   // Dynamic Group Leader resolution
@@ -137,12 +144,14 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
     if (homeroomBookData?.committee) {
       const commItem = homeroomBookData.committee.find((c) => {
         const r = (c.roleName || '').toLowerCase();
-        return r.includes('tổ trưởng') && r.includes(`${groupNum}`);
+        return r.includes('tổ trưởng') && (r.includes(`${groupNum}`) || r.includes(`tổ ${groupNum}`));
       });
       if (commItem && commItem.studentName && commItem.studentName !== 'Chưa gán') {
+        const foundStudent = groupStudents.find((s) => s.name === commItem.studentName || s.id === commItem.studentId);
         return {
           name: commItem.studentName,
           title: `Tổ Trưởng Tổ ${groupNum}`,
+          avatar: foundStudent?.avatar,
         };
       }
     }
@@ -818,18 +827,22 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                       }}
                       className="bg-black/30 text-white font-bold px-2 py-0.5 rounded-lg border border-white/30 text-xs"
                     >
-                      {students
-                        .filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal)
-                        .map((s) => (
-                          <option key={s.id} value={s.name} className="text-slate-900">
-                            {s.name}
+                      <optgroup label="Thành viên Tổ">
+                        {students
+                          .filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal)
+                          .map((s) => (
+                            <option key={s.id} value={s.name} className="text-slate-900">
+                              {s.name}
+                            </option>
+                          ))}
+                      </optgroup>
+                      <optgroup label="Tất cả Học Sinh Lớp">
+                        {students.map((s) => (
+                          <option key={`all-${s.id}`} value={s.name} className="text-slate-900">
+                            {s.name} (Tổ {getStudentGroupNumber(s.group)})
                           </option>
                         ))}
-                      {students.filter((s) => getStudentGroupNumber(s.group) === selectedGroupModal).length === 0 && (
-                        <option value="Chưa phân công" className="text-slate-900">
-                          Chưa phân công
-                        </option>
-                      )}
+                      </optgroup>
                     </select>
                   </div>
                 </div>
