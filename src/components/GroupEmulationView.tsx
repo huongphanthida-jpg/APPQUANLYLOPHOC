@@ -305,12 +305,24 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
       const attendanceDeductions = (excusedAbsences * 2 + unexcusedAbsences * 5 + lateArrivals * 2);
       const totalAttendance = attendanceBonuses - attendanceDeductions;
 
-      // 4. Duty Score
+      // 4. Duty Score: Đã hoàn thành = +0đ, Chưa hoàn thành = -5đ
       const groupDuties = dutySchedule.filter(
         (d) => getStudentGroupNumber(d.assignedGroup || (d as any).group) === groupNum
       );
-      const completedDuties = groupDuties.filter((d) => d.status === 'completed' || (d.status as any) === 'Đã hoàn thành');
-      const totalDuty = completedDuties.length * 5;
+      
+      let incompleteCount = 0;
+      groupDuties.forEach((d) => {
+        if (d.status === 'Chưa hoàn thành' || (d.status as any) === 'incomplete') {
+          incompleteCount += 1;
+        } else if (d.assignedStudents && d.assignedStudents.length > 0) {
+          const uncompletedStudents = d.assignedStudents.filter((s) => s.isCompleted === false).length;
+          if (uncompletedStudents > 0 && d.status !== 'Đã hoàn thành') {
+            incompleteCount += 1;
+          }
+        }
+      });
+
+      const totalDuty = -(incompleteCount * 5);
 
       // 5. Direct Emulation Logs Points
       const groupLogs = emulationLogs.filter((l) => getStudentGroupNumber(l.group) === groupNum);
@@ -501,6 +513,9 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
           <span className="bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 px-2.5 py-1 rounded-xl border border-rose-300 dark:border-rose-700 flex items-center gap-1 shadow-2xs">
             ⚠️ <strong>GPA &lt; 5.0:</strong> <strong className="text-rose-700 dark:text-rose-400 font-black">-2đ / HS</strong> (Phụ đạo)
           </span>
+          <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-300 px-2.5 py-1 rounded-xl border border-amber-300 dark:border-amber-700 flex items-center gap-1 shadow-2xs">
+            🧹 <strong>Trực Nhật:</strong> Hoàn thành (+0đ) • Chưa xong (<strong className="text-rose-600 font-black">-5đ</strong>)
+          </span>
         </div>
       </div>
 
@@ -579,11 +594,13 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between text-slate-600 dark:text-slate-400">
-                    <span className="flex items-center gap-1.5">
+                    <span className="flex items-center gap-1.5" title="Đã hoàn thành: +0đ | Chưa hoàn thành: -5đ">
                       <CheckSquare className="w-3.5 h-3.5 text-amber-500" />
                       Trực Nhật & Nhiệm Vụ:
                     </span>
-                    <span className="font-bold text-amber-600">+{groupData.totalDuty}đ</span>
+                    <span className={`font-bold ${groupData.totalDuty < 0 ? 'text-rose-600 font-extrabold' : 'text-slate-600'}`}>
+                      {groupData.totalDuty > 0 ? `+${groupData.totalDuty}` : `${groupData.totalDuty}`}đ
+                    </span>
                   </div>
 
                   {groupData.totalDirectLogs !== 0 && (
