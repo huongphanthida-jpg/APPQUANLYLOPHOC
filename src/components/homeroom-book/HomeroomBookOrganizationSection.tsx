@@ -22,6 +22,7 @@ interface HomeroomBookOrganizationSectionProps {
   committee: ClassCommitteeRole[];
   parentsBoard: ParentsBoardMember[];
   students: Student[];
+  className?: string;
   role: UserRole;
   onUpdateCommittee?: (newCommittee: ClassCommitteeRole[]) => void;
   onUpdateParentsBoard?: (newBoard: ParentsBoardMember[]) => void;
@@ -31,6 +32,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
   committee,
   parentsBoard,
   students,
+  className,
   role,
   onUpdateCommittee,
   onUpdateParentsBoard,
@@ -156,7 +158,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-blue-600" />
-            1. Danh Sách Ban Cán Sự Lớp & BCH Chi Đoàn 12A1
+            1. Danh Sách Ban Cán Sự Lớp & BCH Chi Đoàn {className || '12A1'}
           </h4>
           
           <div className="flex items-center gap-2">
