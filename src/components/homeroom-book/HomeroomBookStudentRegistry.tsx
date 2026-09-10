@@ -99,7 +99,7 @@ export const HomeroomBookStudentRegistry: React.FC<HomeroomBookStudentRegistryPr
                 PHẦN 3: SƠ YẾU LÝ LỊCH & DANH SÁCH TRÍCH NGANG HỌC SINH
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Hồ sơ thông tin cá nhân, nhân thân gia đình, địa chỉ thường trú và ghi chú sức khỏe 36 học sinh
+                Hồ sơ thông tin cá nhân, nhân thân gia đình, địa chỉ thường trú và ghi chú sức khỏe {students.length} học sinh
               </p>
             </div>
           </div>
