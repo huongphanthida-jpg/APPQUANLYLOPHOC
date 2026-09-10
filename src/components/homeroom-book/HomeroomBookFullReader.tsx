@@ -599,7 +599,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
                         {pageItem.title}
                       </h4>
                       <p className="text-[10px] text-slate-400 font-medium">
-                        {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'} • Lớp {classInfo.className} • {classInfo.academicYear || bookData.academicYear}
+                        {classInfo?.schoolName || 'THPT TRẦN NGUYÊN HÃN'} • Lớp {classInfo?.className || '12A1'} • {classInfo?.academicYear || bookData?.academicYear || '2025-2026'}
                       </p>
                     </div>
                   </div>
@@ -624,7 +624,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
 
                 {/* Official Page Footer */}
                 <div className="flex items-center justify-between pt-6 mt-8 border-t border-slate-200 text-[10px] text-slate-400 font-medium print:mt-4">
-                  <span>Hệ Thống Sổ Chủ Nhiệm Điện Tử - {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'}</span>
+                  <span>Hệ Thống Sổ Chủ Nhiệm Điện Tử - {classInfo?.schoolName || 'THPT TRẦN NGUYÊN HÃN'}</span>
                   <span className="font-bold text-slate-500">
                     Trang {idx + 1} / {totalPages}
                   </span>
