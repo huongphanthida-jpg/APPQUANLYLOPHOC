@@ -233,3 +233,5 @@ export const EditDutyScheduleModal: React.FC<EditDutyScheduleModalProps> = ({
     </div>
   );
 };
+
+export default EditDutyScheduleModal;
