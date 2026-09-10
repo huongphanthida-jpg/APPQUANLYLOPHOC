@@ -132,6 +132,28 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
     onUpdateStudents(updated);
   };
 
+  // Handle adding new emulation bonus/penalty log for a group
+  const handleCreateLog = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!logTitle.trim()) return;
+
+    const newLog: GroupEmulationLog = {
+      id: `gel-${Date.now()}`,
+      group: targetGroup,
+      title: logTitle.trim(),
+      points: logPoints,
+      category,
+      recordedBy: role === 'gvcn' ? 'Giáo viên Chủ nhiệm' : 'Cán bộ Lớp',
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      description: logDesc.trim() || undefined,
+    };
+
+    onAddEmulationLog(newLog);
+    setLogTitle('');
+    setLogDesc('');
+    setIsAddModalOpen(false);
+  };
+
   // Dynamic Group Leader resolution
   const getGroupLeaderInfo = (groupNum: number, groupStudents: Student[]) => {
     if (customLeaders[groupNum]) {
