@@ -188,9 +188,14 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           parentsBoard={bookData?.parentsBoard || []}
           students={students || []}
           className={classInfo?.className || '12A1'}
+          academicYear={classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}
+          classInfo={classInfo}
+          teacherInfo={teacherInfo}
+          bghInfo={bghInfo}
           role={role}
           onUpdateCommittee={onUpdateCommittee}
           onUpdateParentsBoard={onUpdateParentsBoard}
+          onUpdateAdministrative={onUpdateAdministrative}
         />
       ),
     },
