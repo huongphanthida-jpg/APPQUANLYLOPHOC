@@ -52,7 +52,7 @@ export const EditSpecialStudentModal: React.FC<EditSpecialStudentModalProps> = (
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const foundStudent = students.find((s) => s.id === studentId);
+    const foundStudent = (students || []).find((s) => s && s.id === studentId);
     onSave({
       id: studentCareItem?.id || `care-${Date.now()}`,
       studentId,
@@ -103,7 +103,7 @@ export const EditSpecialStudentModal: React.FC<EditSpecialStudentModalProps> = (
                 onChange={(e) => setStudentId(e.target.value)}
                 className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-rose-500"
               >
-                {students.map((s) => (
+                {(students || []).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.code} - {s.name} (Tổ {s.group})
                   </option>
