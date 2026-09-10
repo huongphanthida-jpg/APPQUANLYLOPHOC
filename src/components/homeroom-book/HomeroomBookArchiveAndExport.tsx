@@ -286,3 +286,5 @@ export const HomeroomBookArchiveAndExport: React.FC<HomeroomBookArchiveAndExport
     </div>
   );
 };
+
+export default HomeroomBookArchiveAndExport;
