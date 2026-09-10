@@ -170,10 +170,10 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 1: Kế Hoạch Năm Học & Đặc Điểm Lớp',
       component: (
         <HomeroomBookPlanSection
-          plan={bookData.plan}
-          academicYear={classInfo.academicYear || bookData.academicYear}
+          plan={bookData?.plan}
+          academicYear={classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}
           role={role}
-          students={students}
+          students={students || []}
           onUpdatePlan={onUpdatePlan}
         />
       ),
@@ -184,10 +184,10 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 2: Tổ Chức Lớp & Ban Đại Diện CMHS',
       component: (
         <HomeroomBookOrganizationSection
-          committee={bookData.committee}
-          parentsBoard={bookData.parentsBoard}
-          students={students}
-          className={classInfo.className}
+          committee={bookData?.committee || []}
+          parentsBoard={bookData?.parentsBoard || []}
+          students={students || []}
+          className={classInfo?.className || '12A1'}
           role={role}
           onUpdateCommittee={onUpdateCommittee}
           onUpdateParentsBoard={onUpdateParentsBoard}
@@ -197,11 +197,11 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
     {
       page: 4,
       code: 'registry',
-      title: `Phần 3: Sơ Yếu Lý Lịch ${students.length} Học Sinh`,
+      title: `Phần 3: Sơ Yếu Lý Lịch ${students ? students.length : 0} Học Sinh`,
       component: (
         <HomeroomBookStudentRegistry
-          students={students}
-          className={classInfo.className}
+          students={students || []}
+          className={classInfo?.className || '12A1'}
           role={role}
           onSelectStudent={onSelectStudent}
           onUpdateStudents={onUpdateStudents}
@@ -216,10 +216,10 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
         <HomeroomBookSeatingAndSchedule
           seatingChart={seatingChart}
           timetable={timetable}
-          studyPairs={studyPairs}
-          subjectTeachers={bookData.subjectTeachers}
-          students={students}
-          className={classInfo.className}
+          studyPairs={studyPairs || []}
+          subjectTeachers={bookData?.subjectTeachers || []}
+          students={students || []}
+          className={classInfo?.className || '12A1'}
           role={role}
           onUpdateSubjectTeachers={onUpdateSubjectTeachers}
           onUpdateSeatingChart={onUpdateSeatingChart}
@@ -234,9 +234,9 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 5: Nề Nếp Kỷ Luật & Sổ Đầu Bài',
       component: (
         <HomeroomBookDisciplineAndJournal
-          disciplineLogs={disciplineLogs}
-          journal={journal}
-          students={students}
+          disciplineLogs={disciplineLogs || []}
+          journal={journal || []}
+          students={students || []}
           role={role}
           onUpdateDisciplineLogs={onUpdateDisciplineLogs}
           onUpdateJournal={onUpdateJournal}
@@ -249,7 +249,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 6: Bảng Điểm & Đánh Giá 2 Mặt GD',
       component: (
         <HomeroomBookAcademicSummary
-          students={students}
+          students={students || []}
           role={role}
           onUpdateStudents={onUpdateStudents}
         />
@@ -261,10 +261,10 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 7: Trực Nhật 8 Ca & Điểm Thi Đua 4 Tổ',
       component: (
         <HomeroomBookDutyAndEmulation
-          dutySchedule={dutySchedule}
-          emulationLogs={emulationLogs}
-          students={students}
-          className={classInfo.className}
+          dutySchedule={dutySchedule || []}
+          emulationLogs={emulationLogs || []}
+          students={students || []}
+          className={classInfo?.className || '12A1'}
           role={role}
           onUpdateDutySchedule={onUpdateDutySchedule}
           onUpdateEmulationLogs={onUpdateEmulationLogs}
@@ -277,9 +277,9 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 8: Học Sinh Cần Quan Tâm & Đơn Từ',
       component: (
         <HomeroomBookSpecialCareAndLeaves
-          specialStudents={bookData.specialStudents}
-          leaveRequests={leaveRequests}
-          students={students}
+          specialStudents={bookData?.specialStudents || []}
+          leaveRequests={leaveRequests || []}
+          students={students || []}
           role={role}
           onUpdateSpecialStudents={onUpdateSpecialStudents}
           onUpdateLeaveRequests={onUpdateLeaveRequests}
@@ -292,8 +292,8 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 9: Biên Bản Họp & Duyệt Của BGH',
       component: (
         <HomeroomBookMinutesAndBgh
-          meetingMinutes={bookData.meetingMinutes}
-          inspections={bookData.inspections}
+          meetingMinutes={bookData?.meetingMinutes || []}
+          inspections={bookData?.inspections || []}
           role={role}
           onUpdateMinutes={onUpdateMinutes}
           onUpdateInspections={onUpdateInspections}
