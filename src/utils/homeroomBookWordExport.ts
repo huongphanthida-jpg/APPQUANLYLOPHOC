@@ -508,7 +508,7 @@ export function exportHomeroomMasterWord(params: HomeroomBookWordExportParams) {
     </thead>
     <tbody>
       <tr>
-        <th colspan="7" style="background-color: #e0f2fe; color: #0369a1; text-align: left; padding: 4pt 8pt;">BUỔI SÁNG (07:00 - 11:30)</th>
+        <th colspan="7" style="background-color: #e0f2fe; color: #0369a1; text-align: left; padding: 4pt 8pt;">BUỔI SÁNG (${timetable?.morningTime || '07:00 - 11:20'})${timetable?.morningLabel ? ` - ${timetable.morningLabel}` : ''}</th>
       </tr>
       ${[1, 2, 3, 4, 5].map(periodNum => `
         <tr>
@@ -525,7 +525,7 @@ export function exportHomeroomMasterWord(params: HomeroomBookWordExportParams) {
         </tr>
       `).join('')}
       <tr>
-        <th colspan="7" style="background-color: #fef3c7; color: #92400e; text-align: left; padding: 4pt 8pt;">BUỔI CHIỀU (13:30 - 17:00)</th>
+        <th colspan="7" style="background-color: #fef3c7; color: #92400e; text-align: left; padding: 4pt 8pt;">BUỔI CHIỀU (${timetable?.afternoonTime || '13:30 - 17:45'})${timetable?.afternoonLabel ? ` - ${timetable.afternoonLabel}` : ''}</th>
       </tr>
       ${[1, 2, 3, 4].map(periodNum => `
         <tr>
