@@ -160,6 +160,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
     }, 300);
   };
 
+  // State update handlers for deep persistence
   const handleUpdatePlan = (updatedPlan: HomeroomBookPlan) => {
     if (onUpdateBookData) {
       onUpdateBookData({
@@ -304,6 +305,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Top Banner with Quick Actions */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#003366] to-blue-700 text-white flex items-center justify-center shadow-md shrink-0">
@@ -328,7 +330,9 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
           </div>
         </div>
 
+        {/* Global Toolbar Actions */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Xem trước khi tải Button */}
           <button
             type="button"
             onClick={() => setIsPreviewExportModalOpen(true)}
@@ -339,6 +343,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
             <span>Xem Trước Khi Tải</span>
           </button>
 
+          {/* Xem tất cả các trang Button */}
           <button
             type="button"
             onClick={() => setActiveTab('full-reader')}
@@ -372,6 +377,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
         </div>
       </div>
 
+      {/* Navigation Sub-Tabs Bar */}
       <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-1.5 min-w-max">
           {navItems.map((item) => {
@@ -396,6 +402,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
         </div>
       </div>
 
+      {/* Main Content Area Based on Active Tab */}
       <div className="transition-all">
         {activeTab === 'cover' && (
           <HomeroomBookCover
@@ -405,6 +412,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
             bookData={bookData}
             role={role}
             totalStudents={students.length}
+            students={students}
             onPrintBook={handlePrintBook}
             onExportExcel={handleExportExcel}
             onUpdateAdministrative={handleUpdateAdministrative}
@@ -416,6 +424,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
             plan={bookData.plan}
             academicYear={bookData.academicYear}
             role={role}
+            students={students}
             onUpdatePlan={handleUpdatePlan}
           />
         )}
@@ -517,6 +526,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
           />
         )}
 
+        {/* FULL READER: XEM TẤT CẢ CÁC TRANG (Cuộn liên tục / Từng trang / Lưới thu nhỏ) */}
         {activeTab === 'full-reader' && (
           <HomeroomBookFullReader
             role={role}
@@ -558,6 +568,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
         )}
       </div>
 
+      {/* Global Preview Before Download Modal */}
       {isPreviewExportModalOpen && (
         <HomeroomBookExportPreviewModal
           isOpen={isPreviewExportModalOpen}
