@@ -117,13 +117,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
   const [logPoints, setLogPoints] = useState<number>(10);
   const [logDesc, setLogDesc] = useState<string>('');
 
-  // Default Leaders fallback map (Synchronized with Ban Cán Sự Lớp in Sổ Chủ Nhiệm)
-  const defaultLeadersMap: Record<number, string> = {
-    1: 'Nguyễn Hoàng Long',
-    2: 'Đỗ Hải Đăng',
-    3: 'Vũ Đức Trọng',
-    4: 'Hoàng Nhật Minh',
-  };
+
 
   // Synchronize student group changes with parent state & storage
   const handleChangeStudentGroup = (studentId: string, newGroup: 1 | 2 | 3 | 4) => {
@@ -154,40 +148,41 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
     setIsAddModalOpen(false);
   };
 
-  // Dynamic Group Leader resolution
+  // Dynamic Group Leader resolution (Strictly validated against actual class students)
   const getGroupLeaderInfo = (groupNum: number, groupStudents: Student[]) => {
+    // 1. If custom leader was manually selected and exists in class
     if (customLeaders[groupNum]) {
-      return {
-        name: customLeaders[groupNum],
-        title: `Tổ Trưởng Tổ ${groupNum}`,
-      };
+      const foundInClass = students.find((s) => s.name === customLeaders[groupNum]);
+      if (foundInClass) {
+        return {
+          name: foundInClass.name,
+          title: `Tổ Trưởng Tổ ${groupNum}`,
+          avatar: foundInClass.avatar,
+        };
+      }
     }
 
+    // 2. Check Homeroom Book Committee (Sổ Chủ Nhiệm) - MUST exist in actual class students list
     if (homeroomBookData?.committee) {
       const commItem = homeroomBookData.committee.find((c) => {
         const r = (c.roleName || '').toLowerCase();
         return r.includes('tổ trưởng') && (r.includes(`${groupNum}`) || r.includes(`tổ ${groupNum}`));
       });
       if (commItem && commItem.studentName && commItem.studentName !== 'Chưa gán') {
-        const foundStudent = groupStudents.find((s) => s.name === commItem.studentName || s.id === commItem.studentId);
-        return {
-          name: commItem.studentName,
-          title: `Tổ Trưởng Tổ ${groupNum}`,
-          avatar: foundStudent?.avatar,
-        };
+        const foundInClass = students.find(
+          (s) => s.name === commItem.studentName || s.id === commItem.studentId
+        );
+        if (foundInClass) {
+          return {
+            name: foundInClass.name,
+            title: `Tổ Trưởng Tổ ${groupNum}`,
+            avatar: foundInClass.avatar,
+          };
+        }
       }
     }
 
-    const defaultName = defaultLeadersMap[groupNum];
-    const foundInGroup = groupStudents.find((s) => s.name === defaultName);
-    if (foundInGroup) {
-      return {
-        name: foundInGroup.name,
-        title: `Tổ Trưởng Tổ ${groupNum}`,
-        avatar: foundInGroup.avatar,
-      };
-    }
-
+    // 3. Fallback: First student in this group if any exists in class
     if (groupStudents.length > 0) {
       return {
         name: groupStudents[0].name,
@@ -197,7 +192,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
     }
 
     return {
-      name: defaultName || 'Chưa phân công',
+      name: 'Chưa phân công',
       title: `Tổ Trưởng Tổ ${groupNum}`,
     };
   };
@@ -650,7 +645,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
                         T{g.group}
                       </span>
                       <span className="font-bold text-slate-800 dark:text-slate-200">
-                        Tổ {g.group} - {g.leader.name} ({g.studentCount} HS)
+                        Tổ {g.group} {g.leader.name && g.leader.name !== 'Chưa phân công' ? `- ${g.leader.name}` : ''} ({g.studentCount} HS)
                       </span>
                     </div>
                     <span className="font-black text-orange-600 dark:text-orange-400 font-mono text-sm">
