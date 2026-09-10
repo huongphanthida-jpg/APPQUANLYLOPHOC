@@ -236,3 +236,5 @@ export const EditGroupEmulationModal: React.FC<EditGroupEmulationModalProps> = (
     </div>
   );
 };
+
+export default EditGroupEmulationModal;
