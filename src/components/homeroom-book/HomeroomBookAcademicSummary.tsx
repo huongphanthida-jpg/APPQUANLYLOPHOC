@@ -665,3 +665,5 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
     </div>
   );
 };
+
+export default HomeroomBookAcademicSummary;
