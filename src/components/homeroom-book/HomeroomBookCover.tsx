@@ -12,6 +12,7 @@ import {
   FileSpreadsheet,
   FileText,
   Edit3,
+  Layers,
 } from 'lucide-react';
 import { ClassInfo, TeacherInfo, BghInfo, HomeroomBookData, UserRole, Student } from '../../types';
 import { EditAdministrativeModal } from './EditAdministrativeModal';
