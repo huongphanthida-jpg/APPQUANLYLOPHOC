@@ -171,7 +171,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       component: (
         <HomeroomBookPlanSection
           plan={bookData.plan}
-          academicYear={bookData.academicYear}
+          academicYear={classInfo.academicYear || bookData.academicYear}
           role={role}
           students={students}
           onUpdatePlan={onUpdatePlan}
@@ -187,6 +187,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           committee={bookData.committee}
           parentsBoard={bookData.parentsBoard}
           students={students}
+          className={classInfo.className}
           role={role}
           onUpdateCommittee={onUpdateCommittee}
           onUpdateParentsBoard={onUpdateParentsBoard}
@@ -200,6 +201,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       component: (
         <HomeroomBookStudentRegistry
           students={students}
+          className={classInfo.className}
           role={role}
           onSelectStudent={onSelectStudent}
           onUpdateStudents={onUpdateStudents}
@@ -217,6 +219,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           studyPairs={studyPairs}
           subjectTeachers={bookData.subjectTeachers}
           students={students}
+          className={classInfo.className}
           role={role}
           onUpdateSubjectTeachers={onUpdateSubjectTeachers}
           onUpdateSeatingChart={onUpdateSeatingChart}
@@ -261,6 +264,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           dutySchedule={dutySchedule}
           emulationLogs={emulationLogs}
           students={students}
+          className={classInfo.className}
           role={role}
           onUpdateDutySchedule={onUpdateDutySchedule}
           onUpdateEmulationLogs={onUpdateEmulationLogs}
@@ -595,7 +599,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
                         {pageItem.title}
                       </h4>
                       <p className="text-[10px] text-slate-400 font-medium">
-                        {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'} • Lớp {classInfo.className} • {bookData.academicYear}
+                        {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'} • Lớp {classInfo.className} • {classInfo.academicYear || bookData.academicYear}
                       </p>
                     </div>
                   </div>
@@ -643,7 +647,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
                     {activePageItem?.title}
                   </h3>
                   <p className="text-xs text-slate-400 font-medium">
-                    {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'} • Lớp {classInfo.className} • {bookData.academicYear}
+                    {classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN'} • Lớp {classInfo.className} • {classInfo.academicYear || bookData.academicYear}
                   </p>
                 </div>
               </div>
