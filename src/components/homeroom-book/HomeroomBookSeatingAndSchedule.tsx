@@ -30,6 +30,7 @@ interface HomeroomBookSeatingAndScheduleProps {
   studyPairs: StudyPair[];
   subjectTeachers: SubjectTeacher[];
   students: Student[];
+  className?: string;
   role: UserRole;
   onUpdateSubjectTeachers?: (newTeachers: SubjectTeacher[]) => void;
   onUpdateSeatingChart?: (newChart: SeatingChartData) => void;
@@ -43,6 +44,7 @@ export const HomeroomBookSeatingAndSchedule: React.FC<HomeroomBookSeatingAndSche
   studyPairs,
   subjectTeachers,
   students,
+  className,
   role,
   onUpdateSubjectTeachers,
   onUpdateSeatingChart,
@@ -320,7 +322,7 @@ export const HomeroomBookSeatingAndSchedule: React.FC<HomeroomBookSeatingAndSche
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
             <GraduationCap className="w-4 h-4 text-blue-600" />
-            3. Danh Sách Giáo Viên Giảng Dạy Các Bộ Môn Lớp 12A1
+            3. Danh Sách Giáo Viên Giảng Dạy Các Bộ Môn Lớp {className || '12A1'}
           </h4>
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold border border-blue-200">
