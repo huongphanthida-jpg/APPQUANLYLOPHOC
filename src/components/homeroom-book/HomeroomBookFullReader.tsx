@@ -155,8 +155,8 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           bghInfo={bghInfo}
           bookData={bookData}
           role={role}
-          totalStudents={students.length}
-          students={students}
+          totalStudents={students?.length || 0}
+          students={students || []}
           onPrintBook={onPrintBook}
           onExportExcel={onExportExcel}
           onExportWord={onExportWord}
@@ -197,7 +197,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
     {
       page: 4,
       code: 'registry',
-      title: `Phần 3: Sơ Yếu Lý Lịch ${students ? students.length : 0} Học Sinh`,
+      title: `Phần 3: Sơ Yếu Lý Lịch ${(students || []).length} Học Sinh`,
       component: (
         <HomeroomBookStudentRegistry
           students={students || []}
@@ -214,8 +214,8 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
       title: 'Phần 4: Sơ Đồ Lớp, Đôi Bạn & TKB Chuẩn',
       component: (
         <HomeroomBookSeatingAndSchedule
-          seatingChart={seatingChart}
-          timetable={timetable}
+          seatingChart={seatingChart || { rows: 4, cols: 4, tables: [] }}
+          timetable={timetable || { morning: {}, afternoon: {} }}
           studyPairs={studyPairs || []}
           subjectTeachers={bookData?.subjectTeachers || []}
           students={students || []}
