@@ -323,3 +323,5 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
     </div>
   );
 };
+
+export default HomeroomBookPlanSection;
