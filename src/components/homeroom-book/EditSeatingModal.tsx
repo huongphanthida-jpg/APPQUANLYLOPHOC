@@ -53,7 +53,7 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
     onClose();
   };
 
-  const currentStudent = students.find((s) => s.id === currentAssignedId);
+  const currentStudent = (students || []).find((s) => s && s.id === currentAssignedId);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -153,7 +153,7 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
                 className="w-full py-2.5 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">-- Để trống ghế này --</option>
-                {students.map((s) => (
+                {(students || []).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.code} - Tổ {s.group})
                   </option>
