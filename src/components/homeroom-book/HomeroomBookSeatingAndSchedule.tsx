@@ -407,8 +407,9 @@ export const HomeroomBookSeatingAndSchedule: React.FC<HomeroomBookSeatingAndSche
                 <span>Chỉnh Sửa Thời Khóa Biểu</span>
               </button>
             )}
-            <span className="text-xs font-semibold text-slate-500 hidden sm:inline">
-              {timetable?.appliedDate || 'Áp dụng từ Học kỳ II'}
+            <span className="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1 rounded-xl border border-slate-200 hidden sm:inline-flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
+              {timetable?.appliedDate ? (timetable.appliedDate.startsWith('Áp dụng') ? timetable.appliedDate : `Áp dụng từ ngày ${timetable.appliedDate}`) : 'Áp dụng từ ngày 05/01/2026'}
             </span>
           </div>
         </div>
@@ -432,7 +433,7 @@ export const HomeroomBookSeatingAndSchedule: React.FC<HomeroomBookSeatingAndSche
                   colSpan={daysList.length + 1}
                   className="py-1.5 px-3 border border-slate-200 text-xs uppercase tracking-wider"
                 >
-                  BUỔI SÁNG (07:00 - 11:20) - CÁC MÔN VĂN HÓA CHÍNH KHÓA
+                  BUỔI SÁNG ({timetable?.morningTime || '07:00 - 11:20'}){timetable?.morningLabel ? ` - ${timetable.morningLabel}` : ' - CÁC MÔN VĂN HÓA CHÍNH KHÓA'}
                 </td>
               </tr>
               {[0, 1, 2, 3, 4].map((periodIdx) => (
@@ -467,7 +468,7 @@ export const HomeroomBookSeatingAndSchedule: React.FC<HomeroomBookSeatingAndSche
                   colSpan={daysList.length + 1}
                   className="py-1.5 px-3 border border-slate-200 text-xs uppercase tracking-wider"
                 >
-                  BUỔI CHIỀU (13:30 - 17:45) - ÔN LUYỆN CHUYÊN ĐỀ & GDTC/HĐTN
+                  BUỔI CHIỀU ({timetable?.afternoonTime || '13:30 - 17:45'}){timetable?.afternoonLabel ? ` - ${timetable.afternoonLabel}` : ' - ÔN LUYỆN CHUYÊN ĐỀ & GDTC/HĐTN'}
                 </td>
               </tr>
               {[0, 1, 2, 3, 4].map((periodIdx) => (
