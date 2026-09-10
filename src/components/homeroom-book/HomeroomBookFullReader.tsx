@@ -669,3 +669,5 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
     </div>
   );
 };
+
+export default HomeroomBookFullReader;
