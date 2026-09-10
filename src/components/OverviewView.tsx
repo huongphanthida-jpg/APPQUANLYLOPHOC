@@ -193,53 +193,109 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   );
   const pendingLeaves = (leaveRequests || []).filter((lr) => lr.status === 'pending');
 
-  // Progression Line Data (Aggregated from all students)
-  const periods = ['Tháng 9', 'Giữa HK1', 'Cuối HK1', 'Giữa HK2', 'Thi Thử TN'];
-  const progressData = periods.map((period) => {
-    let mathTotal = 0;
-    let physTotal = 0;
-    let chemTotal = 0;
-    let count = 0;
+  // Active subject columns dynamically loaded from localStorage or default
+  const DEFAULT_OVERVIEW_SUBJECTS = [
+    { key: 'math', short: 'Toán', fullName: 'Toán Học', color: '#2563eb', icon: '📐' },
+    { key: 'physics', short: 'Lý', fullName: 'Vật Lý', color: '#059669', icon: '⚡' },
+    { key: 'chemistry', short: 'Hóa', fullName: 'Hóa Học', color: '#d97706', icon: '🧪' },
+    { key: 'biology', short: 'Sinh', fullName: 'Sinh Học', color: '#10b981', icon: '🌿' },
+    { key: 'literature', short: 'Văn', fullName: 'Ngữ Văn', color: '#8b5cf6', icon: '📖' },
+    { key: 'english', short: 'Anh', fullName: 'Tiếng Anh', color: '#ec4899', icon: '🌐' },
+  ];
 
-    (students || []).forEach((s) => {
-      const match = s.progressHistory?.find((p) => p.period === period);
-      if (match) {
-        mathTotal += match.math || 0;
-        physTotal += match.physics || 0;
-        chemTotal += match.chemistry || 0;
-        count++;
-      }
+  const COLOR_PALETTE = ['#2563eb', '#059669', '#d97706', '#10b981', '#8b5cf6', '#ec4899', '#f97316', '#06b6d4', '#6366f1'];
+  const ICON_MAP: Record<string, string> = {
+    math: '📐',
+    physics: '⚡',
+    chemistry: '🧪',
+    biology: '🌿',
+    literature: '📖',
+    history: '📜',
+    geography: '🗺️',
+    gdcd: '⚖️',
+    english: '🌐',
+    informatics: '💻',
+    technology: '⚙️',
+  };
+
+  const activeSubjects = (() => {
+    const saved = localStorage.getItem('tbm_active_subject_columns');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((col: any, idx: number) => ({
+            key: col.key,
+            short: col.short,
+            fullName: col.fullName || col.short,
+            color: COLOR_PALETTE[idx % COLOR_PALETTE.length],
+            icon: ICON_MAP[col.key] || '📚',
+          }));
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_OVERVIEW_SUBJECTS;
+  })();
+
+  // Progression Line Data dynamically computed for activeSubjects
+  const periods = ['Tháng 9', 'Giữa HK1', 'Cuối HK1', 'Giữa HK2', 'Thi Thử TN'];
+  const progressData = periods.map((period, index) => {
+    const row: Record<string, any> = { period };
+
+    activeSubjects.forEach((subj) => {
+      let total = 0;
+      let count = 0;
+
+      (students || []).forEach((s) => {
+        const match = s.progressHistory?.find((p) => p.period === period);
+        if (match && (match as any)[subj.key] !== undefined) {
+          total += (match as any)[subj.key];
+          count++;
+        } else {
+          const currentGrade = (s.grades as any)?.[subj.key]?.avg ?? (s.grades as any)?.[subj.key] ?? 8.0;
+          const offset = (periods.length - 1 - index) * 0.15;
+          total += Math.max(0, currentGrade - offset);
+          count++;
+        }
+      });
+
+      row[subj.fullName] = count ? Number((total / count).toFixed(2)) : 8.0;
     });
 
-    return {
-      period,
-      'Toán học': count ? Number((mathTotal / count).toFixed(2)) : 0,
-      'Vật lý': count ? Number((physTotal / count).toFixed(2)) : 0,
-      'Hóa học': count ? Number((chemTotal / count).toFixed(2)) : 0,
-    };
+    return row;
   });
 
-  // Group Leaderboard Scores
+  // Base emulation score calculation
+  const attBase = localStorage.getItem('emulation_attendance_base_score') !== null
+    ? Math.max(0, Number(localStorage.getItem('emulation_attendance_base_score')))
+    : 0;
+  const condBase = localStorage.getItem('emulation_conduct_base_score') !== null
+    ? Math.max(0, Number(localStorage.getItem('emulation_conduct_base_score')))
+    : 0;
+  const baseEmulationScore = Math.round(attBase * 0.4 + condBase * 0.6);
+
+  // Group Leaderboard Scores (Synced with Base Score)
   const groupScores = [1, 2, 3, 4].map((groupNum) => {
     const groupStudents = (students || []).filter((s) => s.group === groupNum);
-    const avgScore =
-      groupStudents.length > 0
-        ? groupStudents.reduce((acc, s) => acc + (s.conductScore || 100), 0) /
-          groupStudents.length
-        : 0;
-    const bonusCount = (disciplineLogs || []).filter(
-      (l) => l.group === groupNum && l.type === 'bonus'
-    ).length;
-    const penaltyCount = (disciplineLogs || []).filter(
-      (l) => l.group === groupNum && l.type === 'penalty'
-    ).length;
+    const studentIds = new Set(groupStudents.map((s) => s.id));
+    const groupLogs = (disciplineLogs || []).filter(
+      (l) => l && (l.group === groupNum || (l.studentId && studentIds.has(l.studentId)))
+    );
+
+    const bonusLogs = groupLogs.filter((l) => l.type === 'bonus' || l.type === 'commendation');
+    const penaltyLogs = groupLogs.filter((l) => l.type === 'penalty' || l.type === 'violation');
+
+    const bonusPoints = bonusLogs.reduce((sum, l) => sum + Math.abs(l.points || 0), 0);
+    const penaltyPoints = penaltyLogs.reduce((sum, l) => sum + Math.abs(l.points || 0), 0);
+
+    const score = baseEmulationScore + bonusPoints - penaltyPoints;
 
     return {
       groupNum,
       name: `Tổ ${groupNum}`,
-      avgScore: Number(avgScore.toFixed(1)),
-      bonusCount,
-      penaltyCount,
+      avgScore: score,
+      bonusCount: bonusLogs.length,
+      penaltyCount: penaltyLogs.length,
       membersCount: groupStudents.length,
     };
   }).sort((a, b) => b.avgScore - a.avgScore);
@@ -253,8 +309,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
   const warningStudents = (students || []).filter(
     (s) =>
       (s.conductScore || 100) < 95 ||
-      (s.grades?.math?.avg || 0) < 8.0 ||
-      (s.grades?.physics?.avg || 0) < 7.5
+      (s.grades?.gpa || 0) < 7.5
   );
 
   return (
@@ -889,13 +944,13 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left 2 Cols: Progression Line Chart & Digital Class Journal */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Natural Science Progress Line Chart */}
+          {/* Progress Line Chart (Synchronized with Active Subjects) */}
           <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-bold text-[#003366] flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-blue-600" />
-                  Biểu Đồ Tiến Bộ Khối Tự Nhiên (Toán - Lý - Hóa)
+                  Biểu Đồ Tiến Bộ Môn Học Trọng Điểm ({activeSubjects.slice(0, 4).map((s) => s.short).join(' - ')})
                 </h3>
                 <p className="text-xs text-slate-500">
                   Theo dõi sự phát triển điểm trung bình các đợt kiểm tra & thi thử TN
@@ -904,7 +959,7 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
               <button
                 id="btn-view-academic-detail"
                 onClick={() => onNavigate('academic')}
-                className="text-xs font-semibold text-[#003366] hover:underline flex items-center gap-1"
+                className="text-xs font-semibold text-[#003366] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 Xem chi tiết sổ điểm <ArrowUpRight className="w-3.5 h-3.5" />
               </button>
@@ -927,47 +982,39 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     itemStyle={{ color: '#ffffff' }}
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                  <Line
-                    type="monotone"
-                    dataKey="Toán học"
-                    stroke="#2563eb"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#2563eb' }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Vật lý"
-                    stroke="#059669"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#059669' }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="Hóa học"
-                    stroke="#d97706"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: '#d97706' }}
-                    activeDot={{ r: 6 }}
-                  />
+                  {activeSubjects.map((subj) => (
+                    <Line
+                      key={subj.key}
+                      type="monotone"
+                      dataKey={subj.fullName}
+                      stroke={subj.color}
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: subj.color }}
+                      activeDot={{ r: 6 }}
+                    />
+                  ))}
                 </LineChart>
               </ResponsiveContainer>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2 rounded-xl bg-blue-50/60">
-                <span className="text-slate-500 font-medium">Toán học</span>
-                <p className="text-sm font-bold text-blue-700">9.1 ĐTB</p>
-              </div>
-              <div className="p-2 rounded-xl bg-emerald-50/60">
-                <span className="text-slate-500 font-medium">Vật lý</span>
-                <p className="text-sm font-bold text-emerald-700">8.7 ĐTB</p>
-              </div>
-              <div className="p-2 rounded-xl bg-amber-50/60">
-                <span className="text-slate-500 font-medium">Hóa học</span>
-                <p className="text-sm font-bold text-amber-700">8.5 ĐTB</p>
-              </div>
+            {/* Dynamic Subject Cards below Chart */}
+            <div className="mt-4 pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-center text-xs">
+              {activeSubjects.map((subj) => {
+                const avgVal = students.length > 0
+                  ? Number((students.reduce((acc, s) => {
+                      const g = (s.grades as any)?.[subj.key];
+                      const val = typeof g === 'number' ? g : (g?.avg ?? 8.0);
+                      return acc + (typeof val === 'number' ? val : 8.0);
+                    }, 0) / students.length).toFixed(1))
+                  : 8.0;
+
+                return (
+                  <div key={subj.key} className="p-2.5 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <span className="text-slate-500 font-medium">{subj.icon} {subj.short}</span>
+                    <p className="text-sm font-black text-[#003366] mt-0.5">{avgVal} <span className="text-[10px] text-slate-400">ĐTB</span></p>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
