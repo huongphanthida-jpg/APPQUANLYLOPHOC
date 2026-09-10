@@ -218,3 +218,5 @@ export const EditBghInspectionModal: React.FC<EditBghInspectionModalProps> = ({
     </div>
   );
 };
+
+export default EditBghInspectionModal;
