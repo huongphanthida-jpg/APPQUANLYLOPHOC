@@ -498,9 +498,14 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
               parentsBoard={bookData?.parentsBoard || []}
               students={students || []}
               className={classInfo?.className || '12A1'}
+              academicYear={classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}
+              classInfo={classInfo}
+              teacherInfo={teacherInfo}
+              bghInfo={bghInfo}
               role={role}
               onUpdateCommittee={handleUpdateCommittee}
               onUpdateParentsBoard={handleUpdateParentsBoard}
+              onUpdateAdministrative={handleUpdateAdministrative}
             />
           )}
 
