@@ -22,6 +22,12 @@ import {
   History,
   Clock,
   Star,
+  Edit2,
+  Plus,
+  RotateCcw,
+  Check,
+  Settings2,
+  X,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -83,6 +89,85 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
   const [saveToast, setSaveToast] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedPeriodFocus, setSelectedPeriodFocus] = useState<string>('all');
+
+  // Custom Subject Columns Configuration State
+  const DEFAULT_SUBJECT_COLS = [
+    { key: 'math', short: 'Toán', fullName: 'Toán Học', textColor: 'text-blue-900' },
+    { key: 'physics', short: 'Lý', fullName: 'Vật Lý', textColor: 'text-emerald-900' },
+    { key: 'chemistry', short: 'Hóa', fullName: 'Hóa Học', textColor: 'text-amber-900' },
+    { key: 'biology', short: 'Sinh', fullName: 'Sinh Học', textColor: 'text-teal-900' },
+    { key: 'literature', short: 'Văn', fullName: 'Ngữ Văn', textColor: 'text-purple-900' },
+    { key: 'english', short: 'Anh', fullName: 'Tiếng Anh', textColor: 'text-pink-900' },
+  ];
+
+  const PRESET_SUBJECT_OPTIONS = [
+    { key: 'math', short: 'Toán', fullName: 'Toán Học', category: 'KHTN' },
+    { key: 'physics', short: 'Lý', fullName: 'Vật Lý', category: 'KHTN' },
+    { key: 'chemistry', short: 'Hóa', fullName: 'Hóa Học', category: 'KHTN' },
+    { key: 'biology', short: 'Sinh', fullName: 'Sinh Học', category: 'KHTN' },
+    { key: 'literature', short: 'Văn', fullName: 'Ngữ Văn', category: 'KHXH' },
+    { key: 'history', short: 'Sử', fullName: 'Lịch Sử', category: 'KHXH' },
+    { key: 'geography', short: 'Địa', fullName: 'Địa Lý', category: 'KHXH' },
+    { key: 'gdcd', short: 'GDCD', fullName: 'GDCD & PL', category: 'KHXH' },
+    { key: 'english', short: 'Anh', fullName: 'Tiếng Anh', category: 'Ngoại Ngữ & Khác' },
+    { key: 'informatics', short: 'Tin', fullName: 'Tin Học', category: 'Ngoại Ngữ & Khác' },
+    { key: 'technology', short: 'Công Nghệ', fullName: 'Công Nghệ', category: 'Ngoại Ngữ & Khác' },
+  ];
+
+  const [activeSubjectCols, setActiveSubjectCols] = useState(() => {
+    const saved = localStorage.getItem('tbm_active_subject_columns');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return DEFAULT_SUBJECT_COLS;
+  });
+
+  const [editingColIdx, setEditingColIdx] = useState<number | null>(null);
+  const [editColKey, setEditColKey] = useState<string>('math');
+  const [editColShort, setEditColShort] = useState<string>('Toán');
+  const [editColFullName, setEditColFullName] = useState<string>('Toán Học');
+  const [isEditSubjectModalOpen, setIsEditSubjectModalOpen] = useState<boolean>(false);
+
+  const handleOpenEditSubjectCol = (idx: number) => {
+    const col = activeSubjectCols[idx];
+    setEditingColIdx(idx);
+    setEditColKey(col.key);
+    setEditColShort(col.short);
+    setEditColFullName(col.fullName);
+    setIsEditSubjectModalOpen(true);
+  };
+
+  const handleSaveSubjectCol = () => {
+    if (editingColIdx === null) return;
+    const updated = [...activeSubjectCols];
+    updated[editingColIdx] = {
+      ...updated[editingColIdx],
+      key: editColKey,
+      short: editColShort.trim() || 'Môn mới',
+      fullName: editColFullName.trim() || 'Môn Học',
+    };
+    setActiveSubjectCols(updated);
+    localStorage.setItem('tbm_active_subject_columns', JSON.stringify(updated));
+    setIsEditSubjectModalOpen(false);
+  };
+
+  const handlePresetSelect = (presetKey: string) => {
+    const found = PRESET_SUBJECT_OPTIONS.find((p) => p.key === presetKey);
+    if (found) {
+      setEditColKey(found.key);
+      setEditColShort(found.short);
+      setEditColFullName(found.fullName);
+    }
+  };
+
+  const handleResetDefaultSubjectCols = () => {
+    setActiveSubjectCols(DEFAULT_SUBJECT_COLS);
+    localStorage.removeItem('tbm_active_subject_columns');
+    setIsEditSubjectModalOpen(false);
+  };
 
   // Subject definition for all subjects with grades
   const subjectsList = [
@@ -1023,12 +1108,23 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                 <th className="py-3 px-4">Mã HS</th>
                 <th className="py-3 px-4">Họ và Tên</th>
                 <th className="py-3 px-3 text-center">Tổ</th>
-                <th className="py-3 px-3 text-center text-blue-900">Toán (ĐTB)</th>
-                <th className="py-3 px-3 text-center text-emerald-900">Lý (ĐTB)</th>
-                <th className="py-3 px-3 text-center text-amber-900">Hóa (ĐTB)</th>
-                <th className="py-3 px-3 text-center text-teal-900">Sinh (ĐTB)</th>
-                <th className="py-3 px-3 text-center text-purple-900">Văn (ĐTB)</th>
-                <th className="py-3 px-3 text-center text-pink-900">Anh (ĐTB)</th>
+                {activeSubjectCols.map((col, idx) => (
+                  <th key={idx} className="py-3 px-3 text-center">
+                    <div className="inline-flex items-center justify-center gap-1 group/subj">
+                      <span className="font-bold text-slate-800">{col.short} (ĐTB)</span>
+                      {(role === 'gvcn' || role === 'gvbm') && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditSubjectCol(idx)}
+                          className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-blue-600 transition-all cursor-pointer opacity-70 group-hover/subj:opacity-100"
+                          title={`Nhấp để sửa/điều chỉnh môn ${col.short}`}
+                        >
+                          <Edit2 className="w-3 h-3 text-blue-600" />
+                        </button>
+                      )}
+                    </div>
+                  </th>
+                ))}
                 <th className="py-3 px-4 text-center font-extrabold text-[#003366] bg-blue-50/70">ĐTB Chung</th>
                 <th className="py-3 px-4">Xếp Loại Thi Đua</th>
               </tr>
@@ -1064,131 +1160,41 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                       </span>
                     </td>
 
-                    {/* Toán */}
-                    <td className="py-3 px-3 text-center font-semibold text-blue-800">
-                      {editingCell?.studentId === student.id && editingCell?.subject === 'math' ? (
-                        <input
-                          type="number"
-                          step="0.1"
-                          autoFocus
-                          value={cellValue}
-                          onChange={(e) => setCellValue(e.target.value)}
-                          onBlur={() => handleSaveEdit(student.id, 'math', 'avg')}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveEdit(student.id, 'math', 'avg');
-                          }}
-                          className="w-14 px-1 py-0.5 text-center bg-white border border-blue-400 rounded shadow-inner"
-                        />
-                      ) : (
-                        <span
-                          onDoubleClick={() =>
-                            handleStartEdit(student.id, 'math', 'avg', student.grades.math.avg)
-                          }
-                          className={`cursor-pointer px-2 py-0.5 rounded transition-all ${
-                            student.grades.math.avg >= 9.0
-                              ? 'bg-blue-100 text-blue-900 font-bold'
-                              : 'hover:bg-slate-100'
-                          }`}
-                        >
-                          {student.grades.math.avg}
-                        </span>
-                      )}
-                    </td>
+                    {/* Dynamic Subject Grade Cells */}
+                    {activeSubjectCols.map((col, idx) => {
+                      const rawVal = (student.grades as any)[col.key]?.avg ?? (student.grades as any)[col.key] ?? 8.0;
+                      const subjGrade = typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
+                      const isEditingThis = editingCell?.studentId === student.id && editingCell?.subject === col.key;
 
-                    {/* Lý */}
-                    <td className="py-3 px-3 text-center font-semibold text-emerald-800">
-                      {editingCell?.studentId === student.id && editingCell?.subject === 'physics' ? (
-                        <input
-                          type="number"
-                          step="0.1"
-                          autoFocus
-                          value={cellValue}
-                          onChange={(e) => setCellValue(e.target.value)}
-                          onBlur={() => handleSaveEdit(student.id, 'physics', 'avg')}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveEdit(student.id, 'physics', 'avg');
-                          }}
-                          className="w-14 px-1 py-0.5 text-center bg-white border border-emerald-400 rounded shadow-inner"
-                        />
-                      ) : (
-                        <span
-                          onDoubleClick={() =>
-                            handleStartEdit(student.id, 'physics', 'avg', student.grades.physics.avg)
-                          }
-                          className={`cursor-pointer px-2 py-0.5 rounded transition-all ${
-                            student.grades.physics.avg >= 9.0
-                              ? 'bg-emerald-100 text-emerald-900 font-bold'
-                              : 'hover:bg-slate-100'
-                          }`}
-                        >
-                          {student.grades.physics.avg}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Hóa */}
-                    <td className="py-3 px-3 text-center font-semibold text-amber-800">
-                      {editingCell?.studentId === student.id && editingCell?.subject === 'chemistry' ? (
-                        <input
-                          type="number"
-                          step="0.1"
-                          autoFocus
-                          value={cellValue}
-                          onChange={(e) => setCellValue(e.target.value)}
-                          onBlur={() => handleSaveEdit(student.id, 'chemistry', 'avg')}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveEdit(student.id, 'chemistry', 'avg');
-                          }}
-                          className="w-14 px-1 py-0.5 text-center bg-white border border-amber-400 rounded shadow-inner"
-                        />
-                      ) : (
-                        <span
-                          onDoubleClick={() =>
-                            handleStartEdit(student.id, 'chemistry', 'avg', student.grades.chemistry.avg)
-                          }
-                          className={`cursor-pointer px-2 py-0.5 rounded transition-all ${
-                            student.grades.chemistry.avg >= 9.0
-                              ? 'bg-amber-100 text-amber-900 font-bold'
-                              : 'hover:bg-slate-100'
-                          }`}
-                        >
-                          {student.grades.chemistry.avg}
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Sinh */}
-                    <td className="py-3 px-3 text-center text-teal-800 font-semibold">
-                      <span
-                        className={`px-2 py-0.5 rounded ${
-                          student.grades.biology.avg >= 9.0 ? 'bg-teal-100 text-teal-900 font-bold' : ''
-                        }`}
-                      >
-                        {student.grades.biology.avg}
-                      </span>
-                    </td>
-
-                    {/* Văn */}
-                    <td className="py-3 px-3 text-center text-purple-800 font-semibold">
-                      <span
-                        className={`px-2 py-0.5 rounded ${
-                          student.grades.literature.avg >= 8.5 ? 'bg-purple-100 text-purple-900 font-bold' : ''
-                        }`}
-                      >
-                        {student.grades.literature.avg}
-                      </span>
-                    </td>
-
-                    {/* Anh */}
-                    <td className="py-3 px-3 text-center text-pink-800 font-semibold">
-                      <span
-                        className={`px-2 py-0.5 rounded ${
-                          student.grades.english.avg >= 9.0 ? 'bg-pink-100 text-pink-900 font-bold' : ''
-                        }`}
-                      >
-                        {student.grades.english.avg}
-                      </span>
-                    </td>
+                      return (
+                        <td key={idx} className="py-3 px-3 text-center font-semibold text-slate-800">
+                          {isEditingThis ? (
+                            <input
+                              type="number"
+                              step="0.1"
+                              autoFocus
+                              value={cellValue}
+                              onChange={(e) => setCellValue(e.target.value)}
+                              onBlur={() => handleSaveEdit(student.id, col.key, 'avg')}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveEdit(student.id, col.key, 'avg');
+                              }}
+                              className="w-14 px-1 py-0.5 text-center bg-white border border-blue-400 rounded shadow-inner"
+                            />
+                          ) : (
+                            <span
+                              onDoubleClick={() => handleStartEdit(student.id, col.key, 'avg', subjGrade)}
+                              className={`cursor-pointer px-2 py-0.5 rounded transition-all ${
+                                subjGrade >= 9.0 ? 'bg-blue-100 text-blue-900 font-bold' : 'hover:bg-slate-100'
+                              }`}
+                              title="Nhấp đúp để chỉnh sửa điểm môn này"
+                            >
+                              {subjGrade}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
 
                     {/* GPA Chung */}
                     <td className="py-3 px-4 text-center bg-blue-50/40">
@@ -1219,6 +1225,123 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
         </div>
       </div>
     </div>
+
+      {/* Edit Subject Column Modal */}
+      {isEditSubjectModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                  <Edit2 className="w-5 h-5 text-blue-700" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-slate-900">
+                    Điều Chỉnh Môn Học Cột {editingColIdx !== null ? editingColIdx + 1 : ''}
+                  </h3>
+                  <p className="text-xs text-slate-500">Đổi môn học hiển thị cho cột bảng điểm TBM</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditSubjectModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Select Preset Subject */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                  Chọn môn học từ danh mục có sẵn:
+                </label>
+                <select
+                  value={editColKey}
+                  onChange={(e) => handlePresetSelect(e.target.value)}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                >
+                  <optgroup label="Khối Tự Nhiên (KHTN)">
+                    <option value="math">📐 Toán Học (Toán)</option>
+                    <option value="physics">⚡ Vật Lý (Lý)</option>
+                    <option value="chemistry">🧪 Hóa Học (Hóa)</option>
+                    <option value="biology">🌿 Sinh Học (Sinh)</option>
+                  </optgroup>
+                  <optgroup label="Khối Xã Hội (KHXH)">
+                    <option value="literature">📖 Ngữ Văn (Văn)</option>
+                    <option value="history">📜 Lịch Sử (Sử)</option>
+                    <option value="geography">🗺️ Địa Lý (Địa)</option>
+                    <option value="gdcd">⚖️ GDCD / GDKT&PL (GDCD)</option>
+                  </optgroup>
+                  <optgroup label="Ngoại Ngữ & Môn Khác">
+                    <option value="english">🌐 Tiếng Anh (Anh)</option>
+                    <option value="informatics">💻 Tin Học (Tin)</option>
+                    <option value="technology">⚙️ Công Nghệ (Công nghệ)</option>
+                  </optgroup>
+                </select>
+              </div>
+
+              {/* Custom Display Labels */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Tên môn viết tắt (hiển thị tiêu đề):
+                  </label>
+                  <input
+                    type="text"
+                    value={editColShort}
+                    onChange={(e) => setEditColShort(e.target.value)}
+                    placeholder="VD: Toán, Sử, Địa..."
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold text-blue-900 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Tên môn đầy đủ:
+                  </label>
+                  <input
+                    type="text"
+                    value={editColFullName}
+                    onChange={(e) => setEditColFullName(e.target.value)}
+                    placeholder="VD: Toán Học, Lịch Sử..."
+                    className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100 gap-2">
+              <button
+                type="button"
+                onClick={handleResetDefaultSubjectCols}
+                className="px-3 py-2 rounded-xl text-slate-500 hover:text-slate-700 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Khôi phục mặc định</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditSubjectModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all cursor-pointer"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveSubjectCol}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer"
+                >
+                  Lưu Thay Đổi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Import Grades from Excel Modal */}
       {isImportModalOpen && (
