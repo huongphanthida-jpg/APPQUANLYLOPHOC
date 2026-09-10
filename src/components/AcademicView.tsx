@@ -43,7 +43,6 @@ import {
 import * as XLSX from 'xlsx';
 import { Student, UserRole, ClassInfo, TeacherInfo, DisciplineEntry, LeaveRequest } from '../types';
 import { ImportGradesModal } from './ImportGradesModal';
-import { ClassEmulationSummary2Aspects } from './ClassEmulationSummary2Aspects';
 
 interface AcademicViewProps {
   students: Student[];
@@ -349,14 +348,12 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
         {/* Left: Main Title & Class Badge on 1 Row */}
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-[#003366] text-white flex items-center justify-center shadow-xs shrink-0">
-            <ShieldCheck className="w-5 h-5 text-amber-300" />
+            <GraduationCap className="w-5 h-5 text-amber-300" />
           </div>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg md:text-xl font-black text-slate-900 dark:text-white tracking-tight truncate">
-                {activeMainTab === 'two_aspects_emulation'
-                  ? 'Bảng Điểm TBM & Thi Đua 2 Mặt'
-                  : 'Bảng Điểm TBM & Học Tập Các Môn'}
+                Bảng Điểm TBM & Học Tập Các Môn
               </h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 dark:bg-blue-950 text-blue-900 dark:text-blue-200 shrink-0">
                 {classInfo?.className || 'Lớp 11D5'} • {students.length} Học Sinh
@@ -366,99 +363,48 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 truncate">
-              {activeMainTab === 'two_aspects_emulation'
-                ? 'Đánh giá toàn diện 2 trụ cột: Chuyên cần (điểm danh, vắng) & Nề nếp kỷ luật (khen thưởng, nội quy)'
-                : 'Biểu đồ trực quan và sổ điểm tất cả các môn học cập nhật từ tệp Excel (.xlsx, .csv)'}
+              Biểu đồ trực quan và sổ điểm tất cả các môn học cập nhật từ tệp Excel (.xlsx, .csv)
             </p>
           </div>
         </div>
 
-        {/* Right: Sleek Segmented Tab Switcher (1 Horizontal Row) & Quick Actions */}
-        <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start lg:self-center">
-          <div className="inline-flex items-center p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-            <button
-              type="button"
-              id="tab-btn-two-aspects-emulation"
-              onClick={() => setActiveMainTab('two_aspects_emulation')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${
-                activeMainTab === 'two_aspects_emulation'
-                  ? 'bg-gradient-to-r from-blue-700 to-[#003366] text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300'
-              }`}
-            >
-              <ShieldCheck className={`w-4 h-4 ${activeMainTab === 'two_aspects_emulation' ? 'text-amber-300' : 'text-blue-600'}`} />
-              <span>Thi Đua 2 Mặt (Chuyên Cần & Nề Nếp)</span>
-            </button>
+        {/* Right: Quick Actions */}
+        <div className="flex items-center gap-2 shrink-0 self-start lg:self-center">
+          <button
+            id="btn-quick-download-excel-template"
+            type="button"
+            onClick={handleQuickDownloadExcelTemplate}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
+            title="Tải tệp mẫu Excel điền sẵn danh sách học sinh"
+          >
+            <Download className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="hidden sm:inline">Mẫu Excel</span>
+          </button>
 
-            <button
-              type="button"
-              id="tab-btn-academic-grades"
-              onClick={() => setActiveMainTab('academic_grades')}
-              className={`px-3.5 py-2 rounded-lg font-bold text-xs transition-all flex items-center gap-2 cursor-pointer ${
-                activeMainTab === 'academic_grades'
-                  ? 'bg-gradient-to-r from-blue-700 to-[#003366] text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-300'
-              }`}
-            >
-              <GraduationCap className={`w-4 h-4 ${activeMainTab === 'academic_grades' ? 'text-amber-300' : 'text-blue-600'}`} />
-              <span>Sổ Điểm Các Môn (Excel)</span>
-            </button>
-          </div>
+          <button
+            id="btn-open-import-grades-modal"
+            type="button"
+            onClick={() => setIsImportModalOpen(true)}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+          >
+            <UploadCloud className="w-4 h-4 text-amber-400" />
+            <span>Tải Bảng Điểm</span>
+          </button>
 
-          {activeMainTab === 'academic_grades' && (
-            <div className="flex items-center gap-2">
-              <button
-                id="btn-quick-download-excel-template"
-                type="button"
-                onClick={handleQuickDownloadExcelTemplate}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold transition-all shadow-2xs cursor-pointer"
-                title="Tải tệp mẫu Excel điền sẵn danh sách học sinh"
-              >
-                <Download className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="hidden sm:inline">Mẫu Excel</span>
-              </button>
-
-              <button
-                id="btn-open-import-grades-modal"
-                type="button"
-                onClick={() => setIsImportModalOpen(true)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
-              >
-                <UploadCloud className="w-4 h-4 text-amber-400" />
-                <span>Tải Bảng Điểm</span>
-              </button>
-
-              <button
-                id="btn-academic-ai-analysis"
-                type="button"
-                onClick={onOpenAiAdvisor}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="hidden sm:inline">AI Phân Tích</span>
-              </button>
-            </div>
-          )}
+          <button
+            id="btn-academic-ai-analysis"
+            type="button"
+            onClick={onOpenAiAdvisor}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-bold hover:bg-emerald-100 transition-colors shadow-2xs cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="hidden sm:inline">AI Phân Tích</span>
+          </button>
         </div>
       </div>
 
-      {/* View Mode 1: 2-Aspect Emulation Summary (Chuyên cần & Nề nếp) */}
-      {activeMainTab === 'two_aspects_emulation' && (
-        <ClassEmulationSummary2Aspects
-          students={students}
-          disciplineLogs={disciplineLogs}
-          leaveRequests={leaveRequests}
-          role={role}
-          classInfo={classInfo}
-          teacherInfo={teacherInfo}
-          onOpenAddDiscipline={onOpenAddDiscipline}
-          onSelectStudent={onSelectStudent}
-        />
-      )}
-
-      {/* View Mode 2: Academic Grades & Progress */}
-      {activeMainTab === 'academic_grades' && (
-        <div className="space-y-6">
+      {/* Academic Grades & Progress Content */}
+      <div className="space-y-6">
           {/* Excel Import & Management Quick Banner */}
           <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-900 via-[#003366] to-slate-900 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
@@ -1272,8 +1218,6 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
           </table>
         </div>
       </div>
-        </div>
-      )}
 
       {/* Import Grades from Excel Modal */}
       {isImportModalOpen && (
