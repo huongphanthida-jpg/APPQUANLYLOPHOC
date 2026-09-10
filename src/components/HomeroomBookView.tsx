@@ -55,6 +55,7 @@ import { HomeroomBookMinutesAndBgh } from './homeroom-book/HomeroomBookMinutesAn
 import { HomeroomBookArchiveAndExport } from './homeroom-book/HomeroomBookArchiveAndExport';
 import { HomeroomBookFullReader } from './homeroom-book/HomeroomBookFullReader';
 import { HomeroomBookExportPreviewModal } from './homeroom-book/HomeroomBookExportPreviewModal';
+import { ErrorBoundary } from './ErrorBoundary';
 import { exportHomeroomMasterExcel } from '../utils/homeroomBookExcelExport';
 
 interface HomeroomBookViewProps {
@@ -409,173 +410,175 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
       {/* Main Content Area Based on Active Tab */}
       <div className="transition-all">
-        {activeTab === 'cover' && (
-          <HomeroomBookCover
-            classInfo={classInfo}
-            teacherInfo={teacherInfo}
-            bghInfo={bghInfo}
-            bookData={bookData}
-            role={role}
-            totalStudents={(students || []).length}
-            students={students || []}
-            onPrintBook={handlePrintBook}
-            onExportExcel={handleExportExcel}
-            onOpenFullReader={() => setActiveTab('full-reader')}
-            onUpdateAdministrative={handleUpdateAdministrative}
-          />
-        )}
+        <ErrorBoundary fallbackTitle="Đã xảy ra sự cố khi tải trang Sổ Chủ Nhiệm">
+          {activeTab === 'cover' && (
+            <HomeroomBookCover
+              classInfo={classInfo}
+              teacherInfo={teacherInfo}
+              bghInfo={bghInfo}
+              bookData={bookData}
+              role={role}
+              totalStudents={(students || []).length}
+              students={students || []}
+              onPrintBook={handlePrintBook}
+              onExportExcel={handleExportExcel}
+              onOpenFullReader={() => setActiveTab('full-reader')}
+              onUpdateAdministrative={handleUpdateAdministrative}
+            />
+          )}
 
-        {activeTab === 'plan' && (
-          <HomeroomBookPlanSection
-            plan={bookData?.plan}
-            academicYear={classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}
-            role={role}
-            students={students || []}
-            onUpdatePlan={handleUpdatePlan}
-          />
-        )}
+          {activeTab === 'plan' && (
+            <HomeroomBookPlanSection
+              plan={bookData?.plan}
+              academicYear={classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}
+              role={role}
+              students={students || []}
+              onUpdatePlan={handleUpdatePlan}
+            />
+          )}
 
-        {activeTab === 'org' && (
-          <HomeroomBookOrganizationSection
-            committee={bookData?.committee || []}
-            parentsBoard={bookData?.parentsBoard || []}
-            students={students || []}
-            className={classInfo?.className || '12A1'}
-            role={role}
-            onUpdateCommittee={handleUpdateCommittee}
-            onUpdateParentsBoard={handleUpdateParentsBoard}
-          />
-        )}
+          {activeTab === 'org' && (
+            <HomeroomBookOrganizationSection
+              committee={bookData?.committee || []}
+              parentsBoard={bookData?.parentsBoard || []}
+              students={students || []}
+              className={classInfo?.className || '12A1'}
+              role={role}
+              onUpdateCommittee={handleUpdateCommittee}
+              onUpdateParentsBoard={handleUpdateParentsBoard}
+            />
+          )}
 
-        {activeTab === 'registry' && (
-          <HomeroomBookStudentRegistry
-            students={students || []}
-            className={classInfo?.className || '12A1'}
-            role={role}
-            onSelectStudent={onSelectStudent}
-            onUpdateStudents={onUpdateStudents}
-          />
-        )}
+          {activeTab === 'registry' && (
+            <HomeroomBookStudentRegistry
+              students={students || []}
+              className={classInfo?.className || '12A1'}
+              role={role}
+              onSelectStudent={onSelectStudent}
+              onUpdateStudents={onUpdateStudents}
+            />
+          )}
 
-        {activeTab === 'seating-schedule' && (
-          <HomeroomBookSeatingAndSchedule
-            seatingChart={seatingChart}
-            timetable={timetable}
-            studyPairs={studyPairs || []}
-            subjectTeachers={bookData?.subjectTeachers || []}
-            students={students || []}
-            className={classInfo?.className || '12A1'}
-            role={role}
-            onUpdateSubjectTeachers={handleUpdateSubjectTeachers}
-            onUpdateSeatingChart={onUpdateSeatingChart}
-            onUpdateStudyPairs={onUpdateStudyPairs}
-            onUpdateTimetable={onUpdateTimetable}
-          />
-        )}
+          {activeTab === 'seating-schedule' && (
+            <HomeroomBookSeatingAndSchedule
+              seatingChart={seatingChart}
+              timetable={timetable}
+              studyPairs={studyPairs || []}
+              subjectTeachers={bookData?.subjectTeachers || []}
+              students={students || []}
+              className={classInfo?.className || '12A1'}
+              role={role}
+              onUpdateSubjectTeachers={handleUpdateSubjectTeachers}
+              onUpdateSeatingChart={onUpdateSeatingChart}
+              onUpdateStudyPairs={onUpdateStudyPairs}
+              onUpdateTimetable={onUpdateTimetable}
+            />
+          )}
 
-        {activeTab === 'discipline-journal' && (
-          <HomeroomBookDisciplineAndJournal
-            disciplineLogs={disciplineLogs || []}
-            journal={journal || []}
-            students={students || []}
-            role={role}
-            onUpdateDisciplineLogs={onUpdateDisciplineLogs}
-            onUpdateJournal={onUpdateJournal}
-          />
-        )}
+          {activeTab === 'discipline-journal' && (
+            <HomeroomBookDisciplineAndJournal
+              disciplineLogs={disciplineLogs || []}
+              journal={journal || []}
+              students={students || []}
+              role={role}
+              onUpdateDisciplineLogs={onUpdateDisciplineLogs}
+              onUpdateJournal={onUpdateJournal}
+            />
+          )}
 
-        {activeTab === 'academic' && (
-          <HomeroomBookAcademicSummary
-            students={students || []}
-            role={role}
-            onUpdateStudents={onUpdateStudents}
-          />
-        )}
+          {activeTab === 'academic' && (
+            <HomeroomBookAcademicSummary
+              students={students || []}
+              role={role}
+              onUpdateStudents={onUpdateStudents}
+            />
+          )}
 
-        {activeTab === 'duty-emulation' && (
-          <HomeroomBookDutyAndEmulation
-            dutySchedule={dutySchedule || []}
-            emulationLogs={emulationLogs || []}
-            students={students || []}
-            className={classInfo?.className || '12A1'}
-            role={role}
-            onUpdateDutySchedule={onUpdateDutySchedule}
-            onUpdateEmulationLogs={onUpdateEmulationLogs}
-          />
-        )}
+          {activeTab === 'duty-emulation' && (
+            <HomeroomBookDutyAndEmulation
+              dutySchedule={dutySchedule || []}
+              emulationLogs={emulationLogs || []}
+              students={students || []}
+              className={classInfo?.className || '12A1'}
+              role={role}
+              onUpdateDutySchedule={onUpdateDutySchedule}
+              onUpdateEmulationLogs={onUpdateEmulationLogs}
+            />
+          )}
 
-        {activeTab === 'special-care' && (
-          <HomeroomBookSpecialCareAndLeaves
-            specialStudents={bookData?.specialStudents || []}
-            leaveRequests={leaveRequests || []}
-            students={students || []}
-            role={role}
-            onUpdateSpecialStudents={handleUpdateSpecialStudents}
-            onUpdateLeaveRequests={onUpdateLeaveRequests}
-          />
-        )}
+          {activeTab === 'special-care' && (
+            <HomeroomBookSpecialCareAndLeaves
+              specialStudents={bookData?.specialStudents || []}
+              leaveRequests={leaveRequests || []}
+              students={students || []}
+              role={role}
+              onUpdateSpecialStudents={handleUpdateSpecialStudents}
+              onUpdateLeaveRequests={onUpdateLeaveRequests}
+            />
+          )}
 
-        {activeTab === 'minutes-bgh' && (
-          <HomeroomBookMinutesAndBgh
-            meetingMinutes={bookData?.meetingMinutes || []}
-            inspections={bookData?.inspections || []}
-            role={role}
-            onUpdateMinutes={handleUpdateMinutes}
-            onUpdateInspections={handleUpdateInspections}
-          />
-        )}
+          {activeTab === 'minutes-bgh' && (
+            <HomeroomBookMinutesAndBgh
+              meetingMinutes={bookData?.meetingMinutes || []}
+              inspections={bookData?.inspections || []}
+              role={role}
+              onUpdateMinutes={handleUpdateMinutes}
+              onUpdateInspections={handleUpdateInspections}
+            />
+          )}
 
-        {activeTab === 'archive' && (
-          <HomeroomBookArchiveAndExport
-            snapshots={bookData?.snapshots || []}
-            academicYear={classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}
-            role={role}
-            onExportExcel={handleExportExcel}
-            onPrintBook={handlePrintBook}
-            onCreateSnapshot={handleCreateSnapshot}
-          />
-        )}
+          {activeTab === 'archive' && (
+            <HomeroomBookArchiveAndExport
+              snapshots={bookData?.snapshots || []}
+              academicYear={classInfo?.academicYear || bookData?.academicYear || '2025 - 2026'}
+              role={role}
+              onExportExcel={handleExportExcel}
+              onPrintBook={handlePrintBook}
+              onCreateSnapshot={handleCreateSnapshot}
+            />
+          )}
 
-        {/* FULL READER: XEM TẤT CẢ CÁC TRANG (Cuộn liên tục / Từng trang / Lưới thu nhỏ) */}
-        {activeTab === 'full-reader' && (
-          <HomeroomBookFullReader
-            role={role}
-            classInfo={classInfo}
-            teacherInfo={teacherInfo}
-            bghInfo={bghInfo}
-            students={students}
-            disciplineLogs={disciplineLogs}
-            journal={journal}
-            leaveRequests={leaveRequests}
-            dutySchedule={dutySchedule}
-            seatingChart={seatingChart}
-            timetable={timetable}
-            studyPairs={studyPairs}
-            emulationLogs={emulationLogs}
-            bookData={bookData}
-            onUpdatePlan={handleUpdatePlan}
-            onUpdateCommittee={handleUpdateCommittee}
-            onUpdateParentsBoard={handleUpdateParentsBoard}
-            onUpdateStudents={onUpdateStudents}
-            onUpdateSubjectTeachers={handleUpdateSubjectTeachers}
-            onUpdateSeatingChart={onUpdateSeatingChart}
-            onUpdateStudyPairs={onUpdateStudyPairs}
-            onUpdateTimetable={onUpdateTimetable}
-            onUpdateDisciplineLogs={onUpdateDisciplineLogs}
-            onUpdateJournal={onUpdateJournal}
-            onUpdateDutySchedule={onUpdateDutySchedule}
-            onUpdateEmulationLogs={onUpdateEmulationLogs}
-            onUpdateSpecialStudents={handleUpdateSpecialStudents}
-            onUpdateLeaveRequests={onUpdateLeaveRequests}
-            onUpdateMinutes={handleUpdateMinutes}
-            onUpdateInspections={handleUpdateInspections}
-            onUpdateAdministrative={handleUpdateAdministrative}
-            onSelectStudent={onSelectStudent}
-            onOpenPreviewExport={() => setIsPreviewExportModalOpen(true)}
-            onExportExcel={handleExportExcel}
-            onPrintBook={handlePrintBook}
-          />
-        )}
+          {/* FULL READER: XEM TẤT CẢ CÁC TRANG (Cuộn liên tục / Từng trang / Lưới thu nhỏ) */}
+          {activeTab === 'full-reader' && (
+            <HomeroomBookFullReader
+              role={role}
+              classInfo={classInfo}
+              teacherInfo={teacherInfo}
+              bghInfo={bghInfo}
+              students={students}
+              disciplineLogs={disciplineLogs}
+              journal={journal}
+              leaveRequests={leaveRequests}
+              dutySchedule={dutySchedule}
+              seatingChart={seatingChart}
+              timetable={timetable}
+              studyPairs={studyPairs}
+              emulationLogs={emulationLogs}
+              bookData={bookData}
+              onUpdatePlan={handleUpdatePlan}
+              onUpdateCommittee={handleUpdateCommittee}
+              onUpdateParentsBoard={handleUpdateParentsBoard}
+              onUpdateStudents={onUpdateStudents}
+              onUpdateSubjectTeachers={handleUpdateSubjectTeachers}
+              onUpdateSeatingChart={onUpdateSeatingChart}
+              onUpdateStudyPairs={onUpdateStudyPairs}
+              onUpdateTimetable={onUpdateTimetable}
+              onUpdateDisciplineLogs={onUpdateDisciplineLogs}
+              onUpdateJournal={onUpdateJournal}
+              onUpdateDutySchedule={onUpdateDutySchedule}
+              onUpdateEmulationLogs={onUpdateEmulationLogs}
+              onUpdateSpecialStudents={handleUpdateSpecialStudents}
+              onUpdateLeaveRequests={onUpdateLeaveRequests}
+              onUpdateMinutes={handleUpdateMinutes}
+              onUpdateInspections={handleUpdateInspections}
+              onUpdateAdministrative={handleUpdateAdministrative}
+              onSelectStudent={onSelectStudent}
+              onOpenPreviewExport={() => setIsPreviewExportModalOpen(true)}
+              onExportExcel={handleExportExcel}
+              onPrintBook={handlePrintBook}
+            />
+          )}
+        </ErrorBoundary>
       </div>
 
       {/* Global Preview Before Download Modal */}
