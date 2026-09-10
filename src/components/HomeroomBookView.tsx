@@ -18,6 +18,8 @@ import {
   Eye,
   CheckCircle2,
   Sliders,
+  AlertTriangle,
+  RotateCcw,
 } from 'lucide-react';
 import {
   Student,
@@ -55,8 +57,61 @@ import { HomeroomBookMinutesAndBgh } from './homeroom-book/HomeroomBookMinutesAn
 import { HomeroomBookArchiveAndExport } from './homeroom-book/HomeroomBookArchiveAndExport';
 import { HomeroomBookFullReader } from './homeroom-book/HomeroomBookFullReader';
 import { HomeroomBookExportPreviewModal } from './homeroom-book/HomeroomBookExportPreviewModal';
-import { ErrorBoundary } from './ErrorBoundary';
 import { exportHomeroomMasterExcel } from '../utils/homeroomBookExcelExport';
+
+interface LocalErrorBoundaryProps {
+  children: React.ReactNode;
+  fallbackTitle?: string;
+}
+
+interface LocalErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class LocalErrorBoundary extends React.Component<LocalErrorBoundaryProps, LocalErrorBoundaryState> {
+  state: LocalErrorBoundaryState = {
+    hasError: false,
+    error: null,
+  };
+
+  static getDerivedStateFromError(error: Error): LocalErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('Sổ Chủ Nhiệm Error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-lg text-center space-y-4 my-6">
+          <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <h3 className="text-base font-black text-slate-900">
+            {this.props.fallbackTitle || 'Đã Xảy Ra Lỗi Khi Tải Trang Này'}
+          </h3>
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
+            Vui lòng thử chuyển tab khác hoặc tải lại bộ nhớ tạm để cập nhật giao diện mới nhất.
+          </p>
+          <div className="flex justify-center gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => this.setState({ hasError: false, error: null })}
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              Thử Lại Trang
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 interface HomeroomBookViewProps {
   role: UserRole;
@@ -410,7 +465,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
       {/* Main Content Area Based on Active Tab */}
       <div className="transition-all">
-        <ErrorBoundary fallbackTitle="Đã xảy ra sự cố khi tải trang Sổ Chủ Nhiệm">
+        <LocalErrorBoundary fallbackTitle="Đã xảy ra sự cố khi tải trang Sổ Chủ Nhiệm">
           {activeTab === 'cover' && (
             <HomeroomBookCover
               classInfo={classInfo}
@@ -578,7 +633,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
               onPrintBook={handlePrintBook}
             />
           )}
-        </ErrorBoundary>
+        </LocalErrorBoundary>
       </div>
 
       {/* Global Preview Before Download Modal */}
