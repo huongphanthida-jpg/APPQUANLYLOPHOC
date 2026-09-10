@@ -241,3 +241,5 @@ export const EditMeetingMinuteModal: React.FC<EditMeetingMinuteModalProps> = ({
     </div>
   );
 };
+
+export default EditMeetingMinuteModal;
