@@ -11,6 +11,8 @@ import {
   Edit2,
   Trash2,
   AlertCircle,
+  X,
+  Save,
 } from 'lucide-react';
 import { ClassCommitteeRole, ParentsBoardMember, Student, UserRole } from '../../types';
 import { EditCommitteeModal } from './EditCommitteeModal';
@@ -40,6 +42,30 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
 
   const [isParentsModalOpen, setIsParentsModalOpen] = useState(false);
   const [selectedParentsMember, setSelectedParentsMember] = useState<ParentsBoardMember | null>(null);
+
+  const [groupLeaders, setGroupLeaders] = useState<{ [key: number]: string }>(() => {
+    const saved = localStorage.getItem('homeroom_group_leaders');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      1: 'Nguyễn Hoàng Long',
+      2: 'Đỗ Hải Đăng',
+      3: 'Vũ Đức Trọng',
+      4: 'Hoàng Nhật Minh',
+    };
+  });
+  const [isEditLeadersModalOpen, setIsEditLeadersModalOpen] = useState(false);
+  const [editLeadersForm, setEditLeadersForm] = useState<{ [key: number]: string }>(groupLeaders);
+
+  const handleSaveLeaders = (e: React.FormEvent) => {
+    e.preventDefault();
+    setGroupLeaders(editLeadersForm);
+    localStorage.setItem('homeroom_group_leaders', JSON.stringify(editLeadersForm));
+    setIsEditLeadersModalOpen(false);
+  };
 
   // Group students by team
   const group1Students = (students || []).filter((s) => s.group === 1);
@@ -290,10 +316,26 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
 
       {/* 3. Phân Chia 4 Tổ & Thành Viên */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
-        <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
-          <Layers className="w-4 h-4 text-blue-600" />
-          3. Danh Sách Phân Biên Chế 4 Tổ Học Sinh (36 Học Sinh)
-        </h4>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200">
+          <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
+            <Layers className="w-4 h-4 text-blue-600" />
+            3. Danh Sách Phân Biên Chế 4 Tổ Học Sinh ({students?.length || 0} Học Sinh)
+          </h4>
+
+          {canEdit && (
+            <button
+              type="button"
+              onClick={() => {
+                setEditLeadersForm(groupLeaders);
+                setIsEditLeadersModalOpen(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-800 hover:bg-blue-100 text-xs font-bold border border-blue-200 shadow-xs transition-all cursor-pointer self-start sm:self-auto"
+            >
+              <Edit2 className="w-3.5 h-3.5 text-blue-600" />
+              <span>Chỉnh Sửa Tổ Trưởng 4 Tổ</span>
+            </button>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Tổ 1 */}
@@ -303,7 +345,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-blue-700">{group1Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-blue-900 font-black">Nguyễn Hoàng Long</span>
+              Tổ trưởng: <span className="text-blue-900 font-black">{groupLeaders[1] || 'Nguyễn Hoàng Long'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group1Students.map((s, i) => (
@@ -322,7 +364,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-emerald-700">{group2Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-emerald-900 font-black">Đỗ Hải Đăng</span>
+              Tổ trưởng: <span className="text-emerald-900 font-black">{groupLeaders[2] || 'Đỗ Hải Đăng'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group2Students.map((s, i) => (
@@ -341,7 +383,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-purple-700">{group3Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-purple-900 font-black">Vũ Đức Trọng</span>
+              Tổ trưởng: <span className="text-purple-900 font-black">{groupLeaders[3] || 'Vũ Đức Trọng'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group3Students.map((s, i) => (
@@ -360,7 +402,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-amber-700">{group4Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-amber-900 font-black">Hoàng Nhật Minh</span>
+              Tổ trưởng: <span className="text-amber-900 font-black">{groupLeaders[4] || 'Hoàng Nhật Minh'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group4Students.map((s, i) => (
@@ -373,6 +415,72 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
           </div>
         </div>
       </div>
+
+      {/* Modal Chỉnh sửa Tổ trưởng */}
+      {isEditLeadersModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5 bg-gradient-to-r from-[#003366] to-blue-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white/10 text-amber-300">
+                  <Layers className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Chỉnh Sửa Tổ Trưởng 4 Tổ</h3>
+                  <p className="text-xs text-blue-200 font-medium">Cập nhật họ tên phụ trách của 4 tổ học sinh</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditLeadersModalOpen(false)}
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-xl cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveLeaders} className="p-6 space-y-4 text-xs">
+              {[1, 2, 3, 4].map((g) => (
+                <div key={g}>
+                  <label className="font-bold text-slate-700 block mb-1">
+                    Họ tên Tổ Trưởng Tổ {g} (Dãy {g}):
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editLeadersForm[g] || ''}
+                    onChange={(e) =>
+                      setEditLeadersForm({
+                        ...editLeadersForm,
+                        [g]: e.target.value,
+                      })
+                    }
+                    placeholder={`Nhập tên tổ trưởng tổ ${g}`}
+                    className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              ))}
+
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsEditLeadersModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#003366] hover:bg-blue-900 text-white font-bold shadow-md cursor-pointer"
+                >
+                  <Save className="w-4 h-4 text-amber-300" />
+                  <span>Lưu Thay Đổi</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Edit Committee Modal */}
       {isCommitteeModalOpen && (
