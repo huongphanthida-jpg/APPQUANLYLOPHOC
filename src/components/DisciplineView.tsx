@@ -70,7 +70,8 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
     setTimeout(() => setBghToast(null), 4000);
   };
 
-  const filteredLogs = disciplineLogs.filter((log) => {
+  const filteredLogs = (disciplineLogs || []).filter((log) => {
+    if (!log) return false;
     if (selectedFilter === 'all') return true;
     return log.type === selectedFilter;
   });
@@ -86,11 +87,11 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
 
   // Calculate Group statistics (Synchronized with Base Score configuration)
   const groupStats = [1, 2, 3, 4].map((g) => {
-    const groupStudents = students.filter((s) => s.group === g);
+    const groupStudents = (students || []).filter((s) => s && s.group === g);
     const studentIds = new Set(groupStudents.map((s) => s.id));
 
-    const groupLogs = disciplineLogs.filter(
-      (l) => l.group === g || (l.studentId && studentIds.has(l.studentId))
+    const groupLogs = (disciplineLogs || []).filter(
+      (l) => l && (l.group === g || (l.studentId && studentIds.has(l.studentId)))
     );
 
     const bonusLogs = groupLogs.filter((l) => l.type === 'bonus' || l.type === 'commendation');
