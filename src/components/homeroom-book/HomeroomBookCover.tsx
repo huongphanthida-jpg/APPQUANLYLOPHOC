@@ -13,7 +13,7 @@ import {
   FileText,
   Edit3,
 } from 'lucide-react';
-import { ClassInfo, TeacherInfo, BghInfo, HomeroomBookData, UserRole } from '../../types';
+import { ClassInfo, TeacherInfo, BghInfo, HomeroomBookData, UserRole, Student } from '../../types';
 import { EditAdministrativeModal } from './EditAdministrativeModal';
 
 interface HomeroomBookCoverProps {
@@ -23,6 +23,7 @@ interface HomeroomBookCoverProps {
   bookData: HomeroomBookData;
   role: UserRole;
   totalStudents: number;
+  students?: Student[];
   onPrintBook?: () => void;
   onExportExcel?: () => void;
   onExportWord?: () => void;
@@ -41,11 +42,14 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
   bookData,
   role,
   totalStudents,
+  students,
   onPrintBook,
   onExportExcel,
   onExportWord,
   onUpdateAdministrative,
 }) => {
+  const maleCount = students ? students.filter((s) => s.gender === 'Nam').length : Math.round(totalStudents / 2);
+  const femaleCount = students ? students.filter((s) => s.gender === 'Nữ').length : totalStudents - maleCount;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const canEdit = role === 'gvcn';
 
@@ -177,7 +181,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             </div>
             <div>
               <span className="text-slate-500 font-medium">Sĩ số học sinh:</span>{' '}
-              <strong className="text-slate-900 font-black text-base">{totalStudents} Học sinh</strong> (18 Nam / 18 Nữ)
+              <strong className="text-slate-900 font-black text-base">{totalStudents} Học sinh</strong> ({maleCount} Nam / {femaleCount} Nữ)
             </div>
             <div>
               <span className="text-slate-500 font-medium">Phòng học:</span>{' '}
