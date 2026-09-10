@@ -324,3 +324,5 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
     </div>
   );
 };
+
+export default HomeroomBookDutyAndEmulation;
