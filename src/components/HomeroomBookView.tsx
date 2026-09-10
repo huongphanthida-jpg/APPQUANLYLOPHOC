@@ -292,7 +292,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
     { id: 'cover' as BookTab, label: 'Trang Bìa & Hành Chính', icon: BookOpen },
     { id: 'plan' as BookTab, label: 'Kế Hoạch & Chỉ Tiêu', icon: Target },
     { id: 'org' as BookTab, label: 'Ban Cán Sự & CMHS', icon: Users },
-    { id: 'registry' as BookTab, label: 'Sơ Yếu Lý Lịch 36 HS', icon: FileText },
+    { id: 'registry' as BookTab, label: `Sơ Yếu Lý Lịch ${students.length} HS`, icon: FileText },
     { id: 'seating-schedule' as BookTab, label: 'Sơ Đồ Lớp & TKB', icon: Grid },
     { id: 'discipline-journal' as BookTab, label: 'Nề Nếp & Sổ Đầu Bài', icon: ShieldAlert },
     { id: 'academic' as BookTab, label: 'Bảng Điểm & 2 Mặt GD', icon: GraduationCap },
