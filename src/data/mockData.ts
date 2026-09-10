@@ -1255,7 +1255,11 @@ export const INITIAL_SEATING_CHART: SeatingChartData = {
 // THỜI KHOÁ BIỂU LỚP 12A1 (2 Buổi/ngày, mỗi buổi 5 tiết)
 export const INITIAL_TIMETABLE: TimetableData = {
   academicYear: 'Năm học 2025 - 2026 (Học kỳ II)',
-  appliedDate: 'Áp dụng từ ngày 05/01/2026',
+  appliedDate: '05/01/2026',
+  morningTime: '07:00 - 11:20',
+  morningLabel: 'CÁC MÔN VĂN HÓA CHÍNH KHÓA',
+  afternoonTime: '13:30 - 17:45',
+  afternoonLabel: 'ÔN LUYỆN CHUYÊN ĐỀ & GDTC/HĐTN',
   days: [
     {
       dayKey: 'mon',
