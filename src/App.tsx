@@ -1321,15 +1321,36 @@ export function App() {
               students={students}
               disciplineLogs={disciplineLogs}
               journal={journal}
-              onOpenAddDiscipline={() => setIsAddDisciplineOpen(true)}
-              onAddJournalEntry={handleAddJournalEntry}
-              onDeleteDisciplineLog={handleDeleteDisciplineLog}
-              onDeleteJournalEntry={handleDeleteJournalEntry}
+              onOpenAddDiscipline={(studentId) => {
+                if (studentId) {
+                  setSelectedStudentForModal(students.find(s => s.id === studentId) || null);
+                }
+                setIsAddDisciplineOpen(true);
+              }}
+              onAddJournalEntry={(entry) => {
+                const newEntry = { ...entry, id: `j-${Date.now()}` };
+                const updated = [newEntry, ...journal];
+                setJournal(updated);
+                saveJournal(updated);
+              }}
+              onDeleteDisciplineLog={(id) => {
+                const updated = disciplineLogs.filter((l) => l.id !== id);
+                setDisciplineLogs(updated);
+                saveDisciplineLogs(updated);
+              }}
+              onDeleteJournalEntry={(id) => {
+                const updated = journal.filter((j) => j.id !== id);
+                setJournal(updated);
+                saveJournal(updated);
+              }}
               role={role}
               leaveRequests={leaveRequests}
               classInfo={classInfo}
               teacherInfo={teacherInfo}
-              onSelectStudent={handleSelectStudent}
+              onSelectStudent={(student) => {
+                setSelectedStudentForModal(student);
+                setIsStudentModalOpen(true);
+              }}
             />
           )}
 
