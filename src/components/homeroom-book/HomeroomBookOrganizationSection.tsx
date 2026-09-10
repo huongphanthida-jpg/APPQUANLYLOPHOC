@@ -9,12 +9,14 @@ import {
   Award,
   Plus,
   Edit2,
+  Edit3,
+  Calendar,
   Trash2,
   AlertCircle,
   X,
   Save,
 } from 'lucide-react';
-import { ClassCommitteeRole, ParentsBoardMember, Student, UserRole } from '../../types';
+import { ClassCommitteeRole, ParentsBoardMember, Student, UserRole, ClassInfo, TeacherInfo, BghInfo } from '../../types';
 import { EditCommitteeModal } from './EditCommitteeModal';
 import { EditParentsBoardModal } from './EditParentsBoardModal';
 
@@ -23,9 +25,19 @@ interface HomeroomBookOrganizationSectionProps {
   parentsBoard: ParentsBoardMember[];
   students: Student[];
   className?: string;
+  academicYear?: string;
+  classInfo?: ClassInfo;
+  teacherInfo?: TeacherInfo;
+  bghInfo?: BghInfo;
   role: UserRole;
   onUpdateCommittee?: (newCommittee: ClassCommitteeRole[]) => void;
   onUpdateParentsBoard?: (newBoard: ParentsBoardMember[]) => void;
+  onUpdateAdministrative?: (data: {
+    classInfo: ClassInfo;
+    teacherInfo: TeacherInfo;
+    bghInfo: BghInfo;
+    academicYear: string;
+  }) => void;
 }
 
 export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationSectionProps> = ({
@@ -33,9 +45,14 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
   parentsBoard,
   students,
   className,
+  academicYear,
+  classInfo,
+  teacherInfo,
+  bghInfo,
   role,
   onUpdateCommittee,
   onUpdateParentsBoard,
+  onUpdateAdministrative,
 }) => {
   // Modals state
   const [isCommitteeModalOpen, setIsCommitteeModalOpen] = useState(false);
@@ -44,6 +61,33 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
 
   const [isParentsModalOpen, setIsParentsModalOpen] = useState(false);
   const [selectedParentsMember, setSelectedParentsMember] = useState<ParentsBoardMember | null>(null);
+
+  const [isEditYearModalOpen, setIsEditYearModalOpen] = useState(false);
+  const [yearInput, setYearInput] = useState<string>(
+    academicYear || classInfo?.academicYear || '2025 - 2026'
+  );
+
+  const displayAcademicYear = academicYear || classInfo?.academicYear || yearInput || '2025 - 2026';
+
+  const handleSaveAcademicYear = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!yearInput.trim()) return;
+
+    if (onUpdateAdministrative) {
+      onUpdateAdministrative({
+        classInfo: {
+          ...classInfo,
+          className: className || classInfo?.className || '12A1',
+          academicYear: yearInput.trim(),
+          schoolName: classInfo?.schoolName || 'THPT TRẦN NGUYÊN HÃN',
+        },
+        teacherInfo: teacherInfo || { name: 'Nguyễn Văn A' },
+        bghInfo: bghInfo || { name: 'TS. Lê Thị Mai' },
+        academicYear: yearInput.trim(),
+      });
+    }
+    setIsEditYearModalOpen(false);
+  };
 
   const [groupLeaders, setGroupLeaders] = useState<{ [key: number]: string }>(() => {
     const saved = localStorage.getItem('homeroom_group_leaders');
@@ -231,10 +275,26 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
       {/* 2. Ban Đại Diện Cha Mẹ Học Sinh */}
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
-            <HeartHandshake className="w-4 h-4 text-purple-600" />
-            2. Ban Đại Diện Cha Mẹ Học Sinh Năm Học 2025 - 2026
-          </h4>
+          <div className="flex items-center gap-2 flex-wrap">
+            <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
+              <HeartHandshake className="w-4 h-4 text-purple-600" />
+              2. Ban Đại Diện Cha Mẹ Học Sinh Năm Học {displayAcademicYear}
+            </h4>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  setYearInput(displayAcademicYear);
+                  setIsEditYearModalOpen(true);
+                }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-bold border border-purple-300 shadow-2xs transition-all cursor-pointer"
+                title="Chỉnh sửa năm học cho Ban Đại Diện CMHS"
+              >
+                <Edit3 className="w-3.5 h-3.5 text-purple-700" />
+                <span>Sửa Năm Học</span>
+              </button>
+            )}
+          </div>
           
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-purple-50 text-purple-800 text-xs font-bold border border-purple-200">
@@ -504,6 +564,86 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
           students={students}
           onSave={handleSaveParentsBoard}
         />
+      )}
+
+      {/* Modal Chỉnh Sửa Năm Học */}
+      {isEditYearModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/70 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-5 bg-gradient-to-r from-purple-800 to-indigo-900 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white/10 text-amber-300">
+                  <Calendar className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white">Chỉnh Sửa Năm Học CMHS</h3>
+                  <p className="text-xs text-purple-200 font-medium">Cập nhật niên khóa hoạt động của Ban Đại Diện CMHS</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditYearModalOpen(false)}
+                className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-xl cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAcademicYear} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1.5">
+                  Nhập / Chọn Năm Học:
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={yearInput}
+                  onChange={(e) => setYearInput(e.target.value)}
+                  placeholder="VD: 2025 - 2026, 2026 - 2027..."
+                  className="w-full py-2.5 px-3.5 rounded-xl bg-slate-50 border border-slate-200 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-bold text-slate-500 block">Chọn nhanh năm học mẫu:</span>
+                <div className="flex flex-wrap gap-2">
+                  {['2025 - 2026', '2026 - 2027', '2027 - 2028', '2024 - 2025'].map((yr) => (
+                    <button
+                      key={yr}
+                      type="button"
+                      onClick={() => setYearInput(yr)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                        yearInput === yr
+                          ? 'bg-purple-700 text-white border-purple-700'
+                          : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-purple-50'
+                      }`}
+                    >
+                      {yr}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsEditYearModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-bold shadow-md cursor-pointer"
+                >
+                  <Save className="w-4 h-4 text-amber-300" />
+                  <span>Lưu Năm Học Mới</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );
