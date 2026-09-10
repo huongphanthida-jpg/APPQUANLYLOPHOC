@@ -290,6 +290,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
   };
 
   const navItems = [
+    { id: 'full-reader' as BookTab, label: '📖 Xem Tất Cả Các Trang (10 Trang)', icon: Eye },
     { id: 'cover' as BookTab, label: 'Trang Bìa & Hành Chính', icon: BookOpen },
     { id: 'plan' as BookTab, label: 'Kế Hoạch & Chỉ Tiêu', icon: Target },
     { id: 'org' as BookTab, label: 'Ban Cán Sự & CMHS', icon: Users },
@@ -301,7 +302,6 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
     { id: 'special-care' as BookTab, label: 'HS Quan Tâm & Đơn Từ', icon: HeartHandshake },
     { id: 'minutes-bgh' as BookTab, label: 'Biên Bản & Duyệt BGH', icon: ShieldCheck },
     { id: 'archive' as BookTab, label: 'Lưu Trữ & Xuất File', icon: Archive },
-    { id: 'full-reader' as BookTab, label: '📖 Xem Tất Cả Các Trang (10 Trang)', icon: Eye },
   ];
 
   return (
@@ -333,6 +333,21 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 
         {/* Global Toolbar Actions */}
         <div className="flex flex-wrap items-center gap-2.5">
+          {/* Xem tất cả các trang Button */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('full-reader')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs shadow-md transition-all cursor-pointer active:scale-95 border ${
+              activeTab === 'full-reader'
+                ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400/40'
+                : 'bg-[#003366] hover:bg-blue-900 text-white border-blue-400/30'
+            }`}
+            title="Mở trình đọc & chỉnh sửa 10 trang sổ đầy đủ trước khi tải về"
+          >
+            <Layers className="w-4 h-4 text-amber-300" />
+            <span>📖 Xem Tất Cả Các Trang (Sửa & Tải)</span>
+          </button>
+
           {/* Xem trước khi tải Button */}
           <button
             type="button"
@@ -342,17 +357,6 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
           >
             <Eye className="w-4 h-4 text-blue-600" />
             <span>Xem Trước Khi Tải</span>
-          </button>
-
-          {/* Xem tất cả các trang Button */}
-          <button
-            type="button"
-            onClick={() => setActiveTab('full-reader')}
-            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95"
-            title="Mở trình đọc 10 trang sổ liên tục, từng trang hoặc lưới thu nhỏ"
-          >
-            <Layers className="w-4 h-4 text-indigo-200" />
-            <span>Xem Tất Cả Các Trang</span>
           </button>
 
           <button
@@ -416,6 +420,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
             students={students || []}
             onPrintBook={handlePrintBook}
             onExportExcel={handleExportExcel}
+            onOpenFullReader={() => setActiveTab('full-reader')}
             onUpdateAdministrative={handleUpdateAdministrative}
           />
         )}
@@ -593,6 +598,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
           bookData={bookData}
           onExportExcel={handleExportExcel}
           onPrintBook={handlePrintBook}
+          onOpenFullReader={() => setActiveTab('full-reader')}
         />
       )}
     </div>
