@@ -16,13 +16,14 @@ import {
   BookOpen,
   Sliders,
 } from 'lucide-react';
-import { HomeroomBookPlan, UserRole } from '../../types';
+import { HomeroomBookPlan, UserRole, Student } from '../../types';
 import { EditHomeroomPlanModal } from './EditHomeroomPlanModal';
 
 interface HomeroomBookPlanSectionProps {
   plan: HomeroomBookPlan;
   academicYear: string;
   role: UserRole;
+  students?: Student[];
   onUpdatePlan?: (updatedPlan: HomeroomBookPlan) => void;
 }
 
@@ -30,11 +31,18 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
   plan,
   academicYear,
   role,
+  students,
   onUpdatePlan,
 }) => {
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
 
   const canEdit = role === 'gvcn';
+
+  const totalCount = students && students.length > 0 ? students.length : plan.totalStudentsStart;
+  const maleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nam').length : plan.maleCount;
+  const femaleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nữ').length : plan.femaleCount;
+  const malePct = totalCount > 0 ? ((maleCount / totalCount) * 100).toFixed(1) : '0';
+  const femalePct = totalCount > 0 ? ((femaleCount / totalCount) * 100).toFixed(1) : '0';
 
   const handleSavePlan = (updatedPlan: HomeroomBookPlan) => {
     if (onUpdatePlan) {
@@ -85,18 +93,18 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 text-center">
           <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100">
             <span className="text-[11px] font-bold text-slate-500 block">Tổng Sĩ Số</span>
-            <span className="text-xl font-black text-[#003366]">{plan.totalStudentsStart}</span>
+            <span className="text-xl font-black text-[#003366]">{totalCount}</span>
             <span className="text-[10px] text-blue-600 block font-semibold">100% Học sinh</span>
           </div>
           <div className="p-3 rounded-xl bg-indigo-50/70 border border-indigo-100">
             <span className="text-[11px] font-bold text-slate-500 block">Học Sinh Nam</span>
-            <span className="text-xl font-black text-indigo-700">{plan.maleCount}</span>
-            <span className="text-[10px] text-indigo-600 block font-semibold">50.0%</span>
+            <span className="text-xl font-black text-indigo-700">{maleCount}</span>
+            <span className="text-[10px] text-indigo-600 block font-semibold">{malePct}%</span>
           </div>
           <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-100">
             <span className="text-[11px] font-bold text-slate-500 block">Học Sinh Nữ</span>
-            <span className="text-xl font-black text-rose-600">{plan.femaleCount}</span>
-            <span className="text-[10px] text-rose-600 block font-semibold">50.0%</span>
+            <span className="text-xl font-black text-rose-600">{femaleCount}</span>
+            <span className="text-[10px] text-rose-600 block font-semibold">{femalePct}%</span>
           </div>
           <div className="p-3 rounded-xl bg-red-50/70 border border-red-100">
             <span className="text-[11px] font-bold text-slate-500 block">Đoàn Viên</span>
