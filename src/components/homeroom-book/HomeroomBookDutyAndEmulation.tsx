@@ -20,6 +20,7 @@ interface HomeroomBookDutyAndEmulationProps {
   dutySchedule: DutySchedule[];
   emulationLogs: GroupEmulationLog[];
   students?: Student[];
+  className?: string;
   role: UserRole;
   onUpdateDutySchedule?: (duty: DutySchedule[]) => void;
   onUpdateEmulationLogs?: (logs: GroupEmulationLog[]) => void;
@@ -29,6 +30,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
   dutySchedule,
   emulationLogs,
   students = [],
+  className,
   role,
   onUpdateDutySchedule,
   onUpdateEmulationLogs,
@@ -152,7 +154,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
             <Trophy className="w-4 h-4 text-amber-500" />
-            1. Bảng Xếp Hạng Thi Đua & Điểm Rèn Luyện 4 Tổ Lớp 12A1
+            1. Bảng Xếp Hạng Thi Đua & Điểm Rèn Luyện 4 Tổ Lớp {className || '12A1'}
           </h4>
           {canEdit && (
             <button
