@@ -309,3 +309,5 @@ export const EditStudentRecordModal: React.FC<EditStudentRecordModalProps> = ({
     </div>
   );
 };
+
+export default EditStudentRecordModal;
