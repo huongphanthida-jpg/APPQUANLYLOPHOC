@@ -26,7 +26,7 @@ export const EditCommitteeModal: React.FC<EditCommitteeModalProps> = ({
 
   const handleStudentChange = (selectedId: string) => {
     setStudentId(selectedId);
-    const found = students.find((s) => s.id === selectedId);
+    const found = (students || []).find((s) => s && s.id === selectedId);
     if (found && found.phone) {
       setPhone(found.phone);
     }
@@ -34,7 +34,7 @@ export const EditCommitteeModal: React.FC<EditCommitteeModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedStudent = students.find((s) => s.id === studentId);
+    const selectedStudent = (students || []).find((s) => s && s.id === studentId);
     onSave({
       roleName,
       studentId,
@@ -113,7 +113,7 @@ export const EditCommitteeModal: React.FC<EditCommitteeModalProps> = ({
               onChange={(e) => handleStudentChange(e.target.value)}
               className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {students.map((s) => (
+              {(students || []).map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.code} - {s.name} ({s.gender} - Tổ {s.group})
                 </option>
