@@ -115,10 +115,11 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
 
   // Calculate detailed 2-aspect emulation data for each student based on active time filter (Tuần / Tháng / Cả Năm)
   const studentEmulationData = useMemo(() => {
-    return students.map((student) => {
+    return (students || []).map((student) => {
+      if (!student) return null;
       // 1. Chuyên cần (Attendance) theo thời gian
-      const studentLeaves = leaveRequests.filter((l) => {
-        if (l.studentId !== student.id || l.status !== 'approved') return false;
+      const studentLeaves = (leaveRequests || []).filter((l) => {
+        if (!l || l.studentId !== student.id || l.status !== 'approved') return false;
         if (timePeriodMode === 'by_week') {
           const lWeek = getWeekFromDate(l.startDate || l.createdAt);
           return lWeek === selectedWeek;
@@ -145,8 +146,8 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       }
       
       // Vi phạm chuyên cần từ disciplineLogs (loại Chuyên cần) lọc theo thời gian
-      const attendanceViolations = disciplineLogs.filter((d) => {
-        if (d.studentId !== student.id || d.category !== 'Chuyên cần' || d.type !== 'penalty') return false;
+      const attendanceViolations = (disciplineLogs || []).filter((d) => {
+        if (!d || d.studentId !== student.id || d.category !== 'Chuyên cần' || d.type !== 'penalty') return false;
         if (timePeriodMode === 'by_week') {
           return (d.week || getWeekFromDate(d.timestamp)) === selectedWeek;
         }
@@ -157,10 +158,10 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       });
 
       const unexcusedAbsences = attendanceViolations.filter((v) =>
-        v.reason.toLowerCase().includes('không phép') || v.reason.toLowerCase().includes('trốn')
+        (v.reason || '').toLowerCase().includes('không phép') || (v.reason || '').toLowerCase().includes('trốn')
       ).length;
       const lateArrivals = attendanceViolations.filter((v) =>
-        v.reason.toLowerCase().includes('muộn') || v.reason.toLowerCase().includes('trễ')
+        (v.reason || '').toLowerCase().includes('muộn') || (v.reason || '').toLowerCase().includes('trễ')
       ).length;
 
       // Điểm chuyên cần (Thang gốc tự chọn: Trừ 2đ/nghỉ có phép, 5đ/nghỉ không phép, 2đ/đi muộn)
@@ -175,8 +176,8 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       else if (attendanceRate < 98 || excusedAbsences > 0 || lateArrivals > 0) attendanceRating = 'Tốt';
 
       // 2. Nề nếp & Kỷ luật (Conduct & Discipline) theo thời gian
-      const studentDiscLogs = disciplineLogs.filter((d) => {
-        if (d.studentId !== student.id) return false;
+      const studentDiscLogs = (disciplineLogs || []).filter((d) => {
+        if (!d || d.studentId !== student.id) return false;
         if (timePeriodMode === 'by_week') {
           return (d.week || getWeekFromDate(d.timestamp)) === selectedWeek;
         }
@@ -250,18 +251,20 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
         emulationTitle,
         emulationBadgeColor,
       };
-    });
+    }).filter((item): item is NonNullable<typeof item> => item !== null);
   }, [students, disciplineLogs, leaveRequests, timePeriodMode, selectedWeek, selectedMonth, selectedSemester, initialAttendanceBaseScore, initialConductBaseScore]);
 
   // Filtered & Sorted student emulation list
   const filteredStudents = useMemo(() => {
     let result = studentEmulationData.filter((item) => {
+      if (!item || !item.student) return false;
       // Group filter
-      if (selectedGroupFilter !== 'all' && item.student.group.toString() !== selectedGroupFilter) {
+      const groupStr = String(item.student.group ?? 1);
+      if (selectedGroupFilter !== 'all' && groupStr !== selectedGroupFilter) {
         return false;
       }
       // Rating filter
-      if (selectedRatingFilter === 'excellent' && !item.emulationTitle.includes('Tiêu Biểu') && !item.emulationTitle.includes('Gương Mẫu')) {
+      if (selectedRatingFilter === 'excellent' && !item.emulationTitle?.includes('Tiêu Biểu') && !item.emulationTitle?.includes('Gương Mẫu')) {
         return false;
       }
       if (selectedRatingFilter === 'good' && item.emulationTitle !== 'Tiên Tiến Toàn Diện') {
@@ -276,8 +279,8 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       // Search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
-        const matchName = item.student.name.toLowerCase().includes(q);
-        const matchCode = item.student.code.toLowerCase().includes(q);
+        const matchName = (item.student.name || '').toLowerCase().includes(q);
+        const matchCode = (item.student.code || '').toLowerCase().includes(q);
         return matchName || matchCode;
       }
       return true;
@@ -289,8 +292,8 @@ export const ClassEmulationSummary2Aspects: React.FC<ClassEmulationSummary2Aspec
       if (sortBy === 'overall_asc') return a.overallEmulationScore - b.overallEmulationScore;
       if (sortBy === 'attendance_desc') return b.attendanceScore - a.attendanceScore;
       if (sortBy === 'conduct_desc') return b.conductScore - a.conductScore;
-      if (sortBy === 'name_asc') return a.student.name.localeCompare(b.student.name, 'vi');
-      if (sortBy === 'code_asc') return a.student.code.localeCompare(b.student.code);
+      if (sortBy === 'name_asc') return (a.student?.name || '').localeCompare(b.student?.name || '', 'vi');
+      if (sortBy === 'code_asc') return (a.student?.code || '').localeCompare(b.student?.code || '');
       return 0;
     });
 
