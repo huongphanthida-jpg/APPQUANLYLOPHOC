@@ -233,3 +233,5 @@ export const EditDisciplineModal: React.FC<EditDisciplineModalProps> = ({
     </div>
   );
 };
+
+export default EditDisciplineModal;
