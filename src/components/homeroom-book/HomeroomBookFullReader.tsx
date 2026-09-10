@@ -155,6 +155,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           bookData={bookData}
           role={role}
           totalStudents={students.length}
+          students={students}
           onPrintBook={onPrintBook}
           onExportExcel={onExportExcel}
           onExportWord={onExportWord}
@@ -171,6 +172,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
           plan={bookData.plan}
           academicYear={bookData.academicYear}
           role={role}
+          students={students}
           onUpdatePlan={onUpdatePlan}
         />
       ),
