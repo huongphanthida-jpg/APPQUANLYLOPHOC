@@ -50,8 +50,10 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
   onOpenFullReader,
   onUpdateAdministrative,
 }) => {
-  const maleCount = students ? students.filter((s) => s.gender === 'Nam').length : Math.round(totalStudents / 2);
-  const femaleCount = students ? students.filter((s) => s.gender === 'Nữ').length : totalStudents - maleCount;
+  const safeStudents = Array.isArray(students) ? students : [];
+  const safeTotal = totalStudents || safeStudents.length || 0;
+  const maleCount = safeStudents.length > 0 ? safeStudents.filter((s) => s && s.gender === 'Nam').length : Math.round(safeTotal / 2);
+  const femaleCount = safeStudents.length > 0 ? safeStudents.filter((s) => s && s.gender === 'Nữ').length : safeTotal - maleCount;
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const canEdit = role === 'gvcn';
 
