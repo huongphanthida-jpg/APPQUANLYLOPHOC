@@ -29,7 +29,7 @@ export const EditAdministrativeModal: React.FC<EditAdministrativeModalProps> = (
   const [schoolName, setSchoolName] = useState(classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN');
   const [department, setDepartment] = useState('Sở Giáo Dục & Đào Tạo');
   const [className, setClassName] = useState(classInfo.className || '12A1');
-  const [academicYear, setAcademicYear] = useState(bookData.academicYear || '2025 - 2026');
+  const [academicYear, setAcademicYear] = useState(classInfo.academicYear || bookData.academicYear || '2025 - 2026');
   const [room, setRoom] = useState(classInfo.room || 'Phòng 302 (Khu B)');
 
   // Teacher Info
@@ -54,6 +54,7 @@ export const EditAdministrativeModal: React.FC<EditAdministrativeModalProps> = (
         ...classInfo,
         schoolName,
         className,
+        academicYear,
         room,
       },
       teacherInfo: {
