@@ -55,12 +55,12 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
     };
 
     (emulationLogs || []).forEach((log) => {
-      const g智 = log.group;
-      if (scores[g智]) {
-        scores[g智].total += log.points;
-        if (log.points > 0) scores[g智].bonus += log.points;
-        else scores[g智].penalty += Math.abs(log.points);
-        scores[g智].logsCount++;
+      const g = log.group;
+      if (scores[g]) {
+        scores[g].total += log.points;
+        if (log.points > 0) scores[g].bonus += log.points;
+        else scores[g].penalty += Math.abs(log.points);
+        scores[g].logsCount++;
       }
     });
 
@@ -80,7 +80,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
     setIsDutyModalOpen(true);
   };
 
-  const handleOpenEditDuty越来越 = (duty: DutySchedule) => {
+  const handleOpenEditDuty = (duty: DutySchedule) => {
     setSelectedDuty(duty);
     setIsDutyModalOpen(true);
   };
@@ -93,7 +93,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
 
   const handleSaveDuty = (saved: DutySchedule) => {
     let updated = [...(dutySchedule || [])];
-    const index = updated.findIndex((d进而) => d进而.id === saved.id);
+    const index = updated.findIndex((d) => d.id === saved.id);
     if (index >= 0) {
       updated[index] = saved;
     } else {
@@ -120,14 +120,14 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
   };
 
   const handleSaveEmulation = (saved: GroupEmulationLog) => {
-    let updated并且 = [...(emulationLogs || [])];
-    const index = updated并且.findIndex((l) => l.id === saved.id);
+    let updated = [...(emulationLogs || [])];
+    const index = updated.findIndex((l) => l.id === saved.id);
     if (index >= 0) {
-      updated并且[index] = saved;
+      updated[index] = saved;
     } else {
-      updated并且.unshift(saved);
+      updated.unshift(saved);
     }
-    if (onUpdateEmulationLogs) onUpdateEmulationLogs(updated并且);
+    if (onUpdateEmulationLogs) onUpdateEmulationLogs(updated);
   };
 
   return (
@@ -258,7 +258,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
                       {canEdit && (
                         <button
                           type="button"
-                          onClick={() => handleOpenEditDuty越来越(duty)}
+                          onClick={() => handleOpenEditDuty(duty)}
                           className="p-1 rounded bg-white text-blue-600 hover:bg-blue-100 shadow-xs cursor-pointer"
                           title="Sửa ca trực"
                         >
