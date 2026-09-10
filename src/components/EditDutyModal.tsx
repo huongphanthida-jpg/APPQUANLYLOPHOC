@@ -631,6 +631,7 @@ export const EditDutyModal: React.FC<EditDutyModalProps> = ({
                 <option value="Chưa bắt đầu">Chưa bắt đầu</option>
                 <option value="Đang thực hiện">Đang thực hiện</option>
                 <option value="Đã hoàn thành">Đã hoàn thành</option>
+                <option value="Chưa hoàn thành">Chưa hoàn thành nhiệm vụ</option>
               </select>
             </div>
           </div>
