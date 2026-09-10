@@ -37,7 +37,7 @@ export const EditDutyScheduleModal: React.FC<EditDutyScheduleModalProps> = ({
       'Đổ rác đúng nơi quy định',
     ]
   );
-  const [status, setStatus] = useState<'Đã hoàn thành' | 'Đang thực hiện' | 'Chưa bắt đầu'>(
+  const [status, setStatus] = useState<'Đã hoàn thành' | 'Chưa hoàn thành' | 'Đang thực hiện' | 'Chưa bắt đầu'>(
     dutyItem?.status || 'Đang thực hiện'
   );
   const [notes, setNotes] = useState<string>(dutyItem?.notes || '');
@@ -195,6 +195,7 @@ export const EditDutyScheduleModal: React.FC<EditDutyScheduleModalProps> = ({
               className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="Đã hoàn thành">Đã hoàn thành xuất sắc (Sạch sẽ, đúng giờ)</option>
+              <option value="Chưa hoàn thành">Chưa hoàn thành nhiệm vụ (Nhắc nhở / Vi phạm)</option>
               <option value="Đang thực hiện">Đang theo dõi thực hiện</option>
               <option value="Chưa bắt đầu">Chưa bắt đầu</option>
             </select>
