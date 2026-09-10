@@ -45,16 +45,16 @@ export const HomeroomBookStudentRegistry: React.FC<HomeroomBookStudentRegistryPr
 
   const filteredStudents = useMemo(() => {
     return (students || []).filter((s) => {
-      const matchSearch难以 =
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      const matchSearch =
+        (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (s.code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (s.phone || '').includes(searchTerm) ||
         (s.emergencyContact?.parentName || '').toLowerCase().includes(searchTerm.toLowerCase());
 
       const matchGroup = selectedGroup === 'all' || s.group === selectedGroup;
       const matchGender = selectedGender === 'all' || s.gender === selectedGender;
 
-      return matchSearch难以 && matchGroup && matchGender;
+      return matchSearch && matchGroup && matchGender;
     });
   }, [students, searchTerm, selectedGroup, selectedGender]);
 
