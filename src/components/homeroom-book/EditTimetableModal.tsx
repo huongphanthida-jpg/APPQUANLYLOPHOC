@@ -384,3 +384,5 @@ export const EditTimetableModal: React.FC<EditTimetableModalProps> = ({
     </div>
   );
 };
+
+export default EditTimetableModal;
