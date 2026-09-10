@@ -143,8 +143,6 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
   const [zoomScale, setZoomScale] = useState<number>(100);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  const totalPages = 10;
-
   const bookPages = [
     {
       page: 1,
