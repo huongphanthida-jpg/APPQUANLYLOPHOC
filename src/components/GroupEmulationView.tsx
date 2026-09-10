@@ -358,36 +358,7 @@ export const GroupEmulationView: React.FC<GroupEmulationViewProps> = ({
     return [...groupSummaries].sort((a, b) => b.finalScore - a.finalScore);
   }, [groupSummaries]);
 
-  // Handle changing student group
-  const handleChangeStudentGroup = (studentId: string, newGroup: 1 | 2 | 3 | 4) => {
-    if (!onUpdateStudents) return;
-    const updated = students.map((s) => (s.id === studentId ? { ...s, group: newGroup } : s));
-    onUpdateStudents(updated);
-  };
 
-  // Handle Add Emulation Log
-  const handleCreateLog = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!logTitle.trim()) return;
-
-    const newLog: GroupEmulationLog = {
-      id: `em-${Date.now()}`,
-      group: targetGroup,
-      week: selectedWeek,
-      month: selectedMonth,
-      category: category,
-      title: logTitle.trim(),
-      points: logPoints,
-      description: logDesc.trim() || undefined,
-      date: new Date().toISOString().slice(0, 10),
-      recordedBy: teacherInfo?.name || 'GVCN',
-    };
-
-    onAddEmulationLog(newLog);
-    setLogTitle('');
-    setLogDesc('');
-    setIsAddModalOpen(false);
-  };
 
   const rankBadges = [
     { rank: 1, title: 'Hạng Nhất - Cờ Đỏ Xuất Sắc', icon: Trophy, color: 'text-amber-500', bg: 'bg-amber-500/10 border-amber-400' },
