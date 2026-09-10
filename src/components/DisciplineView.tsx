@@ -38,9 +38,9 @@ interface DisciplineViewProps {
 }
 
 export const DisciplineView: React.FC<DisciplineViewProps> = ({
-  students,
-  disciplineLogs,
-  journal,
+  students = [],
+  disciplineLogs = [],
+  journal = [],
   onOpenAddDiscipline,
   onAddJournalEntry,
   onDeleteDisciplineLog,
