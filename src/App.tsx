@@ -22,6 +22,7 @@ import { EditTeacherModal } from './components/EditTeacherModal';
 import { EditBghModal } from './components/EditBghModal';
 import { SettingsView } from './components/SettingsView';
 import { HomeroomBookView } from './components/HomeroomBookView';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { SubjectTeachersView } from './components/SubjectTeachersView';
 import { ImportStudentsModal } from './components/ImportStudentsModal';
 import { ImportGradesModal } from './components/ImportGradesModal';
@@ -1420,66 +1421,68 @@ export function App() {
           )}
 
           {currentTab === 'homeroom-book' && (
-            <HomeroomBookView
-              role={role}
-              classInfo={classInfo}
-              teacherInfo={teacherInfo}
-              bghInfo={bghInfo}
-              students={students}
-              disciplineLogs={disciplineLogs}
-              journal={journal}
-              leaveRequests={leaveRequests}
-              dutySchedule={dutySchedule}
-              seatingChart={seatingChart}
-              timetable={timetable}
-              studyPairs={studyPairs}
-              emulationLogs={emulationLogs}
-              bookData={homeroomBookData}
-              onUpdateBookData={handleUpdateHomeroomBookData}
-              onUpdateStudents={(newStudents) => {
-                setStudents(newStudents);
-                saveStudents(newStudents);
-              }}
-              onUpdateClassInfo={handleSaveClassInfo}
-              onUpdateTeacherInfo={handleSaveTeacherInfo}
-              onUpdateBghInfo={handleSaveBghInfo}
-              onUpdateSeatingChart={(newChart) => {
-                setSeatingChart(newChart);
-                saveSeatingChart(newChart);
-              }}
-              onUpdateTimetable={(newTimetable) => {
-                setTimetable(newTimetable);
-                saveTimetable(newTimetable);
-              }}
-              onUpdateStudyPairs={(newPairs) => {
-                setStudyPairs(newPairs);
-                saveStudyPairs(newPairs);
-              }}
-              onUpdateDisciplineLogs={(newLogs) => {
-                setDisciplineLogs(newLogs);
-                saveDisciplineLogs(newLogs);
-              }}
-              onUpdateJournal={(newJournal) => {
-                setJournal(newJournal);
-                saveJournal(newJournal);
-              }}
-              onUpdateLeaveRequests={(newRequests) => {
-                setLeaveRequests(newRequests);
-                saveLeaveRequests(newRequests);
-              }}
-              onUpdateDutySchedule={(newDuty) => {
-                setDutySchedule(newDuty);
-                saveDutySchedule(newDuty);
-              }}
-              onUpdateEmulationLogs={(newLogs) => {
-                setEmulationLogs(newLogs);
-                saveGroupEmulationLogs(newLogs);
-              }}
-              onSelectStudent={(s) => {
-                setSelectedStudentForModal(s);
-                setIsStudentModalOpen(true);
-              }}
-            />
+            <ErrorBoundary fallbackTitle="Đã xảy ra lỗi khi mở phân hiệu Sổ Chủ Nhiệm">
+              <HomeroomBookView
+                role={role}
+                classInfo={classInfo}
+                teacherInfo={teacherInfo}
+                bghInfo={bghInfo}
+                students={students}
+                disciplineLogs={disciplineLogs}
+                journal={journal}
+                leaveRequests={leaveRequests}
+                dutySchedule={dutySchedule}
+                seatingChart={seatingChart}
+                timetable={timetable}
+                studyPairs={studyPairs}
+                emulationLogs={emulationLogs}
+                bookData={homeroomBookData}
+                onUpdateBookData={handleUpdateHomeroomBookData}
+                onUpdateStudents={(newStudents) => {
+                  setStudents(newStudents);
+                  saveStudents(newStudents);
+                }}
+                onUpdateClassInfo={handleSaveClassInfo}
+                onUpdateTeacherInfo={handleSaveTeacherInfo}
+                onUpdateBghInfo={handleSaveBghInfo}
+                onUpdateSeatingChart={(newChart) => {
+                  setSeatingChart(newChart);
+                  saveSeatingChart(newChart);
+                }}
+                onUpdateTimetable={(newTimetable) => {
+                  setTimetable(newTimetable);
+                  saveTimetable(newTimetable);
+                }}
+                onUpdateStudyPairs={(newPairs) => {
+                  setStudyPairs(newPairs);
+                  saveStudyPairs(newPairs);
+                }}
+                onUpdateDisciplineLogs={(newLogs) => {
+                  setDisciplineLogs(newLogs);
+                  saveDisciplineLogs(newLogs);
+                }}
+                onUpdateJournal={(newJournal) => {
+                  setJournal(newJournal);
+                  saveJournal(newJournal);
+                }}
+                onUpdateLeaveRequests={(newRequests) => {
+                  setLeaveRequests(newRequests);
+                  saveLeaveRequests(newRequests);
+                }}
+                onUpdateDutySchedule={(newDuty) => {
+                  setDutySchedule(newDuty);
+                  saveDutySchedule(newDuty);
+                }}
+                onUpdateEmulationLogs={(newLogs) => {
+                  setEmulationLogs(newLogs);
+                  saveGroupEmulationLogs(newLogs);
+                }}
+                onSelectStudent={(s) => {
+                  setSelectedStudentForModal(s);
+                  setIsStudentModalOpen(true);
+                }}
+              />
+            </ErrorBoundary>
           )}
 
           {currentTab === 'settings' && (
