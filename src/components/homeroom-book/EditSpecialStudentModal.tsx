@@ -257,3 +257,5 @@ export const EditSpecialStudentModal: React.FC<EditSpecialStudentModalProps> = (
     </div>
   );
 };
+
+export default EditSpecialStudentModal;
