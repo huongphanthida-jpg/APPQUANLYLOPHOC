@@ -274,7 +274,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                   </div>
                   <div>
                     <h4 className="font-black text-emerald-950 text-sm">
-                      So_Chu_Nhiem_{classInfo.className}_{bookData.academicYear.replace(/[^a-zA-Z0-9]/g, '_')}_Chuan.xlsx
+                      So_Chu_Nhiem_{classInfo.className}_{(classInfo.academicYear || bookData.academicYear).replace(/[^a-zA-Z0-9]/g, '_')}_Chuan.xlsx
                     </h4>
                     <p className="text-emerald-700 font-medium">
                       Định dạng chuẩn Excel OpenXML (.xlsx) • 12 Sheet chuẩn hóa • Công thức tự động • Tương thích 100%
@@ -351,7 +351,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                         <h3 className="text-lg font-black text-blue-900 pt-2">
                           SỔ CHỦ NHIỆM LỚP {classInfo.className}
                         </h3>
-                        <p className="text-slate-600 font-semibold">{bookData.academicYear}</p>
+                        <p className="text-slate-600 font-semibold">{classInfo.academicYear || bookData.academicYear}</p>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div className="p-3 rounded-lg bg-slate-50 border border-slate-200">
@@ -507,7 +507,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                     <span className="font-black text-[#003366] text-xs uppercase block">
                       TRƯỜNG THPT TÂY NGUYỄN HUỆ
                     </span>
-                    <span className="text-[10px] text-slate-500 block">Số hiệu lưu trữ: SCN-12A1/2026</span>
+                    <span className="text-[10px] text-slate-500 block">Số hiệu lưu trữ: SCN-{classInfo.className.replace(/\s+/g, '')}/{(classInfo.academicYear || bookData.academicYear).replace(/[^a-zA-Z0-9]/g, '_')}</span>
                   </div>
                   <div className="w-1/2">
                     <span className="font-black text-xs uppercase block">CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</span>
@@ -522,7 +522,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
                     {pdfPages[selectedPdfPage - 1]?.title}
                   </h3>
                   <p className="text-[11px] text-slate-500 font-semibold">
-                    Lớp: {classInfo.className} • {bookData.academicYear} • GVCN: {teacherInfo.name}
+                    Lớp: {classInfo.className} • {classInfo.academicYear || bookData.academicYear} • GVCN: {teacherInfo.name}
                   </p>
                 </div>
 
