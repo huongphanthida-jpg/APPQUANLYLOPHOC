@@ -128,9 +128,13 @@ export function exportHomeroomMasterExcel(params: HomeroomBookExportParams) {
   XLSX.utils.book_append_sheet(wb, wsParents, 'Ban_Dai_Dien_CMHS');
 
   // 4. Sheet: Kế Hoạch & Chỉ Tiêu Năm Học
+  const excelMaleCount = (students || []).filter((s) => s.gender === 'Nam').length;
+  const excelFemaleCount = (students || []).filter((s) => s.gender === 'Nữ').length;
+  const excelTotalStudents = students && students.length > 0 ? students.length : bookData.plan.totalStudentsStart;
+
   const planData = [
     ['KẾ HOẠCH CÔNG TÁC CHỦ NHIỆM NĂM HỌC', bookData.academicYear],
-    ['LỚP:', classInfo.className, 'SĨ SỐ:', `${bookData.plan.totalStudentsStart} học sinh (Nam: ${bookData.plan.maleCount}, Nữ: ${bookData.plan.femaleCount})`],
+    ['LỚP:', classInfo.className, 'SĨ SỐ:', `${excelTotalStudents} học sinh (Nam: ${excelMaleCount}, Nữ: ${excelFemaleCount})`],
     [''],
     ['I. ĐẶC ĐIỂM TÌNH HÌNH LỚP'],
     ['1. Thuận lợi:'],
