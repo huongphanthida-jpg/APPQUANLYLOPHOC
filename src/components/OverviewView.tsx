@@ -1213,6 +1213,8 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       d.status === 'Đã hoàn thành'
                         ? 'bg-emerald-100 text-emerald-800'
+                        : d.status === 'Chưa hoàn thành'
+                        ? 'bg-rose-100 text-rose-800'
                         : d.status === 'Đang thực hiện'
                         ? 'bg-amber-100 text-amber-800'
                         : 'bg-slate-100 text-slate-600'
