@@ -68,7 +68,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             SỔ THEO DÕI VÀ ĐÁNH GIÁ HỌC SINH (SỔ CHỦ NHIỆM)
           </h2>
           <p className="text-xs sm:text-sm text-blue-200 mt-1 max-w-2xl">
-            Lưu trữ, tổng hợp toàn diện và đồng bộ dữ liệu từ 12 phân hiệu của lớp {classInfo.className} ({bookData.academicYear}). Đầy đủ giá trị pháp lý phục vụ báo cáo và thanh tra kiểm tra sư phạm.
+            Lưu trữ, tổng hợp toàn diện và đồng bộ dữ liệu từ 12 phân hiệu của lớp {classInfo.className} ({classInfo.academicYear || bookData.academicYear}). Đầy đủ giá trị pháp lý phục vụ báo cáo và thanh tra kiểm tra sư phạm.
           </p>
         </div>
 
@@ -168,7 +168,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             (SỔ CÔNG TÁC CHỦ NHIỆM LỚP)
           </p>
           <div className="inline-block px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-sm font-black">
-            {bookData.academicYear}
+            {classInfo.academicYear || bookData.academicYear}
           </div>
         </div>
 
@@ -223,7 +223,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
               <QrCode className="w-12 h-12 text-[#003366]" />
             </div>
             <span className="font-bold text-[#003366]">Mã Số Hóa Hồ Sơ</span>
-            <span className="text-[10px] text-slate-500 font-mono">TNH-12A1-2025-2026</span>
+            <span className="text-[10px] text-slate-500 font-mono">TNH-{classInfo.className.replace(/\s+/g, '')}-{(classInfo.academicYear || bookData.academicYear).replace(/[^a-zA-Z0-9]/g, '')}</span>
           </div>
 
           {/* Teacher Signature */}
