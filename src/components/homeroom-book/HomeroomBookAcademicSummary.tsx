@@ -501,14 +501,14 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
           <span className="text-xs font-bold text-indigo-700 block">Học Lực Khá</span>
           <span className="text-2xl font-black text-indigo-600">{stats.fairCount} HS</span>
           <span className="text-[10px] text-indigo-600 block mt-0.5">
-            Tỷ lệ: {(((stats.fairCount) / (students.length || 1)) * 100).toFixed(1)}%
+            Tỷ lệ: {(((stats.fairCount) / (students?.length || 1)) * 100).toFixed(1)}%
           </span>
         </div>
         <div className="p-4 rounded-2xl bg-white border border-purple-200 shadow-sm">
           <span className="text-xs font-bold text-purple-700 block">Hạnh Kiểm Loại Tốt</span>
           <span className="text-2xl font-black text-purple-600">{stats.conductGood} HS</span>
           <span className="text-[10px] text-purple-600 block mt-0.5">
-            Tỷ lệ: {(((stats.conductGood) / (students.length || 1)) * 100).toFixed(1)}%
+            Tỷ lệ: {(((stats.conductGood) / (students?.length || 1)) * 100).toFixed(1)}%
           </span>
         </div>
       </div>
@@ -545,7 +545,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
                 <td className="py-2 px-3 border border-slate-200 text-indigo-700 font-bold">{stats.fairCount - stats.conductFair} HS</td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
                 <td className="py-2 px-3 border border-slate-200 font-bold text-purple-900 bg-purple-50/50">
-                  {stats.conductGood} HS ({(((stats.conductGood) / (students.length || 1)) * 100).toFixed(1)}%)
+                  {stats.conductGood} HS ({(((stats.conductGood) / (students?.length || 1)) * 100).toFixed(1)}%)
                 </td>
               </tr>
               <tr>
@@ -557,7 +557,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
                 <td className="py-2 px-3 border border-slate-200 text-amber-700 font-bold">{stats.conductFair} HS</td>
                 <td className="py-2 px-3 border border-slate-200 text-slate-400">0</td>
                 <td className="py-2 px-3 border border-slate-200 font-bold text-amber-900 bg-amber-50/50">
-                  {stats.conductFair} HS ({(((stats.conductFair) / (students.length || 1)) * 100).toFixed(1)}%)
+                  {stats.conductFair} HS ({(((stats.conductFair) / (students?.length || 1)) * 100).toFixed(1)}%)
                 </td>
               </tr>
               <tr className="bg-slate-100 font-black text-slate-900">
@@ -580,7 +580,7 @@ export const HomeroomBookAcademicSummary: React.FC<HomeroomBookAcademicSummaryPr
         <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center justify-between">
           <span className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-blue-600" />
-            Bảng Điểm Chi Tiết {activeSubjects.length} Môn & Đánh Giá Từng Học Sinh ({students.length} HS)
+            Bảng Điểm Chi Tiết {activeSubjects.length} Môn & Đánh Giá Từng Học Sinh ({(students || []).length} HS)
           </span>
         </h4>
 
