@@ -181,3 +181,5 @@ export const EditParentsBoardModal: React.FC<EditParentsBoardModalProps> = ({
     </div>
   );
 };
+
+export default EditParentsBoardModal;
