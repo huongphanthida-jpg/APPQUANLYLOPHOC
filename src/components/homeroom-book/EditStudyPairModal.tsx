@@ -189,3 +189,5 @@ export const EditStudyPairModal: React.FC<EditStudyPairModalProps> = ({
     </div>
   );
 };
+
+export default EditStudyPairModal;
