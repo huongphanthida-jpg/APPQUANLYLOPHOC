@@ -508,3 +508,5 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
     </div>
   );
 };
+
+export default HomeroomBookOrganizationSection;
