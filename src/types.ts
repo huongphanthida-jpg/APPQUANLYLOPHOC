@@ -359,6 +359,10 @@ export interface DaySchedule {
 export interface TimetableData {
   academicYear: string;
   appliedDate: string;
+  morningTime?: string;
+  morningLabel?: string;
+  afternoonTime?: string;
+  afternoonLabel?: string;
   days: DaySchedule[];
 }
 
