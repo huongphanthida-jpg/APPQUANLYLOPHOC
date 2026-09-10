@@ -47,7 +47,7 @@ export const EditDisciplineModal: React.FC<EditDisciplineModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const st = students.find((s) => s.id === studentId);
+    const st = (students || []).find((s) => s && s.id === studentId);
     const saved: DisciplineEntry = {
       id: entry?.id || `disc-${Date.now()}`,
       studentId,
@@ -152,7 +152,7 @@ export const EditDisciplineModal: React.FC<EditDisciplineModalProps> = ({
                 onChange={(e) => setStudentId(e.target.value)}
                 className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {students.map((s) => (
+                {(students || []).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.code} - Tổ {s.group})
                   </option>
