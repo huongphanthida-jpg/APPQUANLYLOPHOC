@@ -1218,6 +1218,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
           </table>
         </div>
       </div>
+    </div>
 
       {/* Import Grades from Excel Modal */}
       {isImportModalOpen && (
