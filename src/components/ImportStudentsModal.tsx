@@ -101,6 +101,7 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
   };
 
   // Generate and download standard Excel template (.xlsx)
+  // Generate and download standard Excel template (.xlsx) with ALL subjects (KHTN + KHXH)
   const handleDownloadExcelTemplate = () => {
     const sampleRows = [
       {
@@ -119,7 +120,17 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
         'Quan hệ': 'Bố',
         'SĐT phụ huynh': '0912888999',
         'Nơi công tác phụ huynh': 'Công ty Điện lực Hải Phòng',
-        'ĐTB Khối A': 9.2,
+        'Toán ĐTB': 9.5,
+        'Vật Lý ĐTB': 9.0,
+        'Hóa Học ĐTB': 9.2,
+        'Sinh Học ĐTB': 8.5,
+        'Ngữ Văn ĐTB': 8.0,
+        'Lịch Sử ĐTB': 8.5,
+        'Địa Lý ĐTB': 8.5,
+        'GDCD ĐTB': 9.0,
+        'Tiếng Anh ĐTB': 9.0,
+        'Tin Học ĐTB': 9.8,
+        'ĐTB Chung': 9.0,
         'Hạnh kiểm': 'Tốt',
       },
       {
@@ -138,7 +149,17 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
         'Quan hệ': 'Bố',
         'SĐT phụ huynh': '0987111222',
         'Nơi công tác phụ huynh': 'Bệnh viện Hữu nghị Việt Tiệp',
-        'ĐTB Khối A': 8.9,
+        'Toán ĐTB': 8.5,
+        'Vật Lý ĐTB': 8.0,
+        'Hóa Học ĐTB': 8.2,
+        'Sinh Học ĐTB': 8.5,
+        'Ngữ Văn ĐTB': 9.2,
+        'Lịch Sử ĐTB': 9.5,
+        'Địa Lý ĐTB': 9.0,
+        'GDCD ĐTB': 9.2,
+        'Tiếng Anh ĐTB': 9.8,
+        'Tin Học ĐTB': 8.8,
+        'ĐTB Chung': 8.9,
         'Hạnh kiểm': 'Tốt',
       },
       {
@@ -157,7 +178,17 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
         'Quan hệ': 'Bố',
         'SĐT phụ huynh': '0934999888',
         'Nơi công tác phụ huynh': 'Cảng Hải Phòng',
-        'ĐTB Khối A': 9.0,
+        'Toán ĐTB': 9.2,
+        'Vật Lý ĐTB': 9.5,
+        'Hóa Học ĐTB': 8.8,
+        'Sinh Học ĐTB': 8.2,
+        'Ngữ Văn ĐTB': 8.0,
+        'Lịch Sử ĐTB': 8.2,
+        'Địa Lý ĐTB': 8.5,
+        'GDCD ĐTB': 8.8,
+        'Tiếng Anh ĐTB': 8.8,
+        'Tin Học ĐTB': 9.5,
+        'ĐTB Chung': 8.8,
         'Hạnh kiểm': 'Tốt',
       },
       {
@@ -176,7 +207,17 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
         'Quan hệ': 'Bố',
         'SĐT phụ huynh': '0945111333',
         'Nơi công tác phụ huynh': 'Sở Y Tế Hải Phòng',
-        'ĐTB Khối A': 9.1,
+        'Toán ĐTB': 9.0,
+        'Vật Lý ĐTB': 8.8,
+        'Hóa Học ĐTB': 9.6,
+        'Sinh Học ĐTB': 9.5,
+        'Ngữ Văn ĐTB': 8.5,
+        'Lịch Sử ĐTB': 8.8,
+        'Địa Lý ĐTB': 8.5,
+        'GDCD ĐTB': 9.0,
+        'Tiếng Anh ĐTB': 9.0,
+        'Tin Học ĐTB': 9.0,
+        'ĐTB Chung': 9.0,
         'Hạnh kiểm': 'Tốt',
       },
       {
@@ -195,7 +236,17 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
         'Quan hệ': 'Bố',
         'SĐT phụ huynh': '0922888777',
         'Nơi công tác phụ huynh': 'Tập đoàn Bưu chính Viễn thông',
-        'ĐTB Khối A': 8.7,
+        'Toán ĐTB': 8.8,
+        'Vật Lý ĐTB': 8.5,
+        'Hóa Học ĐTB': 8.8,
+        'Sinh Học ĐTB': 8.2,
+        'Ngữ Văn ĐTB': 8.2,
+        'Lịch Sử ĐTB': 8.5,
+        'Địa Lý ĐTB': 8.8,
+        'GDCD ĐTB': 8.8,
+        'Tiếng Anh ĐTB': 8.5,
+        'Tin Học ĐTB': 9.2,
+        'ĐTB Chung': 8.6,
         'Hạnh kiểm': 'Tốt',
       },
     ];
@@ -205,7 +256,9 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
       { wch: 12 }, { wch: 22 }, { wch: 10 }, { wch: 14 }, { wch: 8 },
       { wch: 14 }, { wch: 24 }, { wch: 36 }, { wch: 32 }, { wch: 36 },
       { wch: 24 }, { wch: 22 }, { wch: 12 }, { wch: 16 }, { wch: 30 },
-      { wch: 14 }, { wch: 12 },
+      { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
+      { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 10 },
+      { wch: 12 }, { wch: 12 },
     ];
 
     const wb = XLSX.utils.book_new();
@@ -213,14 +266,14 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
     XLSX.writeFile(wb, `Mau_Danh_Sach_Hoc_Sinh_${safeClassName}.xlsx`);
   };
 
-  // Generate and download CSV template (.csv)
+  // Generate and download CSV template (.csv) with ALL subjects (KHTN + KHXH)
   const handleDownloadCsvTemplate = () => {
     const csvContent =
       '\uFEFF' + // UTF-8 BOM for Excel
-      'Mã HS,Họ và Tên,Giới tính,Ngày sinh,Tổ,SĐT,Email,Địa chỉ,Sở trường năng khiếu,Định hướng nghề nghiệp,Ghi chú sức khỏe,Họ tên phụ huynh,Quan hệ,SĐT phụ huynh,Nơi công tác phụ huynh,ĐTB Khối A,Hạnh kiểm\n' +
-      'TNH-01,Nguyễn Hoàng Nam,Nam,15/03/2008,1,0912345678,nam.nh@tnh.edu.vn,Số 12 Lạch Tray Ngô Quyền Hải Phòng,Lập trình Web & Giải toán nhanh,ĐH Bách Khoa Hà Nội (CNTT),Bình thường mắt cận 1.5 độ,Nguyễn Văn Hùng,Bố,0912888999,Công ty Điện lực HP,9.2,Tốt\n' +
-      'TNH-02,Trần Thị Mai Anh,Nữ,22/07/2008,1,0987654321,maianh.tt@tnh.edu.vn,Số 45 Lê Lợi Lê Chân Hải Phòng,Hùng biện tiếng Anh & Thuyết trình,ĐH Ngoại Thương Hà Nội,Sức khỏe tốt,Trần Văn Minh,Bố,0987111222,Bệnh viện Hữu nghị Tiệp,8.9,Tốt\n' +
-      'TNH-03,Lê Quốc Bảo,Nam,10/11/2008,2,0934567890,bao.lq@tnh.edu.vn,Số 88 Cầu Đất Ngô Quyền Hải Phòng,Robotics & Vật lý ứng dụng,ĐH Bách Khoa (Kỹ thuật Điều khiển),Bình thường,Lê Đình Dũng,Bố,0934999888,Cảng Hải Phòng,9.0,Tốt';
+      'Mã HS,Họ và Tên,Giới tính,Ngày sinh,Tổ,SĐT,Email,Địa chỉ,Sở trường năng khiếu,Định hướng nghề nghiệp,Ghi chú sức khỏe,Họ tên phụ huynh,Quan hệ,SĐT phụ huynh,Nơi công tác phụ huynh,Toán ĐTB,Vật Lý ĐTB,Hóa Học ĐTB,Sinh Học ĐTB,Ngữ Văn ĐTB,Lịch Sử ĐTB,Địa Lý ĐTB,GDCD ĐTB,Tiếng Anh ĐTB,Tin Học ĐTB,ĐTB Chung,Hạnh kiểm\n' +
+      'TNH-01,Nguyễn Hoàng Nam,Nam,15/03/2008,1,0912345678,nam.nh@tnh.edu.vn,Số 12 Lạch Tray Ngô Quyền Hải Phòng,Lập trình Web & Giải toán nhanh,ĐH Bách Khoa Hà Nội (CNTT),Bình thường mắt cận 1.5 độ,Nguyễn Văn Hùng,Bố,0912888999,Công ty Điện lực HP,9.5,9.0,9.2,8.5,8.0,8.5,8.5,9.0,9.0,9.8,9.0,Tốt\n' +
+      'TNH-02,Trần Thị Mai Anh,Nữ,22/07/2008,1,0987654321,maianh.tt@tnh.edu.vn,Số 45 Lê Lợi Lê Chân Hải Phòng,Hùng biện tiếng Anh & Thuyết trình,ĐH Ngoại Thương Hà Nội,Sức khỏe tốt,Trần Văn Minh,Bố,0987111222,Bệnh viện Hữu nghị Tiệp,8.5,8.0,8.2,8.5,9.2,9.5,9.0,9.2,9.8,8.8,8.9,Tốt\n' +
+      'TNH-03,Lê Quốc Bảo,Nam,10/11/2008,2,0934567890,bao.lq@tnh.edu.vn,Số 88 Cầu Đất Ngô Quyền Hải Phòng,Robotics & Vật lý ứng dụng,ĐH Bách Khoa (Kỹ thuật Điều khiển),Bình thường,Lê Đình Dũng,Bố,0934999888,Cảng Hải Phòng,9.2,9.5,8.8,8.2,8.0,8.2,8.5,8.8,8.8,9.5,8.8,Tốt';
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -277,13 +330,13 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
 
     // Profiles & Strengths
     const rawStrengths = getVal(row, ['sở trường năng khiếu', 'sở trường', 'năng khiếu', 'strengths', 'so truong', 'nang khieu']);
-    const strengths = rawStrengths ? cleanStr(rawStrengths, encodingMode) : 'Toán học & Khoa học Tự nhiên';
+    const strengths = rawStrengths ? cleanStr(rawStrengths, encodingMode) : 'Toán học & Khoa học';
 
     const rawCareer = getVal(row, ['định hướng nghề nghiệp', 'định hướng', 'nguyện vọng', 'mục tiêu đại học', 'career', 'aspiration']);
-    const careerAspiration = rawCareer ? cleanStr(rawCareer, encodingMode) : 'ĐH Bách Khoa / Kinh Tế';
+    const careerAspiration = rawCareer ? cleanStr(rawCareer, encodingMode) : 'Đại Học';
 
     const rawHealth = getVal(row, ['ghi chú sức khỏe', 'sức khỏe', 'suc khoe', 'health note', 'health']);
-    const healthNote = rawHealth ? cleanStr(rawHealth, encodingMode) : 'Sức khỏe tốt, không có tiền sử bệnh lý';
+    const healthNote = rawHealth ? cleanStr(rawHealth, encodingMode) : 'Sức khỏe tốt';
 
     // Parent / Emergency
     const rawParentName = getVal(row, ['họ tên phụ huynh', 'phụ huynh', 'tên phụ huynh', 'người giám hộ', 'parent name', 'parent']);
@@ -304,8 +357,8 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
     const workplace = rawWorkplace ? cleanStr(rawWorkplace, encodingMode) : 'Hải Phòng';
 
     // Academic & Conduct
-    const rawGpa = getVal(row, ['đtb khối a', 'đtb', 'điểm tb', 'gpa', 'dtb', 'điểm trung bình']);
-    const gpa = rawGpa ? Number(parseFloat(String(rawGpa)).toFixed(2)) : 8.5;
+    const rawGpa = getVal(row, ['đtb chung', 'đtb khối a', 'đtb', 'điểm tb', 'gpa', 'dtb', 'điểm trung bình']);
+    const parsedRawGpa = rawGpa ? parseFloat(String(rawGpa)) : undefined;
 
     const rawConduct = getVal(row, ['hạnh kiểm', 'rèn luyện', 'conduct', 'hanh kiem']);
     let conductRating: 'Tốt' | 'Khá' | 'Trung bình' | 'Yếu' = 'Tốt';
@@ -323,13 +376,31 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
 
     const id = code.toLowerCase().replace(/[^a-z0-9]/g, '-') || `std-${Date.now()}-${index}`;
 
-    // Subject grades
-    const mathVal = getVal(row, ['toán', 'toan', 'math']) ? parseFloat(String(getVal(row, ['toán', 'toan', 'math']))) : gpa;
-    const physVal = getVal(row, ['lý', 'vật lý', 'ly', 'physics']) ? parseFloat(String(getVal(row, ['lý', 'vật lý', 'ly', 'physics']))) : gpa;
-    const chemVal = getVal(row, ['hóa', 'hóa học', 'hoa', 'chemistry']) ? parseFloat(String(getVal(row, ['hóa', 'hóa học', 'hoa', 'chemistry']))) : gpa;
-    const bioVal = getVal(row, ['sinh', 'sinh học', 'biology']) ? parseFloat(String(getVal(row, ['sinh', 'sinh học', 'biology']))) : 8.5;
-    const litVal = getVal(row, ['văn', 'ngữ văn', 'literature']) ? parseFloat(String(getVal(row, ['văn', 'ngữ văn', 'literature']))) : 8.0;
-    const engVal = getVal(row, ['anh', 'tiếng anh', 'english']) ? parseFloat(String(getVal(row, ['anh', 'tiếng anh', 'english']))) : 8.5;
+    // Subject grades parsing for ALL Natural (KHTN) & Social (KHXH) & Foreign Language subjects
+    const parseSubj = (keys: string[], defaultFallback = 8.5): number => {
+      const val = getVal(row, keys);
+      if (val !== undefined && val !== null && val !== '') {
+        const num = parseFloat(String(val));
+        if (!isNaN(num)) return Number(num.toFixed(1));
+      }
+      return defaultFallback;
+    };
+
+    const mathVal = parseSubj(['toán đtb', 'điểm toán', 'toán', 'toan', 'math'], 8.5);
+    const physVal = parseSubj(['vật lý đtb', 'lý đtb', 'điểm lý', 'lý', 'vật lý', 'ly', 'physics'], 8.0);
+    const chemVal = parseSubj(['hóa học đtb', 'hóa đtb', 'điểm hóa', 'hóa', 'hóa học', 'hoa', 'chemistry'], 8.0);
+    const bioVal = parseSubj(['sinh học đtb', 'sinh đtb', 'điểm sinh', 'sinh', 'sinh học', 'biology'], 8.5);
+    const litVal = parseSubj(['ngữ văn đtb', 'văn đtb', 'điểm văn', 'văn', 'ngữ văn', 'literature'], 8.0);
+    const engVal = parseSubj(['tiếng anh đtb', 'anh đtb', 'điểm anh', 'anh', 'tiếng anh', 'english'], 8.5);
+    const histVal = parseSubj(['lịch sử đtb', 'sử đtb', 'điểm sử', 'sử', 'lịch sử', 'history'], 8.5);
+    const geoVal = parseSubj(['địa lý đtb', 'địa đtb', 'điểm địa', 'địa', 'địa lý', 'geography'], 8.5);
+    const gdcdVal = parseSubj(['gdcd đtb', 'gdkt&pl đtb', 'gdcd', 'gdkt&pl', 'giáo dục công dân', 'civics'], 8.5);
+    const infoVal = parseSubj(['tin học đtb', 'tin đtb', 'điểm tin', 'tin', 'tin học', 'informatics'], 9.0);
+
+    // Calculate dynamic GPA if not provided
+    const subjectListForGpa = [mathVal, physVal, chemVal, bioVal, litVal, engVal, histVal, geoVal, gdcdVal, infoVal];
+    const calculatedGpa = Number((subjectListForGpa.reduce((a, b) => a + b, 0) / subjectListForGpa.length).toFixed(2));
+    const finalGpa = parsedRawGpa !== undefined && !isNaN(parsedRawGpa) ? parsedRawGpa : calculatedGpa;
 
     return {
       id,
@@ -358,7 +429,10 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
         biology: { tx1: bioVal, tx2: bioVal, gk: bioVal, ck: bioVal, avg: bioVal },
         literature: { tx1: litVal, tx2: litVal, gk: litVal, ck: litVal, avg: litVal },
         english: { tx1: engVal, tx2: engVal, gk: engVal, ck: engVal, avg: engVal },
-        gpa: Number(((mathVal + physVal + chemVal) / 3).toFixed(2)),
+        history: { tx1: histVal, tx2: histVal, gk: histVal, ck: histVal, avg: histVal },
+        geography: { tx1: geoVal, tx2: geoVal, gk: geoVal, ck: geoVal, avg: geoVal },
+        informatics: { tx1: infoVal, tx2: infoVal, gk: infoVal, ck: infoVal, avg: infoVal },
+        gpa: finalGpa,
       },
       progressHistory: [
         { period: 'Tháng 9', math: Math.max(0, mathVal - 0.5), physics: Math.max(0, physVal - 0.4), chemistry: Math.max(0, chemVal - 0.6) },
@@ -373,7 +447,7 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
       commendationsCount: 1,
       absenceCount: 0,
       violations: [],
-      commendations: ['Gia nhập tập thể lớp 12A1'],
+      commendations: ['Gia nhập tập thể lớp'],
     };
   };
 
