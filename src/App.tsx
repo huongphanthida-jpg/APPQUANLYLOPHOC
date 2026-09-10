@@ -120,7 +120,7 @@ import { INITIAL_SEATING_CHART, INITIAL_TIMETABLE } from './data/mockData';
 import { INITIAL_HOMEROOM_BOOK_DATA } from './data/homeroomBookData';
 import { fetchStudentsFromGoogleSheet, fetchOnlineClassesFromGoogleSheet } from './utils/googleSheetSync';
 
-export default function App() {
+export function App() {
   // State Initialization
   const [isSystemAuthenticated, setIsSystemAuthenticated] = useState<boolean>(getStoredSystemAuth());
   const [role, setRole] = useState<UserRole>(getStoredRole());
