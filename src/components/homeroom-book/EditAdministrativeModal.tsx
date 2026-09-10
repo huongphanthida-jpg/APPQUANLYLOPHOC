@@ -283,3 +283,5 @@ export const EditAdministrativeModal: React.FC<EditAdministrativeModalProps> = (
     </div>
   );
 };
+
+export default EditAdministrativeModal;
