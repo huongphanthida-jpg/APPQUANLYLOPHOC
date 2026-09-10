@@ -230,3 +230,5 @@ export const EditJournalModal: React.FC<EditJournalModalProps> = ({
     </div>
   );
 };
+
+export default EditJournalModal;
