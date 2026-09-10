@@ -549,3 +549,5 @@ export const HomeroomBookSeatingAndSchedule: React.FC<HomeroomBookSeatingAndSche
     </div>
   );
 };
+
+export default HomeroomBookSeatingAndSchedule;
