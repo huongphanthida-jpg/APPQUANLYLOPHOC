@@ -68,7 +68,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             SỔ THEO DÕI VÀ ĐÁNH GIÁ HỌC SINH (SỔ CHỦ NHIỆM)
           </h2>
           <p className="text-xs sm:text-sm text-blue-200 mt-1 max-w-2xl">
-            Lưu trữ, tổng hợp toàn diện và đồng bộ dữ liệu từ 12 phân hiệu của lớp {classInfo.className} ({classInfo.academicYear || bookData.academicYear}). Đầy đủ giá trị pháp lý phục vụ báo cáo và thanh tra kiểm tra sư phạm.
+            Lưu trữ, tổng hợp toàn diện và đồng bộ dữ liệu từ 12 phân hiệu của lớp {classInfo?.className || '12A1'} ({classInfo?.academicYear || bookData?.academicYear || '2025-2026'}). Đầy đủ giá trị pháp lý phục vụ báo cáo và thanh tra kiểm tra sư phạm.
           </p>
         </div>
 
@@ -148,7 +148,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             SỞ GIÁO DỤC VÀ ĐÀO TẠO THÀNH PHỐ HẢI PHÒNG
           </p>
           <h3 className="text-lg sm:text-xl font-black text-[#003366] uppercase tracking-wide">
-            {classInfo.schoolName || 'TRƯỜNG THPT TRẦN NGUYÊN HÃN'}
+            {classInfo?.schoolName || 'TRƯỜNG THPT TRẦN NGUYÊN HÃN'}
           </h3>
         </div>
 
@@ -168,7 +168,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             (SỔ CÔNG TÁC CHỦ NHIỆM LỚP)
           </p>
           <div className="inline-block px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-900 text-sm font-black">
-            {classInfo.academicYear || bookData.academicYear}
+            {classInfo?.academicYear || bookData?.academicYear || '2025-2026'}
           </div>
         </div>
 
@@ -177,7 +177,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-slate-500 font-medium">Lớp:</span>{' '}
-              <strong className="text-slate-900 font-black text-base">{classInfo.className}</strong>
+              <strong className="text-slate-900 font-black text-base">{classInfo?.className || '12A1'}</strong>
             </div>
             <div>
               <span className="text-slate-500 font-medium">Sĩ số học sinh:</span>{' '}
@@ -185,32 +185,34 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             </div>
             <div>
               <span className="text-slate-500 font-medium">Phòng học:</span>{' '}
-              <strong className="text-slate-800">{classInfo.roomName || 'Phòng 302 - Dãy A'}</strong>
+              <strong className="text-slate-800">{classInfo?.roomName || 'Phòng 302 - Dãy A'}</strong>
             </div>
             <div>
               <span className="text-slate-500 font-medium">Chuyên ban:</span>{' '}
-              <strong className="text-slate-800">{classInfo.streamBadge || 'Khối Tự Nhiên (KHTN)'}</strong>
+              <strong className="text-slate-800">{classInfo?.streamBadge || 'Khối Tự Nhiên (KHTN)'}</strong>
             </div>
             <div className="sm:col-span-2">
               <span className="text-slate-500 font-medium">Khẩu hiệu lớp:</span>{' '}
-              <em className="text-blue-800 font-semibold">"{classInfo.slogan || 'Kỷ luật - Trí tuệ - Bứt phá kỳ thi Tốt nghiệp THPT'}"</em>
+              <em className="text-blue-800 font-semibold">"{classInfo?.slogan || 'Kỷ luật - Trí tuệ - Bứt phá kỳ thi Tốt nghiệp THPT'}"</em>
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div>
-              <span className="text-slate-500 font-medium">Giáo viên chủ nhiệm:</span>
-              <p className="font-black text-slate-900 text-base mt-0.5">{teacherInfo.name}</p>
-              <p className="text-xs text-slate-600">{teacherInfo.title}</p>
-              <p className="text-xs text-blue-700 font-semibold">{teacherInfo.phone} • {teacherInfo.email}</p>
+              <span className="text-slate-500 font-medium">Giáo viên chủ nhiệm:</span>{' '}
+              <strong className="text-slate-900 font-black">{teacherInfo?.name || 'Nguyễn Văn A'}</strong>
             </div>
             <div>
-              <span className="text-slate-500 font-medium">Phê duyệt Ban Giám Hiệu:</span>
-              <p className="font-black text-slate-900 text-base mt-0.5">{bghInfo?.name || 'TS. Lê Thị Mai'}</p>
-              <p className="text-xs text-slate-600">{bghInfo?.dutyRole || 'Phó Hiệu Trưởng - Phụ trách Khối 12'}</p>
-              <p className="text-xs text-emerald-700 font-semibold flex items-center gap-1 mt-0.5">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Đã kiểm tra & ký duyệt điện tử
-              </p>
+              <span className="text-slate-500 font-medium">SĐT GVCN:</span>{' '}
+              <strong className="text-slate-800 font-mono">{teacherInfo?.phone || '0912 345 678'}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500 font-medium">Email liên hệ:</span>{' '}
+              <strong className="text-slate-800 font-mono">{teacherInfo?.email || 'gvcn@thpttrannguyenhan.edu.vn'}</strong>
+            </div>
+            <div>
+              <span className="text-slate-500 font-medium">BGH phụ trách:</span>{' '}
+              <strong className="text-slate-800">{bghInfo?.name || 'TS. Lê Thị Mai'}</strong>
             </div>
           </div>
         </div>
@@ -223,7 +225,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
               <QrCode className="w-12 h-12 text-[#003366]" />
             </div>
             <span className="font-bold text-[#003366]">Mã Số Hóa Hồ Sơ</span>
-            <span className="text-[10px] text-slate-500 font-mono">TNH-{classInfo.className.replace(/\s+/g, '')}-{(classInfo.academicYear || bookData.academicYear).replace(/[^a-zA-Z0-9]/g, '')}</span>
+            <span className="text-[10px] text-slate-500 font-mono">TNH-{(classInfo?.className || '12A1').replace(/\s+/g, '')}-{(classInfo?.academicYear || bookData?.academicYear || '2025-2026').replace(/[^a-zA-Z0-9]/g, '')}</span>
           </div>
 
           {/* Teacher Signature */}
@@ -231,9 +233,9 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
             <span className="font-bold text-slate-500 block uppercase">Giáo Viên Chủ Nhiệm</span>
             <span className="text-[10px] text-slate-400 italic block">Ký và ghi rõ họ tên</span>
             <div className="h-10 flex items-center justify-center font-serif italic text-blue-900 font-bold text-sm">
-              {teacherInfo.name}
+              {teacherInfo?.name || 'Nguyễn Văn A'}
             </div>
-            <strong className="text-slate-800 text-xs block">{teacherInfo.name}</strong>
+            <strong className="text-slate-800 text-xs block">{teacherInfo?.name || 'Nguyễn Văn A'}</strong>
           </div>
 
           {/* BGH Seal & Signature */}
