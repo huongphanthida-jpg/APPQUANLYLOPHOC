@@ -20,6 +20,7 @@ import { EditStudentRecordModal } from './EditStudentRecordModal';
 
 interface HomeroomBookStudentRegistryProps {
   students: Student[];
+  className?: string;
   role: UserRole;
   onSelectStudent?: (student: Student) => void;
   onUpdateStudents?: (students: Student[]) => void;
@@ -27,6 +28,7 @@ interface HomeroomBookStudentRegistryProps {
 
 export const HomeroomBookStudentRegistry: React.FC<HomeroomBookStudentRegistryProps> = ({
   students,
+  className,
   role,
   onSelectStudent,
   onUpdateStudents,
@@ -69,7 +71,7 @@ export const HomeroomBookStudentRegistry: React.FC<HomeroomBookStudentRegistryPr
 
   const handleDeleteStudent = (studentId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!window.confirm('Bạn có chắc chắn muốn xóa học sinh này khỏi danh sách lớp 12A1?')) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn xóa học sinh này khỏi danh sách lớp ${className || 'hiện tại'}?`)) return;
     const updated = (students || []).filter((s) => s.id !== studentId);
     if (onUpdateStudents) onUpdateStudents(updated);
   };
