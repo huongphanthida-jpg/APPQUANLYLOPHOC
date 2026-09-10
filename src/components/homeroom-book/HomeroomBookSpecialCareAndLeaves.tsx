@@ -40,7 +40,7 @@ export const HomeroomBookSpecialCareAndLeaves: React.FC<HomeroomBookSpecialCareA
   const [selectedLeaveRequest, setSelectedLeaveRequest] = useState<LeaveRequest | null>(null);
 
   const approvedLeaves = (leaveRequests || []).filter((l) => l.status === 'approved').length;
-  const pendingLeaves更为 = (leaveRequests || []).filter((l) => l.status === 'pending').length;
+  const pendingLeaves = (leaveRequests || []).filter((l) => l.status === 'pending').length;
 
   const canEdit = role === 'gvcn';
 
@@ -229,7 +229,7 @@ export const HomeroomBookSpecialCareAndLeaves: React.FC<HomeroomBookSpecialCareA
           </h4>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-500">
-              {approvedLeaves} Đã duyệt • {pendingLeaves更为} Đang chờ
+              {approvedLeaves} Đã duyệt • {pendingLeaves} Đang chờ
             </span>
             {canEdit && (
               <button
