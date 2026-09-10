@@ -34,8 +34,8 @@ export const EditStudyPairModal: React.FC<EditStudyPairModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const st1 = students.find((s) => s.id === student1Id);
-    const st2 = students.find((s) => s.id === student2Id);
+    const st1 = (students || []).find((s) => s && s.id === student1Id);
+    const st2 = (students || []).find((s) => s && s.id === student2Id);
 
     const saved: StudyPair = {
       id: pair?.id || `pair-${Date.now()}`,
@@ -99,7 +99,7 @@ export const EditStudyPairModal: React.FC<EditStudyPairModalProps> = ({
                 onChange={(e) => setStudent1Id(e.target.value)}
                 className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {students.map((s) => (
+                {(students || []).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} (Tổ {s.group})
                   </option>
@@ -114,7 +114,7 @@ export const EditStudyPairModal: React.FC<EditStudyPairModalProps> = ({
                 onChange={(e) => setStudent2Id(e.target.value)}
                 className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {students.map((s) => (
+                {(students || []).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} (Tổ {s.group})
                   </option>
