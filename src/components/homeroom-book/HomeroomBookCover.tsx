@@ -27,6 +27,7 @@ interface HomeroomBookCoverProps {
   onPrintBook?: () => void;
   onExportExcel?: () => void;
   onExportWord?: () => void;
+  onOpenFullReader?: () => void;
   onUpdateAdministrative?: (data: {
     classInfo: ClassInfo;
     teacherInfo: TeacherInfo;
@@ -46,6 +47,7 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
   onPrintBook,
   onExportExcel,
   onExportWord,
+  onOpenFullReader,
   onUpdateAdministrative,
 }) => {
   const maleCount = students ? students.filter((s) => s.gender === 'Nam').length : Math.round(totalStudents / 2);
@@ -73,6 +75,18 @@ export const HomeroomBookCover: React.FC<HomeroomBookCoverProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 self-start md:self-auto">
+          {onOpenFullReader && (
+            <button
+              type="button"
+              onClick={onOpenFullReader}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer active:scale-95 border border-indigo-400/30"
+              title="Mở giao diện xem & chỉnh sửa toàn bộ 10 trang sổ trước khi tải về"
+            >
+              <Layers className="w-4 h-4 text-amber-300" />
+              <span>📖 Xem & Sửa Tất Cả Các Trang</span>
+            </button>
+          )}
+
           {canEdit && (
             <button
               type="button"
