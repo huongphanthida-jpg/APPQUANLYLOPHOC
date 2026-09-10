@@ -53,6 +53,31 @@ export function exportHomeroomMasterWord(params: HomeroomBookWordExportParams) {
   const bghName = bghInfo?.name || 'TS. Lê Thị Mai';
   const bghRole = bghInfo?.dutyRole || bghInfo?.title || 'Phó Hiệu Trưởng';
 
+  const activeSubjectKeysWord: string[] = (() => {
+    try {
+      const saved = localStorage.getItem('tbm_active_subject_columns');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return ['math', 'physics', 'chemistry', 'biology', 'literature', 'english'];
+  })();
+
+  const WORD_SUBJ_MAP: Record<string, string> = {
+    math: 'Toán',
+    physics: 'Lý',
+    chemistry: 'Hóa',
+    biology: 'Sinh',
+    literature: 'Văn',
+    history: 'Sử',
+    geography: 'Địa',
+    gdcd: 'GDCD',
+    english: 'Anh',
+    informatics: 'Tin',
+  };
+
+  const wordSubjects = activeSubjectKeysWord
+    .filter((k) => WORD_SUBJ_MAP[k])
+    .map((k) => ({ key: k, short: WORD_SUBJ_MAP[k] }));
+
   const wordHtml = `
 <html xmlns:o='urn:schemas-microsoft-com:office:office'
       xmlns:w='urn:schemas-microsoft-com:office:word'
@@ -580,8 +605,6 @@ export function exportHomeroomMasterWord(params: HomeroomBookWordExportParams) {
     </tbody>
   </table>
 
-  <div class="page-break"></div>
-
   <!-- ==================== PHẦN 6: BẢNG ĐIỂM & ĐÁNH GIÁ ==================== -->
   <h2>PHẦN 6: BẢNG TỔNG HỢP ĐIỂM SỐ & KẾT QUẢ 2 MẶT GIÁO DỤC</h2>
   <table>
@@ -589,12 +612,7 @@ export function exportHomeroomMasterWord(params: HomeroomBookWordExportParams) {
       <tr>
         <th style="width: 5%;">STT</th>
         <th style="width: 20%;">Họ và Tên</th>
-        <th style="width: 7%;">Toán</th>
-        <th style="width: 7%;">Vật Lý</th>
-        <th style="width: 7%;">Hóa</th>
-        <th style="width: 7%;">Sinh</th>
-        <th style="width: 7%;">Văn</th>
-        <th style="width: 7%;">Anh</th>
+        ${wordSubjects.map((s) => `<th>${s.short}</th>`).join('')}
         <th style="width: 8%;">ĐTB</th>
         <th style="width: 11%;">Học Lực</th>
         <th style="width: 14%;">Hạnh Kiểm</th>
@@ -609,12 +627,11 @@ export function exportHomeroomMasterWord(params: HomeroomBookWordExportParams) {
         <tr>
           <td class="text-center">${idx + 1}</td>
           <td class="text-bold">${s.name}</td>
-          <td class="text-center">${s.grades?.math?.avg?.toFixed(1) ?? '-'}</td>
-          <td class="text-center">${s.grades?.physics?.avg?.toFixed(1) ?? '-'}</td>
-          <td class="text-center">${s.grades?.chemistry?.avg?.toFixed(1) ?? '-'}</td>
-          <td class="text-center">${s.grades?.biology?.avg?.toFixed(1) ?? '-'}</td>
-          <td class="text-center">${s.grades?.literature?.avg?.toFixed(1) ?? '-'}</td>
-          <td class="text-center">${s.grades?.english?.avg?.toFixed(1) ?? '-'}</td>
+          ${wordSubjects.map((subj) => {
+            const g = (s.grades as any)?.[subj.key];
+            const val = typeof g === 'number' ? g : (g?.avg ?? '-');
+            return `<td class="text-center">${val}</td>`;
+          }).join('')}
           <td class="text-center text-bold" style="color: #003366;">${gpa.toFixed(1)}</td>
           <td class="text-center text-bold">${hlk}</td>
           <td class="text-center text-bold" style="color: #16a34a;">${hk}</td>
