@@ -437,3 +437,5 @@ export const EditHomeroomPlanModal: React.FC<EditHomeroomPlanModalProps> = ({
     </div>
   );
 };
+
+export default EditHomeroomPlanModal;
