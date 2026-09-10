@@ -226,3 +226,5 @@ export const EditLeaveRequestModal: React.FC<EditLeaveRequestModalProps> = ({
     </div>
   );
 };
+
+export default EditLeaveRequestModal;
