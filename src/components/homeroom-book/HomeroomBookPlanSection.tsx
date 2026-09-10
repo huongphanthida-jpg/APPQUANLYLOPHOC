@@ -38,9 +38,10 @@ export const HomeroomBookPlanSection: React.FC<HomeroomBookPlanSectionProps> = (
 
   const canEdit = role === 'gvcn';
 
-  const totalCount = students && students.length > 0 ? students.length : (plan?.totalStudentsStart || 36);
-  const maleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nam').length : (plan?.maleCount || 18);
-  const femaleCount = students && students.length > 0 ? students.filter((s) => s.gender === 'Nữ').length : (plan?.femaleCount || 18);
+  const safeStudents = Array.isArray(students) ? students : [];
+  const totalCount = safeStudents.length > 0 ? safeStudents.length : (plan?.totalStudentsStart || 36);
+  const maleCount = safeStudents.length > 0 ? safeStudents.filter((s) => s && s.gender === 'Nam').length : (plan?.maleCount || 18);
+  const femaleCount = safeStudents.length > 0 ? safeStudents.filter((s) => s && s.gender === 'Nữ').length : (plan?.femaleCount || 18);
   const malePct = totalCount > 0 ? ((maleCount / totalCount) * 100).toFixed(1) : '0';
   const femalePct = totalCount > 0 ? ((femaleCount / totalCount) * 100).toFixed(1) : '0';
 
