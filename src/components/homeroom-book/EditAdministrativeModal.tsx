@@ -26,18 +26,18 @@ export const EditAdministrativeModal: React.FC<EditAdministrativeModalProps> = (
   bookData,
   onSave,
 }) => {
-  const [schoolName, setSchoolName] = useState(classInfo.schoolName || 'THPT TRẦN NGUYÊN HÃN');
+  const [schoolName, setSchoolName] = useState(classInfo?.schoolName || 'THPT TRẦN NGUYÊN HÃN');
   const [department, setDepartment] = useState('Sở Giáo Dục & Đào Tạo');
-  const [className, setClassName] = useState(classInfo.className || '12A1');
-  const [academicYear, setAcademicYear] = useState(classInfo.academicYear || bookData.academicYear || '2025 - 2026');
-  const [room, setRoom] = useState(classInfo.room || 'Phòng 302 (Khu B)');
+  const [className, setClassName] = useState(classInfo?.className || '12A1');
+  const [academicYear, setAcademicYear] = useState(classInfo?.academicYear || bookData?.academicYear || '2025 - 2026');
+  const [room, setRoom] = useState(classInfo?.room || 'Phòng 302 (Khu B)');
 
   // Teacher Info
-  const [teacherName, setTeacherName] = useState(teacherInfo.name || 'Thầy Nguyễn Văn An');
-  const [teacherPhone, setTeacherPhone] = useState(teacherInfo.phone || '0912.345.678');
-  const [teacherEmail, setTeacherEmail] = useState(teacherInfo.email || 'nguyenvanan.gv@tnh.edu.vn');
-  const [teacherSubject, setTeacherSubject] = useState(teacherInfo.subject || 'Toán học');
-  const [teacherDegree, setTeacherDegree] = useState(teacherInfo.title || teacherInfo.degree || 'Thạc sĩ Toán giải tích - ĐH Sư phạm');
+  const [teacherName, setTeacherName] = useState(teacherInfo?.name || 'Thầy Nguyễn Văn An');
+  const [teacherPhone, setTeacherPhone] = useState(teacherInfo?.phone || '0912.345.678');
+  const [teacherEmail, setTeacherEmail] = useState(teacherInfo?.email || 'nguyenvanan.gv@tnh.edu.vn');
+  const [teacherSubject, setTeacherSubject] = useState(teacherInfo?.subject || 'Toán học');
+  const [teacherDegree, setTeacherDegree] = useState(teacherInfo?.title || teacherInfo?.degree || 'Thạc sĩ Toán giải tích - ĐH Sư phạm');
 
   // BGH Info
   const [bghName, setBghName] = useState(bghInfo?.name || 'TS. Lê Thị Mai');
