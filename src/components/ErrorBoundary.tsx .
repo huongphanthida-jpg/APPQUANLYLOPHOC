@@ -1,0 +1,98 @@
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { AlertTriangle, RotateCcw } from 'lucide-react';
+
+interface Props {
+  children: ReactNode;
+  fallbackTitle?: string;
+}
+
+interface State {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+}
+
+export class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
+    error: null,
+    errorInfo: null,
+  };
+
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error, errorInfo: null };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('Uncaught Error in ErrorBoundary:', error, errorInfo);
+    this.setState({ errorInfo });
+  }
+
+  private handleReset = () => {
+    this.setState({ hasError: false, error: null, errorInfo: null });
+  };
+
+  private handleClearStorageAndReload = () => {
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch {
+      // ignore
+    }
+    window.location.reload();
+  };
+
+  public render() {
+    if (this.state.hasError) {
+      return (
+        <div className="bg-white rounded-3xl p-8 border-2 border-rose-200 shadow-xl max-w-3xl mx-auto my-8 text-center space-y-6">
+          <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto shadow-sm">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+              {this.props.fallbackTitle || 'Đã Xảy Ra Lỗi Khi Tải Phân Hệ Sổ Chủ Nhiệm'}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 mt-2">
+              Hệ thống ghi nhận sự cố dữ liệu chưa tương thích hoặc lỗi cấu trúc bộ nhớ tạm trên trình duyệt.
+            </p>
+          </div>
+
+          {this.state.error && (
+            <div className="p-4 rounded-xl bg-slate-900 text-rose-300 text-xs font-mono text-left overflow-x-auto max-h-40 border border-slate-800">
+              <p className="font-bold text-rose-400 mb-1">Chi tiết lỗi system:</p>
+              <p>{this.state.error.toString()}</p>
+              {this.state.errorInfo?.componentStack && (
+                <p className="text-slate-500 mt-2 text-[10px] whitespace-pre-wrap">
+                  {this.state.errorInfo.componentStack}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              onClick={this.handleReset}
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Thử Tải Lại Phân Hệ
+            </button>
+            <button
+              type="button"
+              onClick={this.handleClearStorageAndReload}
+              className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md transition-all flex items-center gap-2 cursor-pointer"
+            >
+              Đặt Lại Dữ Liệu Bộ Nhớ Tạm & Làm Mới
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+export default ErrorBoundary;
