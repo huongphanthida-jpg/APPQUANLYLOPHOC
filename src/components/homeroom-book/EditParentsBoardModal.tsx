@@ -30,7 +30,7 @@ export const EditParentsBoardModal: React.FC<EditParentsBoardModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const selectedStudent = students.find((s) => s.id === studentId);
+    const selectedStudent = (students || []).find((s) => s && s.id === studentId);
     onSave({
       id: memberItem?.id || `pb-${Date.now()}`,
       role,
@@ -95,7 +95,7 @@ export const EditParentsBoardModal: React.FC<EditParentsBoardModalProps> = ({
                 onChange={(e) => setStudentId(e.target.value)}
                 className="w-full py-2 px-3 rounded-xl bg-slate-50 border border-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500"
               >
-                {students.map((s) => (
+                {(students || []).map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} (Tổ {s.group})
                   </option>
