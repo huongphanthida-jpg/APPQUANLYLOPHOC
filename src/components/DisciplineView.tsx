@@ -65,16 +65,37 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
     return log.type === selectedFilter;
   });
 
-  // Calculate Group statistics
+  // Read synced base score from localStorage (defaults to 0đ if base score is set to 0)
+  const attBase = localStorage.getItem('emulation_attendance_base_score') !== null
+    ? Math.max(0, Number(localStorage.getItem('emulation_attendance_base_score')))
+    : 0;
+  const condBase = localStorage.getItem('emulation_conduct_base_score') !== null
+    ? Math.max(0, Number(localStorage.getItem('emulation_conduct_base_score')))
+    : 0;
+  const baseScore = Math.round(attBase * 0.4 + condBase * 0.6);
+
+  // Calculate Group statistics (Synchronized with Base Score configuration)
   const groupStats = [1, 2, 3, 4].map((g) => {
     const groupStudents = students.filter((s) => s.group === g);
-    const avgConduct = groupStudents.length
-      ? Math.round(groupStudents.reduce((acc, s) => acc + s.conductScore, 0) / groupStudents.length)
-      : 0;
-    const bonus = disciplineLogs.filter((l) => l.group === g && l.type === 'bonus').length;
-    const penalty = disciplineLogs.filter((l) => l.group === g && l.type === 'penalty').length;
-    return { group: g, avgConduct, bonus, penalty, count: groupStudents.length };
-  }).sort((a, b) => b.avgConduct - a.avgConduct);
+    const studentIds = new Set(groupStudents.map((s) => s.id));
+
+    const groupLogs = disciplineLogs.filter(
+      (l) => l.group === g || (l.studentId && studentIds.has(l.studentId))
+    );
+
+    const bonusLogs = groupLogs.filter((l) => l.type === 'bonus' || l.type === 'commendation');
+    const penaltyLogs = groupLogs.filter((l) => l.type === 'penalty' || l.type === 'violation');
+
+    const bonusCount = bonusLogs.length;
+    const penaltyCount = penaltyLogs.length;
+
+    const bonusPoints = bonusLogs.reduce((sum, l) => sum + Math.abs(l.points || 0), 0);
+    const penaltyPoints = penaltyLogs.reduce((sum, l) => sum + Math.abs(l.points || 0), 0);
+
+    const score = baseScore + bonusPoints - penaltyPoints;
+
+    return { group: g, score, bonus: bonusCount, penalty: penaltyCount, count: groupStudents.length };
+  }).sort((a, b) => b.score - a.score);
 
   return (
     <div id="discipline-view" className="space-y-6 pb-12">
@@ -216,7 +237,7 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
               </span>
             </div>
             <h4 className="text-2xl font-black text-[#003366] mt-1">
-              {item.avgConduct} <span className="text-xs font-normal text-slate-400">điểm TB</span>
+              {item.score} <span className="text-xs font-normal text-slate-400">điểm TB</span>
             </h4>
             <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-slate-100">
               <span className="text-emerald-700 font-semibold">+{item.bonus} tuyên dương</span>
