@@ -15,6 +15,7 @@ import {
   AlertCircle,
   X,
   Save,
+  Check,
 } from 'lucide-react';
 import { ClassCommitteeRole, ParentsBoardMember, Student, UserRole, ClassInfo, TeacherInfo, BghInfo } from '../../types';
 import { EditCommitteeModal } from './EditCommitteeModal';
@@ -69,6 +70,9 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
 
   const displayAcademicYear = academicYear || classInfo?.academicYear || yearInput || '2025 - 2026';
 
+  const [isEditingYearInline, setIsEditingYearInline] = useState(false);
+  const [inlineYearValue, setInlineYearValue] = useState<string>(displayAcademicYear);
+
   const handleSaveAcademicYear = (e: React.FormEvent) => {
     e.preventDefault();
     if (!yearInput.trim()) return;
@@ -87,6 +91,26 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
       });
     }
     setIsEditYearModalOpen(false);
+  };
+
+  const handleSaveAcademicYearInline = (newValue: string) => {
+    if (!newValue.trim()) return;
+    setYearInput(newValue.trim());
+
+    if (onUpdateAdministrative) {
+      onUpdateAdministrative({
+        classInfo: {
+          ...classInfo,
+          className: className || classInfo?.className || '12A1',
+          academicYear: newValue.trim(),
+          schoolName: classInfo?.schoolName || 'THPT TRẦN NGUYÊN HÃN',
+        },
+        teacherInfo: teacherInfo || { name: 'Nguyễn Văn A' },
+        bghInfo: bghInfo || { name: 'TS. Lê Thị Mai' },
+        academicYear: newValue.trim(),
+      });
+    }
+    setIsEditingYearInline(false);
   };
 
   const [groupLeaders, setGroupLeaders] = useState<{ [key: number]: string }>(() => {
@@ -276,23 +300,62 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
       <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
-              <HeartHandshake className="w-4 h-4 text-purple-600" />
-              2. Ban Đại Diện Cha Mẹ Học Sinh Năm Học {displayAcademicYear}
-            </h4>
-            {canEdit && (
-              <button
-                type="button"
-                onClick={() => {
-                  setYearInput(displayAcademicYear);
-                  setIsEditYearModalOpen(true);
+            <HeartHandshake className="w-4 h-4 text-purple-600 shrink-0" />
+            {isEditingYearInline ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveAcademicYearInline(inlineYearValue);
                 }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-900 text-xs font-bold border border-purple-300 shadow-2xs transition-all cursor-pointer"
-                title="Chỉnh sửa năm học cho Ban Đại Diện CMHS"
+                className="flex items-center gap-2 flex-wrap"
               >
-                <Edit3 className="w-3.5 h-3.5 text-purple-700" />
-                <span>Sửa Năm Học</span>
-              </button>
+                <span className="text-sm font-black text-[#003366] uppercase tracking-wider">
+                  2. BAN ĐẠI DIỆN CHA MẸ HỌC SINH NĂM HỌC
+                </span>
+                <input
+                  type="text"
+                  value={inlineYearValue}
+                  onChange={(e) => setInlineYearValue(e.target.value)}
+                  autoFocus
+                  placeholder="2025 - 2026"
+                  className="py-1 px-2.5 rounded-lg bg-purple-50 border-2 border-purple-500 text-sm font-black text-purple-900 focus:outline-none w-36 shadow-inner"
+                />
+                <button
+                  type="submit"
+                  className="p-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs"
+                  title="Lưu năm học mới"
+                >
+                  <Check className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingYearInline(false)}
+                  className="p-1.5 rounded-lg bg-slate-200 text-slate-700 hover:bg-slate-300 cursor-pointer"
+                  title="Hủy bỏ"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm font-black text-[#003366] uppercase tracking-wider">
+                  2. Ban Đại Diện Cha Mẹ Học Sinh Năm Học {displayAcademicYear}
+                </h4>
+                {canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInlineYearValue(displayAcademicYear);
+                      setIsEditingYearInline(true);
+                    }}
+                    className="p-1.5 rounded-lg bg-purple-100 text-purple-800 hover:bg-purple-700 hover:text-white border border-purple-300 transition-all cursor-pointer shadow-2xs group flex items-center gap-1 text-xs font-bold"
+                    title="Tự điều chỉnh năm học Ban Đại Diện CMHS (Bấm để sửa trực tiếp)"
+                  >
+                    <Edit2 className="w-3.5 h-3.5 text-purple-700 group-hover:text-white" />
+                    <span className="text-[11px] font-bold">Sửa Năm Học</span>
+                  </button>
+                )}
+              </div>
             )}
           </div>
           
