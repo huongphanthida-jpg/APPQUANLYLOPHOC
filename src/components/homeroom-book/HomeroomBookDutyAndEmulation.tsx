@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Sparkles,
   Trophy,
@@ -11,6 +11,8 @@ import {
   Plus,
   Edit2,
   Trash2,
+  SlidersHorizontal,
+  X,
 } from 'lucide-react';
 import { DutySchedule, GroupEmulationLog, UserRole, Student, DisciplineEntry, LeaveRequest } from '../../types';
 import { EditDutyScheduleModal } from './EditDutyScheduleModal';
@@ -46,16 +48,48 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
   const [isEmulationModalOpen, setIsEmulationModalOpen] = useState(false);
   const [selectedEmulationLog, setSelectedEmulationLog] = useState<GroupEmulationLog | null>(null);
 
+  // Base score configuration state (Synced 100% with GroupEmulationView)
+  const [attBase, setAttBase] = useState<number>(() => {
+    const saved = localStorage.getItem('emulation_attendance_base_score');
+    return saved !== null ? Math.max(0, Number(saved)) : 0;
+  });
+  const [condBase, setCondBase] = useState<number>(() => {
+    const saved = localStorage.getItem('emulation_conduct_base_score');
+    return saved !== null ? Math.max(0, Number(saved)) : 0;
+  });
+  const [isBaseScoreModalOpen, setIsBaseScoreModalOpen] = useState<boolean>(false);
+  const [tempAttBase, setTempAttBase] = useState<number>(attBase);
+  const [tempCondBase, setTempCondBase] = useState<number>(condBase);
+
+  useEffect(() => {
+    const handleStorageOrCustomEvent = () => {
+      const savedAtt = localStorage.getItem('emulation_attendance_base_score');
+      const savedCond = localStorage.getItem('emulation_conduct_base_score');
+      setAttBase(savedAtt !== null ? Math.max(0, Number(savedAtt)) : 0);
+      setCondBase(savedCond !== null ? Math.max(0, Number(savedCond)) : 0);
+    };
+
+    window.addEventListener('storage', handleStorageOrCustomEvent);
+    window.addEventListener('emulation_base_score_updated', handleStorageOrCustomEvent);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageOrCustomEvent);
+      window.removeEventListener('emulation_base_score_updated', handleStorageOrCustomEvent);
+    };
+  }, []);
+
+  const baseScore = Math.round(attBase * 0.4 + condBase * 0.6);
+
   const canEdit = role === 'gvcn' || role === 'csl';
   const canDelete = role === 'gvcn';
 
   // Aggregate Emulation Points by group (Synchronized 100% with GroupEmulationView)
   const groupScores = useMemo(() => {
     const scores: Record<number, { total: number; bonus: number; penalty: number; logsCount: number }> = {
-      1: { total: 100, bonus: 0, penalty: 0, logsCount: 0 },
-      2: { total: 100, bonus: 0, penalty: 0, logsCount: 0 },
-      3: { total: 100, bonus: 0, penalty: 0, logsCount: 0 },
-      4: { total: 100, bonus: 0, penalty: 0, logsCount: 0 },
+      1: { total: baseScore, bonus: 0, penalty: 0, logsCount: 0 },
+      2: { total: baseScore, bonus: 0, penalty: 0, logsCount: 0 },
+      3: { total: baseScore, bonus: 0, penalty: 0, logsCount: 0 },
+      4: { total: baseScore, bonus: 0, penalty: 0, logsCount: 0 },
     };
 
     [1, 2, 3, 4].forEach((groupNum) => {
@@ -133,7 +167,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
       const totalBonus = (academicGpaBonus > 0 ? academicGpaBonus : 0) + bonusDisciplinePoints + attendanceBonuses + directBonus;
       const totalPenalty = (academicGpaBonus < 0 ? Math.abs(academicGpaBonus) : 0) + penaltyDisciplinePoints + attendanceDeductions + dutyDeductions + directPenalty;
 
-      const finalTotal = 100 + totalBonus - totalPenalty;
+      const finalTotal = baseScore + totalBonus - totalPenalty;
       const totalLogsCount = groupLogs.length + groupDiscipline.length + (incompleteStudentCount > 0 ? 1 : 0);
 
       scores[groupNum] = {
@@ -145,7 +179,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
     });
 
     return scores;
-  }, [students, disciplineLogs, leaveRequests, dutySchedule, emulationLogs]);
+  }, [students, disciplineLogs, leaveRequests, dutySchedule, emulationLogs, baseScore]);
 
   // Rank groups
   const rankedGroups = useMemo(() => {
@@ -236,16 +270,33 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
             <Trophy className="w-4 h-4 text-amber-500" />
             1. Bảng Xếp Hạng Thi Đua & Điểm Rèn Luyện 4 Tổ Lớp {className || '12A1'}
           </h4>
-          {canEdit && (
-            <button
-              type="button"
-              onClick={handleOpenAddEmulation}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#003366] hover:bg-blue-900 text-white text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all"
-            >
-              <Plus className="w-3.5 h-3.5 text-amber-300" />
-              <span>Chấm Điểm Thi Đua Tổ</span>
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {canEdit && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTempAttBase(attBase);
+                  setTempCondBase(condBase);
+                  setIsBaseScoreModalOpen(true);
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs font-bold border border-amber-300 shadow-2xs transition-all cursor-pointer"
+                title="Cấu hình điểm gốc xuất phát ban đầu cho 4 Tổ"
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5 text-amber-600" />
+                <span>Điểm Gốc: {baseScore}đ</span>
+              </button>
+            )}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={handleOpenAddEmulation}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#003366] hover:bg-blue-900 text-white text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all"
+              >
+                <Plus className="w-3.5 h-3.5 text-amber-300" />
+                <span>Chấm Điểm Thi Đua Tổ</span>
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -400,6 +451,112 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
           logItem={selectedEmulationLog}
           onSave={handleSaveEmulation}
         />
+      )}
+
+      {/* Modal Cài Đặt Điểm Gốc Ban Đầu 4 Tổ */}
+      {isBaseScoreModalOpen && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl border border-slate-200 max-w-md w-full space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <h3 className="text-base font-bold text-[#003366] flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-amber-500" />
+                Cấu Hình Điểm Gốc Ban Đầu 4 Tổ
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsBaseScoreModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Điểm Gốc Chuyên Cần Ban Đầu:
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={tempAttBase}
+                  onChange={(e) => setTempAttBase(Math.max(0, Number(e.target.value)))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">
+                  Điểm Gốc Nề Nếp / Kỷ Luật Ban Đầu:
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={tempCondBase}
+                  onChange={(e) => setTempCondBase(Math.max(0, Number(e.target.value)))}
+                  className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-[11px]">
+                <span>Công thức tính điểm gốc: </span>
+                <strong className="font-mono">Math.round(Chuyên cần * 0.4 + Nề nếp * 0.6) = {Math.round(tempAttBase * 0.4 + tempCondBase * 0.6)}đ</strong>
+              </div>
+
+              <div className="flex items-center justify-between pt-1">
+                <span className="text-slate-500">Mẫu cài sẵn:</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempAttBase(0);
+                      setTempCondBase(0);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer"
+                  >
+                    Mặc định 0đ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTempAttBase(100);
+                      setTempCondBase(100);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-xs cursor-pointer"
+                  >
+                    Mặc định 100đ
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsBaseScoreModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 font-bold text-xs cursor-pointer"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setAttBase(tempAttBase);
+                  setCondBase(tempCondBase);
+                  localStorage.setItem('emulation_attendance_base_score', String(tempAttBase));
+                  localStorage.setItem('emulation_conduct_base_score', String(tempCondBase));
+                  window.dispatchEvent(new Event('emulation_base_score_updated'));
+                  setIsBaseScoreModalOpen(false);
+                }}
+                className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold text-xs shadow-md cursor-pointer active:scale-95"
+              >
+                Lưu & Đồng Bộ Điểm Gốc
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
