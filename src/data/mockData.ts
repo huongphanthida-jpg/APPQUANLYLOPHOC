@@ -975,6 +975,84 @@ export const INITIAL_MATERIALS: StudyMaterial[] = [
     description: 'Tài liệu củng cố điểm liệt và bứt phá điểm 8+ môn Tiếng Anh cho học sinh chuyên ban KHTN.',
     downloadCount: 33,
     targetGroup: 'all'
+  },
+  {
+    id: 'mat-07',
+    title: 'Bộ Dàn Ý Phân Tích Các Tác Phẩm Ngữ Văn Trọng Tâm Ôn Thi THPT',
+    subject: 'Ngữ Văn',
+    fileType: 'word',
+    fileName: 'Dan_Y_Van_Hoc_Trong_Tam_12.docx',
+    fileSize: '2.4 MB',
+    uploadedBy: 'Cô Đỗ Thị Mai (GVBM Ngữ Văn)',
+    uploadedAt: '2026-08-22 10:15',
+    description: 'Hướng dẫn lập dàn ý Nghị luận văn học & Nghị luận xã hội 200 chữ đạt điểm tối đa.',
+    downloadCount: 45,
+    targetGroup: 'all'
+  },
+  {
+    id: 'mat-08',
+    title: 'Trắc Nghiệm Lịch Sử Việt Nam & Thế Giới Hiện Đại (1945 - 2000)',
+    subject: 'Lịch Sử',
+    fileType: 'pdf',
+    fileName: 'On_Tap_Lich_Su_12_Full.pdf',
+    fileSize: '3.1 MB',
+    uploadedBy: 'Thầy Phạm Văn Đức (GVBM Lịch Sử)',
+    uploadedAt: '2026-08-21 16:20',
+    description: 'Hệ thống hóa kiến thức Lịch Sử 12 theo mốc thời gian và dạng bài so sánh phân loại.',
+    downloadCount: 28,
+    targetGroup: 'all'
+  },
+  {
+    id: 'mat-09',
+    title: 'Atlat Địa Lý Việt Nam & Phương Pháp Khai Thác Đạt Điểm 9+',
+    subject: 'Địa Lý',
+    fileType: 'pdf',
+    fileName: 'Ky_Nang_Khai_Thac_Atlat_Dia_Ly.pdf',
+    fileSize: '4.2 MB',
+    uploadedBy: 'Cô Nguyễn Thị Hoa (GVBM Địa Lý)',
+    uploadedAt: '2026-08-20 11:30',
+    description: 'Bí quyết đọc nhanh trang trang Atlat Địa lý Việt Nam, nhận dạng biểu đồ và bảng số liệu.',
+    downloadCount: 36,
+    targetGroup: 'all'
+  },
+  {
+    id: 'mat-10',
+    title: 'Chuyên Đề Lập Trình Python & Cơ Sở Dữ Liệu SQL (Môn Tin Học 12)',
+    subject: 'Tin Học',
+    fileType: 'pdf',
+    fileName: 'Tin_Hoc_12_Python_Database.pdf',
+    fileSize: '2.7 MB',
+    uploadedBy: 'Thầy Hoàng Văn Hải (GVBM Tin Học)',
+    uploadedAt: '2026-08-19 09:45',
+    description: 'Tài liệu thực hành lập trình Python kết nối CSDL MySQL & HTML/CSS cơ bản.',
+    downloadCount: 30,
+    targetGroup: 'all'
+  },
+  {
+    id: 'mat-11',
+    title: 'Hệ Thống Kiến Thức Giáo Dục Kinh Tế & Pháp Luật (GDKT&PL 12)',
+    subject: 'GDKT&PL',
+    fileType: 'word',
+    fileName: 'GDKT_Phap_Luat_12_Trong_Tam.docx',
+    fileSize: '1.9 MB',
+    uploadedBy: 'Cô Lê Thị Loan (GVBM GDKT&PL)',
+    uploadedAt: '2026-08-18 15:00',
+    description: 'Tóm tắt luật lao động, luật doanh nghiệp và các tình huống pháp luật ứng dụng thực tế.',
+    downloadCount: 22,
+    targetGroup: 'all'
+  },
+  {
+    id: 'mat-12',
+    title: 'Chuyên Đề Di Truyền Học Phân Tử & Bồi Dưỡng Học Sinh Giỏi Sinh Học',
+    subject: 'Sinh Học',
+    fileType: 'pdf',
+    fileName: 'Sinh_Hoc_12_Di_Truyen_Phan_Tu.pdf',
+    fileSize: '3.5 MB',
+    uploadedBy: 'Cô Vũ Thị Thu (GVBM Sinh Học)',
+    uploadedAt: '2026-08-17 08:30',
+    description: 'Bài tập quy luật di truyền ADN/ARN, đột biến gen và quần thể Sinh học 12.',
+    downloadCount: 27,
+    targetGroup: 'all'
   }
 ];
 
