@@ -543,17 +543,17 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
                 <Filter className="w-3.5 h-3.5" /> Môn học:
               </span>
-              {['all', 'Toán', 'Vật Lý', 'Hóa Học', 'Sinh Học', 'Ngữ Văn', 'Tiếng Anh', 'Chung'].map((sub) => (
+              {['all', 'Toán', 'Vật Lý', 'Hóa Học', 'Sinh Học', 'Tin Học', 'Công Nghệ', 'Ngữ Văn', 'Lịch Sử', 'Địa Lý', 'GDKT&PL', 'Tiếng Anh', 'Nghệ Thuật', 'GDQP-AN', 'Thể Chất', 'HĐTN', 'Chung'].map((sub) => (
                 <button
                   key={sub}
                   onClick={() => setSelectedSubject(sub)}
                   className={`px-3 py-1 rounded-xl text-xs font-semibold transition-colors ${
                     selectedSubject === sub
-                      ? 'bg-[#003366] text-white'
+                      ? 'bg-[#003366] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {sub === 'all' ? 'Tất cả' : sub}
+                  {sub === 'all' ? 'Tất cả môn' : sub}
                 </button>
               ))}
             </div>
@@ -764,13 +764,13 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <span className="text-xs font-bold text-slate-500 mr-1 flex items-center gap-1">
                 <Filter className="w-3.5 h-3.5" /> Môn thi:
               </span>
-              {['all', 'Toán', 'Vật Lý', 'Hóa Học', 'Sinh Học', 'Ngữ Văn', 'Tiếng Anh'].map((sub) => (
+              {['all', 'Toán', 'Vật Lý', 'Hóa Học', 'Sinh Học', 'Tin Học', 'Công Nghệ', 'Ngữ Văn', 'Lịch Sử', 'Địa Lý', 'GDKT&PL', 'Tiếng Anh', 'Nghệ Thuật', 'GDQP-AN', 'HĐTN'].map((sub) => (
                 <button
                   key={sub}
                   onClick={() => setSelectedExamSubject(sub)}
                   className={`px-3 py-1 rounded-xl text-xs font-semibold transition-colors ${
                     selectedExamSubject === sub
-                      ? 'bg-[#003366] text-white'
+                      ? 'bg-[#003366] text-white shadow-xs'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
@@ -1094,12 +1094,28 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                       onChange={(e) => setSubmitSubject(e.target.value as any)}
                       className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003366]"
                     >
-                      <option value="Toán">Toán Học</option>
-                      <option value="Vật Lý">Vật Lý</option>
-                      <option value="Hóa Học">Hóa Học</option>
-                      <option value="Sinh Học">Sinh Học</option>
-                      <option value="Ngữ Văn">Ngữ Văn</option>
-                      <option value="Tiếng Anh">Tiếng Anh</option>
+                      <optgroup label="--- Khối Tự Nhiên & Công Nghệ ---">
+                        <option value="Toán">Toán Học</option>
+                        <option value="Vật Lý">Vật Lý</option>
+                        <option value="Hóa Học">Hóa Học</option>
+                        <option value="Sinh Học">Sinh Học</option>
+                        <option value="Tin Học">Tin Học</option>
+                        <option value="Công Nghệ">Công Nghệ</option>
+                      </optgroup>
+                      <optgroup label="--- Khối Xã Hội & Ngoại Ngữ ---">
+                        <option value="Ngữ Văn">Ngữ Văn</option>
+                        <option value="Lịch Sử">Lịch Sử</option>
+                        <option value="Địa Lý">Địa Lý</option>
+                        <option value="GDKT&PL">Giáo Dục Kinh Tế & Pháp Luật (GDKT&PL)</option>
+                        <option value="Tiếng Anh">Tiếng Anh (Ngoại Ngữ)</option>
+                      </optgroup>
+                      <optgroup label="--- Năng Khiếu, Thể Chất & Khác ---">
+                        <option value="Nghệ Thuật">Âm Nhạc / Mỹ Thuật</option>
+                        <option value="GDQP-AN">Giáo Dục Quốc Phòng & An Ninh</option>
+                        <option value="Thể Chất">Giáo Dục Thể Chất</option>
+                        <option value="HĐTN">Hoạt Động Trải Nghiệm - Hướng Nghiệp</option>
+                        <option value="Chung">Thông Báo / Chung</option>
+                      </optgroup>
                     </select>
                   </div>
 
@@ -1367,13 +1383,28 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                     onChange={(e) => setNewMatSubject(e.target.value as any)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#003366]"
                   >
-                    <option value="Toán">Toán Học</option>
-                    <option value="Vật Lý">Vật Lý</option>
-                    <option value="Hóa Học">Hóa Học</option>
-                    <option value="Sinh Học">Sinh Học</option>
-                    <option value="Ngữ Văn">Ngữ Văn</option>
-                    <option value="Tiếng Anh">Tiếng Anh</option>
-                    <option value="Chung">Thông Báo / Chung</option>
+                    <optgroup label="--- Khối Tự Nhiên & Công Nghệ ---">
+                      <option value="Toán">Toán Học</option>
+                      <option value="Vật Lý">Vật Lý</option>
+                      <option value="Hóa Học">Hóa Học</option>
+                      <option value="Sinh Học">Sinh Học</option>
+                      <option value="Tin Học">Tin Học</option>
+                      <option value="Công Nghệ">Công Nghệ</option>
+                    </optgroup>
+                    <optgroup label="--- Khối Xã Hội & Ngoại Ngữ ---">
+                      <option value="Ngữ Văn">Ngữ Văn</option>
+                      <option value="Lịch Sử">Lịch Sử</option>
+                      <option value="Địa Lý">Địa Lý</option>
+                      <option value="GDKT&PL">Giáo Dục Kinh Tế & Pháp Luật (GDKT&PL)</option>
+                      <option value="Tiếng Anh">Tiếng Anh (Ngoại Ngữ)</option>
+                    </optgroup>
+                    <optgroup label="--- Năng Khiếu, Thể Chất & Khác ---">
+                      <option value="Nghệ Thuật">Âm Nhạc / Mỹ Thuật</option>
+                      <option value="GDQP-AN">Giáo Dục Quốc Phòng & An Ninh</option>
+                      <option value="Thể Chất">Giáo Dục Thể Chất</option>
+                      <option value="HĐTN">Hoạt Động Trải Nghiệm - Hướng Nghiệp</option>
+                      <option value="Chung">Thông Báo / Chung</option>
+                    </optgroup>
                   </select>
                 </div>
 
