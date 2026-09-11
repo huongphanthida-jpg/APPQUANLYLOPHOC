@@ -190,7 +190,12 @@ export const saveDutySchedule = (duty: DutySchedule[]) => {
 export const getStoredMaterials = (): StudyMaterial[] => {
   try {
     const data = localStorage.getItem(KEYS.MATERIALS);
-    return data ? JSON.parse(data) : INITIAL_MATERIALS;
+    if (!data) return INITIAL_MATERIALS;
+    const parsed: StudyMaterial[] = JSON.parse(data);
+    if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_MATERIALS;
+    const existingIds = new Set(parsed.map((item) => item.id));
+    const missingInitials = INITIAL_MATERIALS.filter((item) => !existingIds.has(item.id));
+    return missingInitials.length > 0 ? [...parsed, ...missingInitials] : parsed;
   } catch {
     return INITIAL_MATERIALS;
   }
