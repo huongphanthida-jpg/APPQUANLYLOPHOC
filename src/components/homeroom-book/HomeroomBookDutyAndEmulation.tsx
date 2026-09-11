@@ -12,7 +12,7 @@ import {
   Edit2,
   Trash2,
 } from 'lucide-react';
-import { DutySchedule, GroupEmulationLog, UserRole, Student } from '../../types';
+import { DutySchedule, GroupEmulationLog, UserRole, Student, DisciplineEntry, LeaveRequest } from '../../types';
 import { EditDutyScheduleModal } from './EditDutyScheduleModal';
 import { EditGroupEmulationModal } from './EditGroupEmulationModal';
 
@@ -20,6 +20,8 @@ interface HomeroomBookDutyAndEmulationProps {
   dutySchedule: DutySchedule[];
   emulationLogs: GroupEmulationLog[];
   students?: Student[];
+  disciplineLogs?: DisciplineEntry[];
+  leaveRequests?: LeaveRequest[];
   className?: string;
   role: UserRole;
   onUpdateDutySchedule?: (duty: DutySchedule[]) => void;
@@ -30,6 +32,8 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
   dutySchedule,
   emulationLogs,
   students = [],
+  disciplineLogs = [],
+  leaveRequests = [],
   className,
   role,
   onUpdateDutySchedule,
@@ -45,7 +49,7 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
   const canEdit = role === 'gvcn' || role === 'csl';
   const canDelete = role === 'gvcn';
 
-  // Aggregate Emulation Points by group
+  // Aggregate Emulation Points by group (Synchronized 100% with GroupEmulationView)
   const groupScores = useMemo(() => {
     const scores: Record<number, { total: number; bonus: number; penalty: number; logsCount: number }> = {
       1: { total: 100, bonus: 0, penalty: 0, logsCount: 0 },
@@ -54,18 +58,94 @@ export const HomeroomBookDutyAndEmulation: React.FC<HomeroomBookDutyAndEmulation
       4: { total: 100, bonus: 0, penalty: 0, logsCount: 0 },
     };
 
-    (emulationLogs || []).forEach((log) => {
-      const g = log.group;
-      if (scores[g]) {
-        scores[g].total += log.points;
-        if (log.points > 0) scores[g].bonus += log.points;
-        else scores[g].penalty += Math.abs(log.points);
-        scores[g].logsCount++;
+    [1, 2, 3, 4].forEach((groupNum) => {
+      const groupStudents = (students || []).filter((s) => s.group === groupNum);
+      const studentIds = new Set(groupStudents.map((s) => s.id));
+
+      // 1. Academic GPA Bonus
+      const countGpa9to10 = groupStudents.filter((s) => (s.grades?.gpa !== undefined ? s.grades.gpa : 8.0) >= 9.0).length;
+      const countGpa8to89 = groupStudents.filter((s) => {
+        const g = s.grades?.gpa !== undefined ? s.grades.gpa : 8.0;
+        return g >= 8.0 && g < 9.0;
+      }).length;
+      const countGpaBelow5 = groupStudents.filter((s) => {
+        const g = s.grades?.gpa !== undefined ? s.grades.gpa : 8.0;
+        return g < 5.0;
+      }).length;
+      const academicGpaBonus = countGpa9to10 * 10 + countGpa8to89 * 5 - countGpaBelow5 * 2;
+
+      // 2. Discipline Logs
+      const groupDiscipline = (disciplineLogs || []).filter(
+        (d) => studentIds.has(d.studentId) || Number(d.group) === groupNum
+      );
+      const bonusDisciplinePoints = groupDiscipline
+        .filter((d) => (d.type === 'bonus' || d.type === 'commendation') && d.category !== 'Chuyên cần')
+        .reduce((sum, d) => sum + Math.abs(d.points), 0);
+      const penaltyDisciplinePoints = groupDiscipline
+        .filter((d) => (d.type === 'penalty' || d.type === 'violation') && d.category !== 'Chuyên cần')
+        .reduce((sum, d) => sum + Math.abs(d.points), 0);
+
+      // 3. Attendance
+      const groupAttendanceDisc = groupDiscipline.filter((d) => d.category === 'Chuyên cần');
+      const unexcusedAbsences = groupAttendanceDisc.filter((v) =>
+        (v.type === 'penalty' || v.type === 'violation') &&
+        (v.reason.toLowerCase().includes('không phép') || v.reason.toLowerCase().includes('trốn'))
+      ).length;
+      const lateArrivals = groupAttendanceDisc.filter((v) =>
+        (v.type === 'penalty' || v.type === 'violation') &&
+        (v.reason.toLowerCase().includes('muộn') || v.reason.toLowerCase().includes('trễ'))
+      ).length;
+
+      const groupApprovedLeaves = (leaveRequests || []).filter((l) => studentIds.has(l.studentId) && l.status === 'approved');
+      let excusedAbsences = groupApprovedLeaves.length;
+      if (excusedAbsences === 0) {
+        excusedAbsences = groupStudents.reduce((acc, s) => acc + (s.absenceCount || 0), 0);
       }
+
+      const attendanceBonuses = groupAttendanceDisc
+        .filter((d) => d.type === 'bonus' || d.type === 'commendation')
+        .reduce((sum, d) => sum + Math.abs(d.points), 0);
+      const attendanceDeductions = excusedAbsences * 2 + unexcusedAbsences * 5 + lateArrivals * 2;
+
+      // 4. Duty Schedule
+      const groupDuties = (dutySchedule || []).filter(
+        (d) => Number(d.assignedGroup || (d as any).group) === groupNum
+      );
+      let incompleteStudentCount = 0;
+      groupDuties.forEach((d) => {
+        if (d.status === 'Chưa hoàn thành' || (d.status as any) === 'incomplete') {
+          if (d.assignedStudents && d.assignedStudents.length > 0) {
+            const uncompletedInShift = d.assignedStudents.filter((s) => s.isCompleted !== true).length;
+            incompleteStudentCount += uncompletedInShift > 0 ? uncompletedInShift : d.assignedStudents.length;
+          } else {
+            incompleteStudentCount += 1;
+          }
+        }
+      });
+      const dutyDeductions = incompleteStudentCount * 5;
+
+      // 5. Direct Emulation Logs
+      const groupLogs = (emulationLogs || []).filter((l) => Number(l.group) === groupNum);
+      const directBonus = groupLogs.filter((l) => l.points > 0).reduce((sum, l) => sum + l.points, 0);
+      const directPenalty = groupLogs.filter((l) => l.points < 0).reduce((sum, l) => sum + Math.abs(l.points), 0);
+
+      // Aggregate totals
+      const totalBonus = (academicGpaBonus > 0 ? academicGpaBonus : 0) + bonusDisciplinePoints + attendanceBonuses + directBonus;
+      const totalPenalty = (academicGpaBonus < 0 ? Math.abs(academicGpaBonus) : 0) + penaltyDisciplinePoints + attendanceDeductions + dutyDeductions + directPenalty;
+
+      const finalTotal = 100 + totalBonus - totalPenalty;
+      const totalLogsCount = groupLogs.length + groupDiscipline.length + (incompleteStudentCount > 0 ? 1 : 0);
+
+      scores[groupNum] = {
+        total: finalTotal,
+        bonus: totalBonus,
+        penalty: totalPenalty,
+        logsCount: totalLogsCount,
+      };
     });
 
     return scores;
-  }, [emulationLogs]);
+  }, [students, disciplineLogs, leaveRequests, dutySchedule, emulationLogs]);
 
   // Rank groups
   const rankedGroups = useMemo(() => {
