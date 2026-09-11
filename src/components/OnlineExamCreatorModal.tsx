@@ -709,12 +709,28 @@ export const OnlineExamCreatorModal: React.FC<OnlineExamCreatorModalProps> = ({
                     onChange={(e) => setSubject(e.target.value as any)}
                     className="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Toán">Toán Học</option>
-                    <option value="Vật Lý">Vật Lý</option>
-                    <option value="Hóa Học">Hóa Học</option>
-                    <option value="Sinh Học">Sinh Học</option>
-                    <option value="Ngữ Văn">Ngữ Văn</option>
-                    <option value="Tiếng Anh">Tiếng Anh</option>
+                    <optgroup label="--- Khối Tự Nhiên & Công Nghệ ---">
+                      <option value="Toán">Toán Học</option>
+                      <option value="Vật Lý">Vật Lý</option>
+                      <option value="Hóa Học">Hóa Học</option>
+                      <option value="Sinh Học">Sinh Học</option>
+                      <option value="Tin Học">Tin Học</option>
+                      <option value="Công Nghệ">Công Nghệ</option>
+                    </optgroup>
+                    <optgroup label="--- Khối Xã Hội & Ngoại Ngữ ---">
+                      <option value="Ngữ Văn">Ngữ Văn</option>
+                      <option value="Lịch Sử">Lịch Sử</option>
+                      <option value="Địa Lý">Địa Lý</option>
+                      <option value="GDKT&PL">Giáo Dục Kinh Tế & Pháp Luật (GDKT&PL)</option>
+                      <option value="Tiếng Anh">Tiếng Anh (Ngoại Ngữ)</option>
+                    </optgroup>
+                    <optgroup label="--- Năng Khiếu, Thể Chất & Khác ---">
+                      <option value="Nghệ Thuật">Âm Nhạc / Mỹ Thuật</option>
+                      <option value="GDQP-AN">Giáo Dục Quốc Phòng & An Ninh</option>
+                      <option value="Thể Chất">Giáo Dục Thể Chất</option>
+                      <option value="HĐTN">Hoạt Động Trải Nghiệm - Hướng Nghiệp</option>
+                      <option value="Chung">Thông Báo / Chung</option>
+                    </optgroup>
                   </select>
                 </div>
 
