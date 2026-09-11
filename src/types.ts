@@ -286,7 +286,7 @@ export type MaterialFileType = 'pdf' | 'word' | 'excel' | 'sheet' | 'image' | 'p
 export interface StudyMaterial {
   id: string;
   title: string;
-  subject: 'Toán' | 'Vật Lý' | 'Hóa Học' | 'Sinh Học' | 'Ngữ Văn' | 'Tiếng Anh' | 'Chung';
+  subject: string;
   fileType: MaterialFileType;
   fileName: string;
   fileSize: string; // e.g. "3.2 MB"
@@ -302,7 +302,7 @@ export interface AssignmentSubmission {
   id: string;
   assignmentTitle: string;
   assignmentType: 'homework' | 'test15' | 'test45' | 'mock_exam';
-  subject: 'Toán' | 'Vật Lý' | 'Hóa Học' | 'Sinh Học' | 'Ngữ Văn' | 'Tiếng Anh';
+  subject: string;
   studentId: string;
   studentName: string;
   studentCode: string;
