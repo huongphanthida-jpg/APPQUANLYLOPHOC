@@ -1,6 +1,187 @@
 import * as XLSX from 'xlsx';
 import { Student, GoogleSheetConfig, OnlineClass } from '../types';
-import { autoRepairVietnameseText } from './vietnameseEncoding';
+
+// TCVN3 (ABC) to Unicode character map
+const TCVN3_LOWER_MAP: Record<string, string> = {
+  '¸': 'á', 'µ': 'à', '¶': 'ả', '·': 'ã', '¹': 'ạ',
+  '¨': 'ă', '¾': 'ắ', '»': 'ằ', '¼': 'ẳ', '½': 'ẵ', 'Æ': 'ặ',
+  '©': 'â', 'Ê': 'ấ', 'Ç': 'ầ', 'È': 'ẩ', 'É': 'ẫ', 'Ë': 'ậ',
+  '®': 'đ',
+  'Ð': 'é', 'Ì': 'è', 'Î': 'ẻ', 'Ï': 'ẽ', 'Ñ': 'ẹ',
+  'ª': 'ê', 'Õ': 'ế', 'Ò': 'ề', 'Ó': 'ể', 'Ô': 'ễ', 'Ö': 'ệ',
+  'Ý': 'í', '×': 'ì', 'Ø': 'ỉ', 'Ü': 'ĩ', 'Þ': 'ị',
+  'ã': 'ó', 'ß': 'ò', 'á': 'ỏ', 'â': 'õ', 'ä': 'ọ',
+  '«': 'ô', 'è': 'ố', 'é': 'ồ', 'ê': 'ổ', 'ë': 'ỗ', 'í': 'ộ',
+  '¬': 'ơ', 'ó': 'ớ', 'ï': 'ờ', 'ñ': 'ở', 'ò': 'ỡ', 'ô': 'ợ',
+  'ú': 'ú', 'ù': 'ù', 'û': 'ủ', 'ü': 'ũ', 'ý': 'ụ',
+  '­': 'ư', 'ø': 'ứ', 'ö': 'ừ', '÷': 'ử',
+  'ỳ': 'ỳ', 'ỷ': 'ỷ', 'ỹ': 'ỹ', 'ỵ': 'ỵ',
+};
+
+// VNI-Windows to Unicode pairs
+const VNI_PAIRS: [string, string][] = [
+  ['aù', 'á'], ['aø', 'à'], ['aû', 'ả'], ['aõ', 'ã'], ['aï', 'ạ'],
+  ['aê', 'ă'], ['aé', 'ắ'], ['aè', 'ằ'], ['aú', 'ẳ'], ['aü', 'ẵ'], ['aë', 'ặ'],
+  ['aâ', 'â'], ['aá', 'ấ'], ['aà', 'ầ'], ['aå', 'ẩ'], ['aã', 'ẫ'], ['aä', 'ậ'],
+  ['eù', 'é'], ['eø', 'è'], ['eû', 'ẻ'], ['eõ', 'ẽ'], ['eï', 'ẹ'],
+  ['eâ', 'ê'], ['eá', 'ế'], ['eà', 'ề'], ['eå', 'ể'], ['eã', 'ễ'], ['eä', 'ệ'],
+  ['où', 'ó'], ['oø', 'ò'], ['oû', 'ỏ'], ['oõ', 'õ'], ['oï', 'ọ'],
+  ['oâ', 'ô'], ['oá', 'ố'], ['oà', 'ồ'], ['oå', 'ổ'], ['oã', 'ỗ'], ['oä', 'ộ'],
+  ['ôù', 'ớ'], ['ôø', 'ờ'], ['ôû', 'ở'], ['ôõ', 'ỡ'], ['ôï', 'ợ'], ['ô', 'ơ'],
+  ['uù', 'ú'], ['uø', 'ù'], ['uû', 'ủ'], ['uõ', 'ũ'], ['uï', 'ụ'],
+  ['öù', 'ứ'], ['öø', 'ừ'], ['öû', 'ử'], ['öõ', 'ữ'], ['öï', 'ự'], ['ö', 'ư'],
+  ['í', 'í'], ['ì', 'ì'], ['æ', 'ỉ'], ['ó', 'ĩ'], ['ò', 'ị'],
+  ['yù', 'ý'], ['yø', 'ỳ'], ['yû', 'ỷ'], ['yõ', 'ỹ'], ['î', 'ỵ'],
+  ['ñ', 'đ'],
+  ['AÙ', 'Á'], ['AØ', 'À'], ['AÛ', 'Ả'], ['AÕ', 'Ã'], ['AÏ', 'Ạ'],
+  ['AÊ', 'Ă'], ['AÉ', 'Ắ'], ['AÈ', 'Ằ'], ['AÚ', 'Ẳ'], ['AÜ', 'Ẵ'], ['AË', 'Ặ'],
+  ['AÂ', 'Â'], ['AÁ', 'Ấ'], ['AÀ', 'Ầ'], ['AÅ', 'Ẩ'], ['AÃ', 'Ẫ'], ['AÄ', 'Ậ'],
+  ['EÙ', 'É'], ['EØ', 'È'], ['EÛ', 'Ẻ'], ['EÕ', 'Ẽ'], ['EÏ', 'Ẹ'],
+  ['EÂ', 'Ê'], ['EÁ', 'Ế'], ['EÀ', 'Ề'], ['EÅ', 'Ể'], ['EÃ', 'Ễ'], ['EÄ', 'Ệ'],
+  ['OÙ', 'Ó'], ['OØ', 'Ò'], ['OÛ', 'Ỏ'], ['OÕ', 'Õ'], ['OÏ', 'Ọ'],
+  ['OÂ', 'Ô'], ['OÁ', 'Ố'], ['OÀ', 'Ồ'], ['OÅ', 'Ổ'], ['OÃ', 'Ỗ'], ['OÄ', 'Ộ'],
+  ['ÔÙ', 'Ớ'], ['ÔØ', 'Ờ'], ['ÔÛ', 'Ở'], ['ÔÕ', 'Ỡ'], ['ÔÏ', 'Ợ'], ['Ô', 'Ơ'],
+  ['UÙ', 'Ú'], ['UØ', 'Ù'], ['UÛ', 'Ủ'], ['UÕ', 'Ũ'], ['UÏ', 'Ụ'],
+  ['ÖÙ', 'Ứ'], ['ÖØ', 'Ừ'], ['ÖÛ', 'Ử'], ['ÖÕ', 'Ữ'], ['ÖÏ', 'Ự'], ['Ö', 'Ư'],
+  ['Í', 'Í'], ['Ì', 'Ì'], ['Æ', 'Ỉ'], ['Ó', 'Ĩ'], ['Ò', 'Ị'],
+  ['YÙ', 'Ý'], ['YØ', 'Ỳ'], ['YÛ', 'Ỷ'], ['YÕ', 'Ỹ'], ['Î', 'Ỵ'],
+  ['Ñ', 'Đ'],
+];
+
+export function convertTCVN3ToUnicode(text: string): string {
+  if (!text) return text;
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    result += TCVN3_LOWER_MAP[char] || char;
+  }
+  return result.normalize('NFC');
+}
+
+export function convertVNIToUnicode(text: string): string {
+  if (!text) return text;
+  let result = text;
+  for (const [vniChar, uniChar] of VNI_PAIRS) {
+    result = result.split(vniChar).join(uniChar);
+  }
+  return result.normalize('NFC');
+}
+
+export function repairVietnameseMojibake(text: string): string {
+  if (!text) return text;
+  try {
+    const bytes = new Uint8Array(text.length);
+    for (let i = 0; i < text.length; i++) {
+      const code = text.charCodeAt(i);
+      if (code > 255) return text;
+      bytes[i] = code;
+    }
+    const decoded = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    return decoded.normalize('NFC');
+  } catch {
+    return text.normalize('NFC');
+  }
+}
+
+const VIETNAMESE_WORD_REPAIR_MAP: Record<string, string> = {
+  'nguy?n': 'Nguyễn', 'nguyn': 'Nguyễn', 'nguyen': 'Nguyễn',
+  'tr?n': 'Trần', 'trn': 'Trần', 'tran': 'Trần',
+  'l?': 'Lê', 'le': 'Lê',
+  'ph?m': 'Phạm', 'phm': 'Phạm', 'pham': 'Phạm',
+  'ho?ng': 'Hoàng', 'hong': 'Hoàng', 'hoang': 'Hoàng',
+  'hu?nh': 'Huỳnh', 'hunh': 'Huỳnh', 'huynh': 'Huỳnh',
+  'phan': 'Phan', 'v?': 'Vũ', 'vu': 'Vũ', 'd?ng': 'Đặng',
+  'b?i': 'Bùi', 'bi': 'Bùi', 'bui': 'Bùi', 'd?': 'Đỗ', 'do': 'Đỗ',
+  'h?': 'Hồ', 'ho': 'Hồ', 'ng?': 'Ngô', 'ngo': 'Ngô',
+  'phuong': 'Phương', 'anh': 'Anh', 'th?i': 'Thái', 'b?o': 'Bảo',
+  'ng?c': 'Ngọc', 'thi?n': 'Thiện', 'b?nh': 'Bình', 'th?': 'Thị',
+  'thanh': 'Thanh', 'di?m': 'Diễm', 'dung': 'Dũng', 'huy': 'Huy',
+  'h?ng': 'Hùng', 'hung': 'Hùng', 'ha': 'Hà', '?c': 'Đức', 'duc': 'Đức',
+  'minh': 'Minh', 'nam': 'Nam', 'qu?c': 'Quốc', 'quoc': 'Quốc',
+  'trang': 'Trang', 'thu': 'Thu', 'tu?n': 'Tuấn', 'tuan': 'Tuấn',
+  'kh?nh': 'Khánh', 'h??ng': 'Hương', 'linh': 'Linh', 'lan': 'Lan',
+  't?m': 'Tâm', 'th?o': 'Thảo', 'vinh': 'Vinh', 'vi?t': 'Việt',
+  'ti?n': 'Tiến', 'long': 'Long', 'h?i': 'Hải', 'ph?c': 'Phúc',
+};
+
+export function repairVietnameseWord(word: string): string {
+  if (!word) return word;
+  const trimmed = word.trim();
+  const lower = trimmed.toLowerCase();
+  if (VIETNAMESE_WORD_REPAIR_MAP[lower]) {
+    const fixed = VIETNAMESE_WORD_REPAIR_MAP[lower];
+    if (trimmed === trimmed.toUpperCase() && trimmed.length > 1) return fixed.toUpperCase();
+    if (trimmed[0] && trimmed[0] === trimmed[0].toUpperCase()) return fixed.charAt(0).toUpperCase() + fixed.slice(1);
+    return fixed;
+  }
+  let fixed = trimmed;
+  fixed = fixed.replace(/Nguy\?n/gi, 'Nguyễn');
+  fixed = fixed.replace(/Tr\?n/gi, 'Trần');
+  fixed = fixed.replace(/Ph\?m/gi, 'Phạm');
+  fixed = fixed.replace(/Ho\?ng/gi, 'Hoàng');
+  fixed = fixed.replace(/Hu\?nh/gi, 'Huỳnh');
+  fixed = fixed.replace(/Di\?m/gi, 'Diễm');
+  fixed = fixed.replace(/Tu\?n/gi, 'Tuấn');
+  fixed = fixed.replace(/Qu\?c/gi, 'Quốc');
+  fixed = fixed.replace(/Kh\?nh/gi, 'Khánh');
+  fixed = fixed.replace(/B\?nh/gi, 'Bình');
+  return fixed;
+}
+
+export function autoRepairVietnameseText(input: string): string {
+  if (!input || typeof input !== 'string') return input;
+  let str = input.trim();
+  if (!str) return str;
+  if (/[\u00C0-\u00FF]{2,}/.test(str)) str = repairVietnameseMojibake(str);
+  if (/[a-zA-Z][ùøûõïéèáàåä]/.test(str)) str = convertVNIToUnicode(str);
+  if (/[\u00B8\u00B5\u00B6\u00B7\u00B9\u00A8\u00A9\u00AE\u00AA\u00AB\u00AC]/.test(str)) str = convertTCVN3ToUnicode(str);
+
+  const tokens = str.split(/(\s+|[.,;:\-_/()]+)/);
+  const repairedTokens = tokens.map((token) => {
+    if (/^\s+$/.test(token) || /^[.,;:\-_/()]+$/.test(token)) return token;
+    return repairVietnameseWord(token);
+  });
+  return repairedTokens.join('').normalize('NFC');
+}
+
+export function hasFontCorruption(text: string): boolean {
+  if (!text || typeof text !== 'string') return false;
+  if (text.includes('')) return true;
+  if (/[a-zA-Z]\?[a-zA-Z]/.test(text)) return true;
+  if (/[\u00B8\u00B5\u00B6\u00B7\u00B9\u00A8\u00A9\u00AE\u00AA\u00AB\u00AC]/.test(text)) return true;
+  if (/[a-zA-Z][ùøûõïéèáàåä]/.test(text)) return true;
+  if (/[\u00C0-\u00FF]{2,}/.test(text)) return true;
+  return false;
+}
+
+export function repairStudentData(
+  student: Student,
+  mode: 'auto' | 'tcvn3' | 'vni' | 'mojibake' = 'auto'
+): Student {
+  const repair = (str: string): string => {
+    if (!str) return str;
+    if (mode === 'tcvn3') return convertTCVN3ToUnicode(str);
+    if (mode === 'vni') return convertVNIToUnicode(str);
+    if (mode === 'mojibake') return repairVietnameseMojibake(str);
+    return autoRepairVietnameseText(str);
+  };
+  const isFemale = (student.gender as string) === 'Nữ' || (student.gender as string) === 'Nu';
+  return {
+    ...student,
+    name: repair(student.name),
+    gender: isFemale ? 'Nữ' : 'Nam',
+    address: repair(student.address),
+    strengths: repair(student.strengths),
+    careerAspiration: repair(student.careerAspiration),
+    healthNote: repair(student.healthNote),
+    emergencyContact: {
+      ...student.emergencyContact,
+      parentName: repair(student.emergencyContact?.parentName || ''),
+      workplace: repair(student.emergencyContact?.workplace || ''),
+      relationship: student.emergencyContact?.relationship || 'Bố',
+    },
+  };
+}
 import { extractStructuredSheet, getRowValue } from './excelParser';
 
 /**
@@ -150,25 +331,25 @@ function transformRowToStudent(row: any, index: number): Student | null {
   }
 
   const rawPhone = getVal(['sđt', 'sdt', 'số điện thoại', 'điện thoại', 'phone', 'tel']);
-  const phone = rawPhone ? String(rawPhone).trim() : '0912000000';
+  const phone = rawPhone ? String(rawPhone).trim() : '';
 
   const rawEmail = getVal(['email', 'thư điện tử', 'mail']);
-  const email = rawEmail ? String(rawEmail).trim() : `${code.toLowerCase()}@gvcn2027.edu.vn`;
+  const email = rawEmail ? String(rawEmail).trim() : '';
 
   const rawAddress = getVal(['địa chỉ', 'dia chi', 'address', 'nơi ở']);
-  const address = rawAddress ? cleanStr(rawAddress) : 'Hải Phòng';
+  const address = rawAddress ? cleanStr(rawAddress) : '';
 
   const rawStrengths = getVal(['sở trường năng khiếu', 'sở trường', 'năng khiếu', 'strengths']);
-  const strengths = rawStrengths ? cleanStr(rawStrengths) : 'Toán học & Khoa học Tự nhiên';
+  const strengths = rawStrengths ? cleanStr(rawStrengths) : '';
 
   const rawCareer = getVal(['định hướng nghề nghiệp', 'định hướng', 'nguyện vọng', 'career']);
-  const careerAspiration = rawCareer ? cleanStr(rawCareer) : 'Đại học Bách Khoa / Kinh Tế';
+  const careerAspiration = rawCareer ? cleanStr(rawCareer) : '';
 
   const rawHealth = getVal(['ghi chú sức khỏe', 'sức khỏe', 'suc khoe', 'health note']);
-  const healthNote = rawHealth ? cleanStr(rawHealth) : 'Sức khỏe tốt';
+  const healthNote = rawHealth ? cleanStr(rawHealth) : '';
 
   const rawParentName = getVal(['họ tên phụ huynh', 'phụ huynh', 'tên phụ huynh', 'parent']);
-  const parentName = rawParentName ? cleanStr(rawParentName) : `Phụ huynh của ${name}`;
+  const parentName = rawParentName ? cleanStr(rawParentName) : '';
 
   const rawRel = getVal(['quan hệ', 'mối quan hệ', 'relationship']);
   let relationship: 'Bố' | 'Mẹ' | 'Người giám hộ' = 'Bố';
@@ -177,10 +358,10 @@ function transformRowToStudent(row: any, index: number): Student | null {
   }
 
   const rawParentPhone = getVal(['sđt phụ huynh', 'sđt ph', 'số điện thoại phụ huynh', 'parent phone']);
-  const parentPhone = rawParentPhone ? String(rawParentPhone).trim() : '0912888999';
+  const parentPhone = rawParentPhone ? String(rawParentPhone).trim() : '';
 
   const rawWorkplace = getVal(['nơi công tác phụ huynh', 'nơi công tác', 'workplace']);
-  const workplace = rawWorkplace ? cleanStr(rawWorkplace) : 'Hải Phòng';
+  const workplace = rawWorkplace ? cleanStr(rawWorkplace) : '';
 
   const rawGpa = getVal(['đtb khối a', 'đtb', 'điểm tb', 'gpa', 'dtb']);
   const gpa = rawGpa ? Number(parseFloat(String(rawGpa)).toFixed(2)) : 8.5;
