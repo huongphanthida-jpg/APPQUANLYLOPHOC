@@ -51,7 +51,7 @@ import {
   INITIAL_GROUP_EMULATION_LOGS,
 } from '../data/mockData';
 import { INITIAL_HOMEROOM_BOOK_DATA } from '../data/homeroomBookData';
-import { autoRepairVietnameseText } from '../utils/vietnameseEncoding';
+import { autoRepairVietnameseText } from '../utils/googleSheetSync';
 
 const KEYS = {
   STUDENTS: 'tnh_gvcn_students_v1',
