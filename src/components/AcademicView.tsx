@@ -275,14 +275,21 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
   }));
 
   // Compute Class Averages for All Subjects dynamically
-  const calcClassSubjectAvg = (subjKey: string, field: 'tx1' | 'tx2' | 'gk' | 'ck' | 'avg') => {
+  const calcClassSubjectAvg = (subjKey: string, field: 'tx1' | 'tx2' | 'gk' | 'ck' | 'avg' = 'avg') => {
     if (!students || !students.length) return 0;
     const total = students.reduce((acc, s) => {
       const g = (s.grades as any)?.[subjKey];
       if (g === undefined || g === null) return acc + 8.0;
-      if (typeof g === 'number') return acc + g;
-      const val = g?.[field] ?? g?.avg ?? 8.0;
-      return acc + (typeof val === 'number' ? val : 8.0);
+      let val = 8.0;
+      if (typeof g === 'number') {
+        val = g <= 10 && g >= 0 ? g : 8.0;
+      } else if (typeof g === 'object' && g !== null) {
+        const fieldVal = g[field] ?? g.avg ?? 8.0;
+        if (typeof fieldVal === 'number' && !isNaN(fieldVal) && fieldVal <= 10 && fieldVal >= 0) {
+          val = fieldVal;
+        }
+      }
+      return acc + val;
     }, 0);
     return Number((total / students.length).toFixed(2));
   };
@@ -307,8 +314,18 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
       };
 
       activeSubjectCols.forEach((col) => {
-        const rawVal = (s.grades as any)[col.key]?.avg ?? (s.grades as any)[col.key] ?? 8.0;
-        const subjGrade = typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
+        const rawObj = (s.grades as any)[col.key];
+        let subjGrade = 8.0;
+        if (rawObj !== undefined && rawObj !== null) {
+          if (typeof rawObj === 'number') {
+            subjGrade = rawObj <= 10 && rawObj >= 0 ? Number(rawObj.toFixed(1)) : 8.0;
+          } else if (typeof rawObj === 'object' && rawObj !== null) {
+            const val = rawObj.avg;
+            if (typeof val === 'number' && !isNaN(val) && val <= 10 && val >= 0) {
+              subjGrade = Number(val.toFixed(1));
+            }
+          }
+        }
         row[`${col.short} (ĐTB)`] = subjGrade;
       });
 
@@ -327,82 +344,41 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     XLSX.writeFile(wb, `Mau_Bang_Diem_TBM_Lop_${(classInfo?.className || '12A1').replace(/\s+/g, '_')}.xlsx`);
   };
 
-  // 1. Data for "all_subjects" Bar Chart Mode (Shows all subjects on X-axis)
-  const allSubjectsBarData = [
-    ...subjectsList.map((subj) => {
-      if (selectedStudentForChart === 'all') {
-        const tx1 = calcClassSubjectAvg(subj.key, 'tx1');
-        const tx2 = calcClassSubjectAvg(subj.key, 'tx2');
-        const gk = calcClassSubjectAvg(subj.key, 'gk');
-        const ck = calcClassSubjectAvg(subj.key, 'ck');
-        const avg = calcClassSubjectAvg(subj.key, 'avg');
-        const maxScore = Math.max(...students.map((s) => s.grades[subj.key]?.avg || 0));
-        const minScore = Math.min(...students.map((s) => s.grades[subj.key]?.avg || 0));
-
-        return {
-          subject: `${subj.icon} ${subj.name}`,
-          shortName: subj.short,
-          'Thường Xuyên 1 (TX1)': tx1,
-          'Thường Xuyên 2 (TX2)': tx2,
-          'Giữa Kỳ (GK)': gk,
-          'Cuối Kỳ (CK)': ck,
-          'Điểm Trung Bình (ĐTB)': avg,
-          'Điểm Cao Nhất': maxScore,
-          'Điểm Thấp Nhất': minScore,
-        };
-      } else {
-        const student = students.find((s) => s.id === selectedStudentForChart);
-        const subjGrade = student?.grades[subj.key];
-        const classAvg = calcClassSubjectAvg(subj.key, 'avg');
-
-        return {
-          subject: `${subj.icon} ${subj.name}`,
-          shortName: subj.short,
-          'Thường Xuyên 1 (TX1)': subjGrade?.tx1 || 0,
-          'Thường Xuyên 2 (TX2)': subjGrade?.tx2 || 0,
-          'Giữa Kỳ (GK)': subjGrade?.gk || 0,
-          'Cuối Kỳ (CK)': subjGrade?.ck || 0,
-          'Điểm Trung Bình (ĐTB)': subjGrade?.avg || 0,
-          'Điểm TB Cả Lớp': classAvg,
-        };
+  // 1. Data for "all_subjects" Bar Chart Mode (Shows TBM scores only for all subjects)
+  const allSubjectsBarData = subjectsList.map((subj) => {
+    if (selectedStudentForChart === 'all') {
+      const avg = calcClassSubjectAvg(subj.key, 'avg');
+      return {
+        subject: `${subj.icon} ${subj.name}`,
+        shortName: subj.short,
+        'Điểm Trung Bình (ĐTB)': avg,
+        color: subj.color,
+      };
+    } else {
+      const student = students.find((s) => s.id === selectedStudentForChart);
+      const rawObj = (student?.grades as any)?.[subj.key];
+      let stuAvg = 8.0;
+      if (rawObj !== undefined && rawObj !== null) {
+        if (typeof rawObj === 'number') {
+          stuAvg = rawObj <= 10 && rawObj >= 0 ? Number(rawObj.toFixed(1)) : 8.0;
+        } else if (typeof rawObj === 'object' && rawObj !== null) {
+          const val = rawObj.avg;
+          if (typeof val === 'number' && !isNaN(val) && val <= 10 && val >= 0) {
+            stuAvg = Number(val.toFixed(1));
+          }
+        }
       }
-    }),
-    // Add Overall GPA Summary Bar
-    (() => {
-      if (selectedStudentForChart === 'all') {
-        const totalGpa = students.reduce((acc, s) => acc + (s.grades.gpa || 0), 0);
-        const avgGpa = Number((totalGpa / (students.length || 1)).toFixed(2));
-        const maxGpa = Math.max(...students.map((s) => s.grades.gpa || 0));
-        const minGpa = Math.min(...students.map((s) => s.grades.gpa || 0));
-        return {
-          subject: '🏆 ĐTB Chung / Khối',
-          shortName: 'ĐTB Chung',
-          'Thường Xuyên 1 (TX1)': avgGpa,
-          'Thường Xuyên 2 (TX2)': avgGpa,
-          'Giữa Kỳ (GK)': avgGpa,
-          'Cuối Kỳ (CK)': avgGpa,
-          'Điểm Trung Bình (ĐTB)': avgGpa,
-          'Điểm Cao Nhất': maxGpa,
-          'Điểm Thấp Nhất': minGpa,
-        };
-      } else {
-        const student = students.find((s) => s.id === selectedStudentForChart);
-        const totalGpa = students.reduce((acc, s) => acc + (s.grades.gpa || 0), 0);
-        const avgGpa = Number((totalGpa / (students.length || 1)).toFixed(2));
-        const stuGpa = student?.grades.gpa || 0;
-        return {
-          subject: '🏆 ĐTB Chung / Khối',
-          shortName: 'ĐTB Chung',
-          'Thường Xuyên 1 (TX1)': stuGpa,
-          'Thường Xuyên 2 (TX2)': stuGpa,
-          'Giữa Kỳ (GK)': stuGpa,
-          'Cuối Kỳ (CK)': stuGpa,
-          'Điểm Trung Bình (ĐTB)': stuGpa,
-          'Điểm TB Cả Lớp': avgGpa,
-        };
-      }
-    })(),
-  ];
+      const classAvg = calcClassSubjectAvg(subj.key, 'avg');
+
+      return {
+        subject: `${subj.icon} ${subj.name}`,
+        shortName: subj.short,
+        'Điểm Trung Bình (ĐTB)': stuAvg,
+        'Điểm TB Cả Lớp': classAvg,
+        color: subj.color,
+      };
+    }
+  });
 
   // 2. Data for "group_emulation" Bar Chart Mode (Shows 4 Groups on X-axis with active subjects)
   const groupEmulationBarData = [1, 2, 3, 4].map((grpNum) => {
@@ -803,7 +779,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
           </div>
         </div>
 
-        {/* 1. Bar Chart Render for All Subjects (TX1, TX2, GK, CK, ĐTB) */}
+        {/* 1. Bar Chart Render for All Subjects (TBM Only) */}
         {chartViewMode === 'all_subjects' && (
           <div className="space-y-2">
             <div className="h-80 sm:h-96 w-full">
@@ -811,7 +787,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                 <BarChart data={allSubjectsBarData} margin={{ top: 20, right: 25, left: -10, bottom: 25 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                   <XAxis
-                    dataKey="subject"
+                    dataKey="shortName"
                     stroke="#475569"
                     fontSize={12}
                     tickLine={false}
@@ -819,6 +795,10 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                   />
                   <YAxis domain={[0, 10]} stroke="#64748b" fontSize={12} ticks={[0, 2, 4, 6, 8, 10]} />
                   <Tooltip
+                    formatter={(value: any, name: any, props: any) => [
+                      `${value} điểm`,
+                      `${props?.payload?.subject || name}`,
+                    ]}
                     contentStyle={{
                       backgroundColor: '#002855',
                       borderColor: '#001c3d',
@@ -837,13 +817,13 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                   <ReferenceLine y={8.0} stroke="#10b981" strokeDasharray="3 3" label={{ value: 'Chuẩn Giỏi (8.0)', fill: '#059669', fontSize: 10 }} />
                   <ReferenceLine y={5.0} stroke="#f59e0b" strokeDasharray="3 3" label={{ value: 'Chuẩn Đạt (5.0)', fill: '#d97706', fontSize: 10 }} />
 
-                  <Bar dataKey="Thường Xuyên 1 (TX1)" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={22} />
-                  <Bar dataKey="Thường Xuyên 2 (TX2)" fill="#60a5fa" radius={[4, 4, 0, 0]} maxBarSize={22} />
-                  <Bar dataKey="Giữa Kỳ (GK)" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={22} />
-                  <Bar dataKey="Cuối Kỳ (CK)" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={22} />
-                  <Bar dataKey="Điểm Trung Bình (ĐTB)" fill="#003366" radius={[6, 6, 0, 0]} maxBarSize={26} />
+                  <Bar dataKey="Điểm Trung Bình (ĐTB)" fill="#003366" radius={[6, 6, 0, 0]} maxBarSize={32}>
+                    {allSubjectsBarData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color || '#003366'} />
+                    ))}
+                  </Bar>
                   {selectedStudentForChart !== 'all' && (
-                    <Bar dataKey="Điểm TB Cả Lớp" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={18} />
+                    <Bar dataKey="Điểm TB Cả Lớp" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={20} />
                   )}
                 </BarChart>
               </ResponsiveContainer>
@@ -852,10 +832,10 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
             {/* Note & Color Legend Guide */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 px-2 text-[11px] text-slate-500 bg-slate-50 rounded-xl p-2.5">
               <span className="font-semibold text-slate-700">
-                📊 Ghi chú: Thang điểm 10. Môn Toán, Lý, Hóa, Sinh, Văn, Anh đều được đánh giá đầy đủ các hệ số.
+                📊 Biểu đồ so sánh Điểm Trung Bình Môn (TBM) được đồng bộ trực tiếp từ Sổ điểm chi tiết các môn.
               </span>
               <span className="text-blue-800 font-bold">
-                Cột màu xanh đậm thể hiện Điểm Trung Bình (ĐTB) tổng kết môn.
+                Thang điểm từ 0.0 đến 10.0
               </span>
             </div>
           </div>
