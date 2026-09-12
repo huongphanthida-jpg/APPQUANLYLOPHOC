@@ -320,27 +320,27 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
 
     // Contact
     const rawPhone = getVal(row, ['sđt', 'sdt', 'số điện thoại', 'điện thoại', 'phone', 'tel', 'sđt học sinh']);
-    const phone = rawPhone ? String(rawPhone).trim() : '0912000000';
+    const phone = rawPhone ? String(rawPhone).trim() : '';
 
     const rawEmail = getVal(row, ['email', 'thư điện tử', 'mail']);
-    const email = rawEmail ? String(rawEmail).trim() : `${code.toLowerCase().replace(/[^a-z0-9]/g, '')}@tnh.edu.vn`;
+    const email = rawEmail ? String(rawEmail).trim() : '';
 
     const rawAddress = getVal(row, ['địa chỉ', 'dia chi', 'address', 'nơi ở', 'hộ khẩu']);
-    const address = rawAddress ? cleanStr(rawAddress, encodingMode) : 'Hải Phòng';
+    const address = rawAddress ? cleanStr(rawAddress, encodingMode) : '';
 
     // Profiles & Strengths
     const rawStrengths = getVal(row, ['sở trường năng khiếu', 'sở trường', 'năng khiếu', 'strengths', 'so truong', 'nang khieu']);
-    const strengths = rawStrengths ? cleanStr(rawStrengths, encodingMode) : 'Toán học & Khoa học';
+    const strengths = rawStrengths ? cleanStr(rawStrengths, encodingMode) : '';
 
     const rawCareer = getVal(row, ['định hướng nghề nghiệp', 'định hướng', 'nguyện vọng', 'mục tiêu đại học', 'career', 'aspiration']);
-    const careerAspiration = rawCareer ? cleanStr(rawCareer, encodingMode) : 'Đại Học';
+    const careerAspiration = rawCareer ? cleanStr(rawCareer, encodingMode) : '';
 
     const rawHealth = getVal(row, ['ghi chú sức khỏe', 'sức khỏe', 'suc khoe', 'health note', 'health']);
-    const healthNote = rawHealth ? cleanStr(rawHealth, encodingMode) : 'Sức khỏe tốt';
+    const healthNote = rawHealth ? cleanStr(rawHealth, encodingMode) : '';
 
     // Parent / Emergency
     const rawParentName = getVal(row, ['họ tên phụ huynh', 'phụ huynh', 'tên phụ huynh', 'người giám hộ', 'parent name', 'parent']);
-    const parentName = rawParentName ? cleanStr(rawParentName, encodingMode) : `Phụ huynh của ${name}`;
+    const parentName = rawParentName ? cleanStr(rawParentName, encodingMode) : '';
 
     const rawRel = getVal(row, ['quan hệ', 'mối quan hệ', 'relationship', 'quan he']);
     let relationship: 'Bố' | 'Mẹ' | 'Người giám hộ' = 'Bố';
@@ -351,10 +351,10 @@ export const ImportStudentsModal: React.FC<ImportStudentsModalProps> = ({
     }
 
     const rawParentPhone = getVal(row, ['sđt phụ huynh', 'sđt ph', 'số điện thoại phụ huynh', 'parent phone', 'sdt ph']);
-    const parentPhone = rawParentPhone ? String(rawParentPhone).trim() : '0912888999';
+    const parentPhone = rawParentPhone ? String(rawParentPhone).trim() : '';
 
     const rawWorkplace = getVal(row, ['nơi công tác phụ huynh', 'nơi công tác', 'nơi làm việc', 'workplace', 'co quan']);
-    const workplace = rawWorkplace ? cleanStr(rawWorkplace, encodingMode) : 'Hải Phòng';
+    const workplace = rawWorkplace ? cleanStr(rawWorkplace, encodingMode) : '';
 
     // Academic & Conduct
     const rawGpa = getVal(row, ['đtb chung', 'đtb khối a', 'đtb', 'điểm tb', 'gpa', 'dtb', 'điểm trung bình']);
