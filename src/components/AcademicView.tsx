@@ -147,17 +147,19 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
   // 3. Cần Phụ Đạo: Có bất kỳ môn nào TBM < 5.0
   // 4. Để trống: Các trường hợp còn lại (Tất cả các môn >= 5.0 nhưng chưa đủ 6 môn >= 8.0)
   const getEmulationRating = (student: Student) => {
-    const subjectKeys = [
-      'math',
-      'literature',
-      'gdcd',
-      'history',
-      'geography',
-      'english',
-      'physics',
-      'chemistry',
-      'biology',
-    ];
+    const subjectKeys = activeSubjectCols && activeSubjectCols.length > 0
+      ? activeSubjectCols.map((c) => c.key)
+      : [
+          'math',
+          'literature',
+          'gdcd',
+          'history',
+          'geography',
+          'english',
+          'physics',
+          'chemistry',
+          'biology',
+        ];
 
     const scores: number[] = subjectKeys.map((key) => {
       const g = (student.grades as any)?.[key];
