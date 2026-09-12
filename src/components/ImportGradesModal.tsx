@@ -26,7 +26,7 @@ import {
   normalizeHeaderKey,
   removeVietnameseAccents,
 } from '../utils/excelParser';
-import { autoRepairVietnameseText } from '../utils/vietnameseEncoding';
+import { autoRepairVietnameseText } from '../utils/googleSheetSync';
 
 export interface SubjectScoreDetail {
   tx1?: number;
