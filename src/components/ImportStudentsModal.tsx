@@ -23,7 +23,7 @@ import {
   autoRepairVietnameseText,
   convertTCVN3ToUnicode,
   convertVNIToUnicode,
-} from '../utils/vietnameseEncoding';
+} from '../utils/googleSheetSync';
 import {
   extractStructuredSheet,
   getRowValue,
