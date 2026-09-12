@@ -282,45 +282,34 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     ? dynamicPeriods
     : ['Tháng 9', 'Giữa HK1', 'Cuối HK1', 'Giữa HK2', 'Thi Thử TN'];
 
-  // Quick download template handler
+  // Quick download template handler (TBM scores only for all 9 subjects)
   const handleQuickDownloadExcelTemplate = () => {
-    const templateData = students.map((s) => ({
-      'Mã HS': s.code,
-      'Họ và Tên': s.name,
-      'Tổ': s.group,
-      'Toán TX1': s.grades.math.tx1,
-      'Toán TX2': s.grades.math.tx2,
-      'Toán GK': s.grades.math.gk,
-      'Toán CK': s.grades.math.ck,
-      'Toán ĐTB': s.grades.math.avg,
-      'Lý TX1': s.grades.physics.tx1,
-      'Lý TX2': s.grades.physics.tx2,
-      'Lý GK': s.grades.physics.gk,
-      'Lý CK': s.grades.physics.ck,
-      'Lý ĐTB': s.grades.physics.avg,
-      'Hóa TX1': s.grades.chemistry.tx1,
-      'Hóa TX2': s.grades.chemistry.tx2,
-      'Hóa GK': s.grades.chemistry.gk,
-      'Hóa CK': s.grades.chemistry.ck,
-      'Hóa ĐTB': s.grades.chemistry.avg,
-      'Sinh ĐTB': s.grades.biology.avg,
-      'Văn ĐTB': s.grades.literature.avg,
-      'Anh ĐTB': s.grades.english.avg,
-      'ĐTB Khối A': s.grades.gpa,
-      'Ghi Chú': 'Mẫu cập nhật điểm số lớp 12A1',
-    }));
+    const templateData = students.map((s) => {
+      const row: Record<string, any> = {
+        'Mã HS': s.code,
+        'Họ và Tên': s.name,
+        'Tổ': s.group,
+      };
+
+      activeSubjectCols.forEach((col) => {
+        const rawVal = (s.grades as any)[col.key]?.avg ?? (s.grades as any)[col.key] ?? 8.0;
+        const subjGrade = typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
+        row[`${col.short} (ĐTB)`] = subjGrade;
+      });
+
+      row['Ghi Chú'] = `Bảng điểm TBM 9 môn lớp ${classInfo?.className || '12A1'}`;
+      return row;
+    });
 
     const ws = XLSX.utils.json_to_sheet(templateData);
     ws['!cols'] = [
-      { wch: 15 }, { wch: 22 }, { wch: 6 },
-      { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-      { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-      { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-      { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 25 },
+      { wch: 15 }, { wch: 24 }, { wch: 6 },
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+      { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 25 },
     ];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Bang_Diem_Lop');
-    XLSX.writeFile(wb, `Mau_Bang_Diem_Lop_12A1.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Bang_Diem_TBM');
+    XLSX.writeFile(wb, `Mau_Bang_Diem_TBM_Lop_${(classInfo?.className || '12A1').replace(/\s+/g, '_')}.xlsx`);
   };
 
   // 1. Data for "all_subjects" Bar Chart Mode (Shows all subjects on X-axis)
