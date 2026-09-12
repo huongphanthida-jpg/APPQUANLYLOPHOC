@@ -112,6 +112,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     { key: 'history', short: 'Sử', fullName: 'Lịch Sử', category: 'KHXH' },
     { key: 'geography', short: 'Địa', fullName: 'Địa Lý', category: 'KHXH' },
     { key: 'gdcd', short: 'GDCD', fullName: 'GDCD & PL', category: 'KHXH' },
+    { key: 'gdqpan', short: 'GDQPAN', fullName: 'GDQP & An Ninh', category: 'Ngoại Ngữ & Khác' },
     { key: 'english', short: 'Anh', fullName: 'Tiếng Anh', category: 'Ngoại Ngữ & Khác' },
     { key: 'informatics', short: 'Tin', fullName: 'Tin Học', category: 'Ngoại Ngữ & Khác' },
     { key: 'technology', short: 'Công Nghệ', fullName: 'Công Nghệ', category: 'Ngoại Ngữ & Khác' },
@@ -162,7 +163,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
       const g = (student.grades as any)?.[key];
       if (g === undefined || g === null) return 8.0;
       const rawVal = typeof g === 'number' ? g : g?.avg ?? 8.0;
-      return typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
+      return typeof rawVal === 'number' && !isNaN(rawVal) && rawVal <= 10 ? Number(rawVal.toFixed(1)) : 8.0;
     });
 
     // Rule 3: Nếu có môn < 5.0 -> Cần Phụ Đạo
@@ -227,7 +228,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
       fullName: editColFullName.trim() || 'Môn Học',
     };
     setActiveSubjectCols(updated);
-    localStorage.setItem('tbm_active_subject_columns', JSON.stringify(updated));
+    localStorage.setItem('tbm_active_subject_columns_9_v4', JSON.stringify(updated));
     setIsEditSubjectModalOpen(false);
   };
 
@@ -242,6 +243,8 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
 
   const handleResetDefaultSubjectCols = () => {
     setActiveSubjectCols(DEFAULT_SUBJECT_COLS);
+    localStorage.removeItem('tbm_active_subject_columns_9_v4');
+    localStorage.removeItem('tbm_active_subject_columns_9');
     localStorage.removeItem('tbm_active_subject_columns');
     setIsEditSubjectModalOpen(false);
   };
@@ -256,6 +259,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     history: '📜',
     geography: '🗺️',
     gdcd: '⚖️',
+    gdqpan: '🪖',
     english: '🌐',
     informatics: '💻',
     technology: '⚙️',
@@ -1239,8 +1243,18 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                         ? activeSubjectCols
                         : activeSubjectCols.filter((c) => c.key === selectedSubjectFilter);
                       return displayedCols.map((col, idx) => {
-                        const rawVal = (student.grades as any)[col.key]?.avg ?? (student.grades as any)[col.key] ?? 8.0;
-                        const subjGrade = typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
+                        const rawObj = (student.grades as any)[col.key];
+                        let subjGrade = 8.0;
+                        if (rawObj !== undefined && rawObj !== null) {
+                          if (typeof rawObj === 'number') {
+                            subjGrade = rawObj <= 10 && rawObj >= 0 ? Number(rawObj.toFixed(1)) : 8.0;
+                          } else if (typeof rawObj === 'object' && rawObj !== null) {
+                            const avgVal = rawObj.avg;
+                            if (typeof avgVal === 'number' && !isNaN(avgVal) && avgVal <= 10 && avgVal >= 0) {
+                              subjGrade = Number(avgVal.toFixed(1));
+                            }
+                          }
+                        }
                         const isEditingThis = editingCell?.studentId === student.id && editingCell?.subject === col.key;
 
                         return (
