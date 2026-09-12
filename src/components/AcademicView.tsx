@@ -118,20 +118,33 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
   ];
 
   const [activeSubjectCols, setActiveSubjectCols] = useState(() => {
-    const saved = localStorage.getItem('tbm_active_subject_columns_9');
+    const saved = localStorage.getItem('tbm_active_subject_columns_9_v4');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length === 9) {
+          const keys = parsed.map((c: any) => c.key);
+          const validKeys = ['math', 'literature', 'gdcd', 'history', 'geography', 'english', 'physics', 'chemistry', 'biology'];
+          const uniqueKeys = new Set(keys);
+          if (uniqueKeys.size === 9 && validKeys.every((k) => uniqueKeys.has(k))) return parsed;
+        }
       } catch (e) {}
     }
     return DEFAULT_SUBJECT_COLS;
   });
 
+  React.useEffect(() => {
+    localStorage.removeItem('tbm_active_subject_columns');
+    localStorage.removeItem('tbm_active_subject_columns_9');
+    localStorage.removeItem('tbm_active_subject_columns_9_v2');
+    localStorage.removeItem('tbm_active_subject_columns_9_v3');
+  }, []);
+
   // Calculate Emulation Rating based on Exact User Rules:
-  // 1. Học sinh xuất sắc: >= 6 môn TBM >= 9.0 và KHÔNG có môn nào < 6.5
-  // 2. Học sinh giỏi: >= 6 môn TBM >= 8.0 và KHÔNG có môn nào < 6.5
-  // 3. Cần phụ đạo: Có môn nào TBM < 5.0
+  // 1. Học sinh Xuất Sắc: >= 6 môn TBM >= 9.0 và KHÔNG có môn nào < 6.5
+  // 2. Học sinh Giỏi: >= 6 môn TBM >= 8.0 và KHÔNG có môn nào < 6.5
+  // 3. Cần Phụ Đạo: Có bất kỳ môn nào TBM < 5.0
+  // 4. Để trống: Các trường hợp còn lại (Tất cả các môn >= 5.0 nhưng chưa đủ 6 môn >= 8.0)
   const getEmulationRating = (student: Student) => {
     const subjectKeys = [
       'math',
@@ -143,8 +156,6 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
       'physics',
       'chemistry',
       'biology',
-      'informatics',
-      'technology',
     ];
 
     const scores: number[] = subjectKeys.map((key) => {
@@ -184,10 +195,10 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
       };
     }
 
-    // Fallback: Học sinh Khá Giỏi
+    // Rule 4: Để trống đối với các trường hợp còn lại
     return {
-      label: 'Học sinh Khá Giỏi',
-      badgeClass: 'bg-sky-100 text-sky-900 border border-sky-300 font-bold',
+      label: '',
+      badgeClass: '',
     };
   };
 
@@ -1267,6 +1278,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                     <td className="py-3 px-4">
                       {(() => {
                         const rating = getEmulationRating(student);
+                        if (!rating.label) return null;
                         return (
                           <span className={`text-[10px] px-2.5 py-1 rounded-full ${rating.badgeClass}`}>
                             {rating.label}
