@@ -18,7 +18,7 @@ import {
   convertTCVN3ToUnicode,
   convertVNIToUnicode,
   hasFontCorruption,
-} from '../utils/vietnameseEncoding';
+} from '../utils/googleSheetSync';
 
 interface VietnameseFontRepairModalProps {
   isOpen: boolean;
