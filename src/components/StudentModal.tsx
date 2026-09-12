@@ -257,6 +257,65 @@ export const StudentModal: React.FC<StudentModalProps> = ({
     });
   };
 
+  const handleAvgGradeChange = (
+    subjectKey:
+      | 'math'
+      | 'physics'
+      | 'chemistry'
+      | 'biology'
+      | 'english'
+      | 'literature'
+      | 'history'
+      | 'geography'
+      | 'informatics',
+    rawVal: string
+  ) => {
+    const val = parseFloat(rawVal);
+    const numVal = isNaN(val) ? 0 : Math.min(10, Math.max(0, val));
+
+    setFormData((prev) => {
+      const currentSubject = (prev.grades as any)[subjectKey] || { tx1: 8.0, tx2: 8.0, gk: 8.0, ck: 8.0, avg: 8.0 };
+      const updatedSubject = {
+        ...currentSubject,
+        tx1: numVal,
+        tx2: numVal,
+        gk: numVal,
+        ck: numVal,
+        avg: numVal,
+      };
+
+      const newGrades = {
+        ...prev.grades,
+        [subjectKey]: updatedSubject,
+      };
+
+      const subjects = [
+        'math',
+        'physics',
+        'chemistry',
+        'biology',
+        'english',
+        'literature',
+        'history',
+        'geography',
+        'informatics',
+      ] as const;
+
+      const totalAvg = subjects.reduce((sum, key) => {
+        const subj = (newGrades as any)[key] || { avg: 8.0 };
+        return sum + (subj.avg || 0);
+      }, 0);
+
+      const gpa = Number((totalAvg / subjects.length).toFixed(2));
+      newGrades.gpa = gpa;
+
+      return {
+        ...prev,
+        grades: newGrades,
+      };
+    });
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     onSave(formData);
@@ -678,12 +737,8 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                 <table className="w-full text-xs text-left">
                   <thead>
                     <tr className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
-                      <th className="py-2.5 px-3">Môn Học</th>
-                      <th className="py-2.5 px-3">KTTX 1</th>
-                      <th className="py-2.5 px-3">KTTX 2</th>
-                      <th className="py-2.5 px-3">Giữa Kỳ</th>
-                      <th className="py-2.5 px-3">Cuối Kỳ</th>
-                      <th className="py-2.5 px-3">ĐTB Môn</th>
+                      <th className="py-2.5 px-4 text-left">Môn Học</th>
+                      <th className="py-2.5 px-4 text-center">ĐTB Môn</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -707,7 +762,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                       };
                       return (
                         <tr key={subject.key} className="hover:bg-slate-50 transition-colors">
-                          <td className="py-2.5 px-3 font-bold text-[#003366] min-w-[210px]">
+                          <td className="py-2.5 px-4 font-bold text-[#003366]">
                             {editingSubjectKey === subject.key ? (
                               <div className="flex items-center gap-1.5 animate-in fade-in duration-150">
                                 <input
@@ -750,7 +805,7 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                                       setEditingSubjectKey(subject.key);
                                       setEditingSubjectName(subjectNames[subject.key] || subject.name);
                                     }}
-                                    title="Nhấp để điều chỉnh tên môn học (VD: Toán (Khối A) -> Văn (Khối D)...)"
+                                    title="Nhấp để điều chỉnh tên môn học"
                                     className="p-1 rounded-md text-blue-600 hover:text-blue-800 hover:bg-blue-100 transition-colors cursor-pointer"
                                   >
                                     <Edit3 className="w-3.5 h-3.5" />
@@ -759,62 +814,21 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                               </div>
                             )}
                           </td>
-                          {isEditingGrades && isGVCN ? (
-                            <>
-                              <td className="py-1.5 px-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="10"
-                                  step="0.1"
-                                  value={grade.tx1}
-                                  onChange={(e) => handleGradeChange(subject.key as any, 'tx1', e.target.value)}
-                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-                                />
-                              </td>
-                              <td className="py-1.5 px-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="10"
-                                  step="0.1"
-                                  value={grade.tx2}
-                                  onChange={(e) => handleGradeChange(subject.key as any, 'tx2', e.target.value)}
-                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-                                />
-                              </td>
-                              <td className="py-1.5 px-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="10"
-                                  step="0.1"
-                                  value={grade.gk}
-                                  onChange={(e) => handleGradeChange(subject.key as any, 'gk', e.target.value)}
-                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-                                />
-                              </td>
-                              <td className="py-1.5 px-2">
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="10"
-                                  step="0.1"
-                                  value={grade.ck}
-                                  onChange={(e) => handleGradeChange(subject.key as any, 'ck', e.target.value)}
-                                  className="w-16 px-2 py-1 bg-white border border-blue-300 rounded-lg text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs"
-                                />
-                              </td>
-                            </>
-                          ) : (
-                            <>
-                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.tx1}</td>
-                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.tx2}</td>
-                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.gk}</td>
-                              <td className="py-2.5 px-3 font-semibold text-slate-700">{grade.ck}</td>
-                            </>
-                          )}
-                          <td className="py-2.5 px-3 font-black text-blue-700 text-sm">{grade.avg}</td>
+                          <td className="py-2.5 px-4 text-center">
+                            {isEditingGrades && isGVCN ? (
+                              <input
+                                type="number"
+                                min="0"
+                                max="10"
+                                step="0.1"
+                                value={grade.avg}
+                                onChange={(e) => handleAvgGradeChange(subject.key as any, e.target.value)}
+                                className="w-20 px-2 py-1 bg-white border border-blue-400 rounded-xl text-xs font-bold text-center text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs mx-auto"
+                              />
+                            ) : (
+                              <span className="text-sm font-black text-blue-700">{grade.avg}</span>
+                            )}
+                          </td>
                         </tr>
                       );
                     })}
