@@ -4,7 +4,7 @@ import {
   convertTCVN3ToUnicode,
   convertVNIToUnicode,
   repairVietnameseMojibake,
-} from './vietnameseEncoding';
+} from './googleSheetSync';
 
 export interface ExtractedTableData {
   headers: string[];
