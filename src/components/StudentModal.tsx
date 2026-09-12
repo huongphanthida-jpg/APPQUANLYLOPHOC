@@ -196,13 +196,14 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   const handleGradeChange = (
     subjectKey:
       | 'math'
+      | 'literature'
+      | 'gdcd'
+      | 'history'
+      | 'geography'
+      | 'english'
       | 'physics'
       | 'chemistry'
       | 'biology'
-      | 'english'
-      | 'literature'
-      | 'history'
-      | 'geography'
       | 'informatics',
     field: 'tx1' | 'tx2' | 'gk' | 'ck',
     rawVal: string
@@ -232,14 +233,14 @@ export const StudentModal: React.FC<StudentModalProps> = ({
 
       const subjects = [
         'math',
+        'literature',
+        'gdcd',
+        'history',
+        'geography',
+        'english',
         'physics',
         'chemistry',
         'biology',
-        'english',
-        'literature',
-        'history',
-        'geography',
-        'informatics',
       ] as const;
 
       const totalAvg = subjects.reduce((sum, key) => {
@@ -260,13 +261,14 @@ export const StudentModal: React.FC<StudentModalProps> = ({
   const handleAvgGradeChange = (
     subjectKey:
       | 'math'
+      | 'literature'
+      | 'gdcd'
+      | 'history'
+      | 'geography'
+      | 'english'
       | 'physics'
       | 'chemistry'
       | 'biology'
-      | 'english'
-      | 'literature'
-      | 'history'
-      | 'geography'
       | 'informatics',
     rawVal: string
   ) => {
@@ -291,14 +293,14 @@ export const StudentModal: React.FC<StudentModalProps> = ({
 
       const subjects = [
         'math',
+        'literature',
+        'gdcd',
+        'history',
+        'geography',
+        'english',
         'physics',
         'chemistry',
         'biology',
-        'english',
-        'literature',
-        'history',
-        'geography',
-        'informatics',
       ] as const;
 
       const totalAvg = subjects.reduce((sum, key) => {
@@ -743,15 +745,15 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {[
-                      { key: 'math', name: 'Toán học (Khối A)', defaultAvg: 7.3 },
-                      { key: 'physics', name: 'Vật lý (Khối A)', defaultAvg: 8.2 },
-                      { key: 'chemistry', name: 'Hóa học (Khối A)', defaultAvg: 7.7 },
-                      { key: 'biology', name: 'Sinh học', defaultAvg: 7.0 },
-                      { key: 'english', name: 'Tiếng Anh', defaultAvg: 8.3 },
-                      { key: 'literature', name: 'Ngữ văn', defaultAvg: 7.1 },
-                      { key: 'history', name: 'Lịch sử', defaultAvg: 7.8 },
-                      { key: 'geography', name: 'Địa lý', defaultAvg: 8.0 },
-                      { key: 'informatics', name: 'Tin học', defaultAvg: 8.2 },
+                      { key: 'math', name: 'Toán học', defaultAvg: 8.5 },
+                      { key: 'literature', name: 'Ngữ văn', defaultAvg: 8.0 },
+                      { key: 'gdcd', name: 'GDCD / GDKT&PL', defaultAvg: 8.5 },
+                      { key: 'history', name: 'Lịch sử', defaultAvg: 8.0 },
+                      { key: 'geography', name: 'Địa lý', defaultAvg: 8.2 },
+                      { key: 'english', name: 'Tiếng Anh', defaultAvg: 8.6 },
+                      { key: 'physics', name: 'Vật lý', defaultAvg: 8.5 },
+                      { key: 'chemistry', name: 'Hóa học', defaultAvg: 8.5 },
+                      { key: 'biology', name: 'Sinh học', defaultAvg: 8.2 },
                     ].map((subject) => {
                       const grade = (formData.grades as any)[subject.key] || {
                         tx1: subject.defaultAvg,
