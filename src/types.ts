@@ -138,6 +138,7 @@ export interface Student {
     literature: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     history?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     geography?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
+    gdcd?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     informatics?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     gpa: number;
   };
@@ -152,6 +153,7 @@ export interface Student {
     english?: number;
     history?: number;
     geography?: number;
+    gdcd?: number;
     informatics?: number;
     gpa?: number;
   }[];
