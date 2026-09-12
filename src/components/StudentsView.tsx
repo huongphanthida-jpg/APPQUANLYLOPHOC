@@ -31,7 +31,7 @@ import { Student, UserRole, ClassInfo, TeacherInfo, GoogleSheetConfig } from '..
 import { ImportStudentsModal } from './ImportStudentsModal';
 import { ConfirmModal } from './ConfirmModal';
 import { VietnameseFontRepairModal } from './VietnameseFontRepairModal';
-import { hasFontCorruption } from '../utils/vietnameseEncoding';
+import { hasFontCorruption } from '../utils/googleSheetSync';
 
 interface StudentsViewProps {
   students: Student[];
