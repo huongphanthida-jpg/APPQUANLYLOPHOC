@@ -42,14 +42,15 @@ export interface ParsedGradeRow {
   group?: number;
   matchedStudentId?: string;
   math: SubjectScoreDetail;
+  literature: SubjectScoreDetail;
+  gdcd: SubjectScoreDetail;
+  history: SubjectScoreDetail;
+  geography: SubjectScoreDetail;
+  english: SubjectScoreDetail;
   physics: SubjectScoreDetail;
   chemistry: SubjectScoreDetail;
   biology: SubjectScoreDetail;
-  literature: SubjectScoreDetail;
-  english: SubjectScoreDetail;
-  history: SubjectScoreDetail;
-  geography: SubjectScoreDetail;
-  informatics: SubjectScoreDetail;
+  informatics?: SubjectScoreDetail;
   gpa: number;
   status: 'valid' | 'matched_by_name' | 'not_found' | 'warning';
   warningMessage?: string;
@@ -69,15 +70,15 @@ interface ImportGradesModalProps {
 }
 
 export const SUBJECT_CONFIG = [
-  { key: 'math' as const, label: 'Toán Học', aliases: ['toán', 'toan', 'math', 'toán học', 'toan hoc'], color: 'text-blue-700' },
-  { key: 'physics' as const, label: 'Vật Lý', aliases: ['vật lý', 'vat ly', 'vật lí', 'vat li', 'lý', 'ly', 'physics'], color: 'text-emerald-700' },
-  { key: 'chemistry' as const, label: 'Hóa Học', aliases: ['hóa học', 'hoa hoc', 'hóa', 'hoa', 'chemistry'], color: 'text-amber-700' },
-  { key: 'biology' as const, label: 'Sinh Học', aliases: ['sinh học', 'sinh hoc', 'sinh', 'biology'], color: 'text-teal-700' },
-  { key: 'literature' as const, label: 'Ngữ Văn', aliases: ['ngữ văn', 'ngu van', 'văn', 'van', 'literature'], color: 'text-purple-700' },
-  { key: 'english' as const, label: 'Tiếng Anh', aliases: ['tiếng anh', 'tieng anh', 'anh', 'english'], color: 'text-pink-700' },
-  { key: 'history' as const, label: 'Lịch Sử', aliases: ['lịch sử', 'lich su', 'sử', 'su', 'history'], color: 'text-orange-700' },
-  { key: 'geography' as const, label: 'Địa Lý', aliases: ['địa lý', 'dia ly', 'địa lí', 'dia li', 'địa', 'dia', 'geography'], color: 'text-indigo-700' },
-  { key: 'informatics' as const, label: 'Tin Học', aliases: ['tin học', 'tin hoc', 'tin', 'informatics'], color: 'text-cyan-700' },
+  { key: 'math' as const, label: 'Toán Học', aliases: ['toán', 'toan', 'math', 'toán học', 'toan hoc', 'toán (đtb)', 'toán đtb'], color: 'text-blue-700' },
+  { key: 'literature' as const, label: 'Ngữ Văn', aliases: ['ngữ văn', 'ngu van', 'văn', 'van', 'literature', 'văn (đtb)', 'ngữ văn (đtb)', 'văn đtb'], color: 'text-purple-700' },
+  { key: 'gdcd' as const, label: 'GDCD / GDKT&PL', aliases: ['gdcd', 'gdkt&pl', 'gdkt pl', 'giáo dục công dân', 'giao duc cong dan', 'gdcd (đtb)', 'gdcd/gdkt&pl (đtb)', 'gdcd / gdkt&pl (đtb)', 'gdcd đtb'], color: 'text-yellow-700' },
+  { key: 'history' as const, label: 'Lịch Sử', aliases: ['lịch sử', 'lich su', 'sử', 'su', 'history', 'sử (đtb)', 'lịch sử (đtb)', 'sử đtb'], color: 'text-orange-700' },
+  { key: 'geography' as const, label: 'Địa Lý', aliases: ['địa lý', 'dia ly', 'địa lí', 'dia li', 'địa', 'dia', 'geography', 'địa (đtb)', 'địa lý (đtb)', 'địa đtb'], color: 'text-indigo-700' },
+  { key: 'english' as const, label: 'Tiếng Anh', aliases: ['tiếng anh', 'tieng anh', 'anh', 'english', 'anh (đtb)', 'tiếng anh (đtb)', 'anh đtb'], color: 'text-pink-700' },
+  { key: 'physics' as const, label: 'Vật Lý', aliases: ['vật lý', 'vat ly', 'vật lí', 'vat li', 'lý', 'ly', 'physics', 'lý (đtb)', 'vật lý (đtb)', 'lý đtb'], color: 'text-emerald-700' },
+  { key: 'chemistry' as const, label: 'Hóa Học', aliases: ['hóa học', 'hoa hoc', 'hóa', 'hoa', 'chemistry', 'hóa (đtb)', 'hóa học (đtb)', 'hóa đtb'], color: 'text-amber-700' },
+  { key: 'biology' as const, label: 'Sinh Học', aliases: ['sinh học', 'sinh hoc', 'sinh', 'biology', 'sinh (đtb)', 'sinh học (đtb)', 'sinh đtb'], color: 'text-teal-700' },
 ];
 
 export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
@@ -143,35 +144,29 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
     return Number(((tx1 + tx2 + gk * 2 + ck * 3) / 7).toFixed(1));
   };
 
-  // Download Sample Excel File (.xlsx & .csv) for 9 subjects
+  // Download Sample Excel File (.xlsx & .csv) for 9 subjects (TBM only)
   const handleDownloadExcelTemplate = (format: 'xlsx' | 'csv' = 'xlsx') => {
-    const templateData = students.map((s) => ({
+    const defaultDemoRows = [
+      { code: 'HS001', name: 'Nguyễn Văn A', group: 1, grades: { math: { avg: 9.0 }, literature: { avg: 8.5 }, gdcd: { avg: 9.0 }, history: { avg: 8.5 }, geography: { avg: 8.0 }, english: { avg: 9.5 }, physics: { avg: 8.8 }, chemistry: { avg: 9.2 }, biology: { avg: 8.0 }, gpa: 8.7 } },
+      { code: 'HS002', name: 'Trần Thị B', group: 1, grades: { math: { avg: 9.5 }, literature: { avg: 9.0 }, gdcd: { avg: 9.0 }, history: { avg: 9.0 }, geography: { avg: 9.2 }, english: { avg: 9.5 }, physics: { avg: 9.2 }, chemistry: { avg: 9.0 }, biology: { avg: 9.0 }, gpa: 9.2 } },
+    ];
+
+    const dataRows = students.length > 0 ? students : defaultDemoRows;
+
+    const templateData = dataRows.map((s: any) => ({
       'Mã HS': s.code,
       'Họ và Tên': s.name,
       'Tổ': s.group,
-      'Toán TX1': s.grades.math.tx1,
-      'Toán TX2': s.grades.math.tx2,
-      'Toán GK': s.grades.math.gk,
-      'Toán CK': s.grades.math.ck,
-      'Toán ĐTB': s.grades.math.avg,
-      'Lý TX1': s.grades.physics.tx1,
-      'Lý TX2': s.grades.physics.tx2,
-      'Lý GK': s.grades.physics.gk,
-      'Lý CK': s.grades.physics.ck,
-      'Lý ĐTB': s.grades.physics.avg,
-      'Hóa TX1': s.grades.chemistry.tx1,
-      'Hóa TX2': s.grades.chemistry.tx2,
-      'Hóa GK': s.grades.chemistry.gk,
-      'Hóa CK': s.grades.chemistry.ck,
-      'Hóa ĐTB': s.grades.chemistry.avg,
-      'Sinh ĐTB': s.grades.biology.avg,
-      'Văn ĐTB': s.grades.literature.avg,
-      'Anh ĐTB': s.grades.english.avg,
-      'Sử ĐTB': s.grades.history?.avg ?? 8.0,
-      'Địa ĐTB': s.grades.geography?.avg ?? 8.2,
-      'Tin ĐTB': s.grades.informatics?.avg ?? 8.5,
-      'ĐTB 9 Môn': s.grades.gpa,
-      'Ghi Chú': 'Mẫu cập nhật điểm số 9 môn học',
+      'Toán (ĐTB)': s.grades.math?.avg ?? 8.5,
+      'Văn (ĐTB)': s.grades.literature?.avg ?? 8.0,
+      'GDCD (ĐTB)': s.grades.gdcd?.avg ?? 8.5,
+      'Sử (ĐTB)': s.grades.history?.avg ?? 8.0,
+      'Địa (ĐTB)': s.grades.geography?.avg ?? 8.2,
+      'Anh (ĐTB)': s.grades.english?.avg ?? 8.6,
+      'Lý (ĐTB)': s.grades.physics?.avg ?? 8.5,
+      'Hóa (ĐTB)': s.grades.chemistry?.avg ?? 8.5,
+      'Sinh (ĐTB)': s.grades.biology?.avg ?? 8.2,
+      'Ghi Chú': 'Mẫu cập nhật điểm trung bình môn (TBM) 9 môn học',
     }));
 
     if (format === 'xlsx') {
@@ -180,14 +175,12 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         { wch: 15 },
         { wch: 24 },
         { wch: 6 },
-        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 },
-        { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, { wch: 22 },
+        { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 },
+        { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 30 },
       ];
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Bang_Diem_9_Mon');
-      XLSX.writeFile(wb, `Mau_Bang_Diem_${safeClassName}_${effectivePeriod.replace(/\s+/g, '_')}.xlsx`);
+      XLSX.utils.book_append_sheet(wb, ws, 'Bang_Diem_TBM');
+      XLSX.writeFile(wb, `Mau_Bang_Diem_TBM_${safeClassName}_${effectivePeriod.replace(/\s+/g, '_')}.xlsx`);
     } else {
       const ws = XLSX.utils.json_to_sheet(templateData);
       const csvOutput = XLSX.utils.sheet_to_csv(ws);
@@ -195,7 +188,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Mau_Bang_Diem_${safeClassName}.csv`;
+      link.download = `Mau_Bang_Diem_TBM_${safeClassName}.csv`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -292,75 +285,18 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
           tx2: ['toán tx2', 'toan tx2', 'toán đgtx2', 'toán 45p', 'toan 45p', 'math tx2'],
           gk: ['toán gk', 'toan gk', 'toán giữa kỳ', 'toán đggk', 'toan giua ky', 'math gk'],
           ck: ['toán ck', 'toan ck', 'toán cuối kỳ', 'toán đgck', 'toan cuoi ky', 'math ck'],
-          avg: ['toán đtb', 'toan dtb', 'toán tb', 'toán', 'toan', 'điểm toán', 'diem toan', 'math'],
+          avg: ['toán (đtb)', 'toán đtb', 'toan dtb', 'toán tb', 'toán', 'toan', 'điểm toán', 'diem toan', 'math'],
         },
         {
           tx1: matchedStudent?.grades.math.tx1 ?? 8.5,
-          tx2: matchedStudent?.grades.math.tx2 ?? 9.0,
-          gk: matchedStudent?.grades.math.gk ?? 8.8,
-          ck: matchedStudent?.grades.math.ck ?? 9.0,
-          avg: matchedStudent?.grades.math.avg ?? 8.8,
+          tx2: matchedStudent?.grades.math.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.math.gk ?? 8.5,
+          ck: matchedStudent?.grades.math.ck ?? 8.5,
+          avg: matchedStudent?.grades.math.avg ?? 8.5,
         }
       );
 
-      // 2. Physics
-      const physics = parseSubjectScore(
-        'physics',
-        {
-          tx1: ['lý tx1', 'ly tx1', 'vật lý tx1', 'vật lí tx1', 'physics tx1'],
-          tx2: ['lý tx2', 'ly tx2', 'vật lý tx2', 'vật lí tx2', 'physics tx2'],
-          gk: ['lý gk', 'ly gk', 'vật lý gk', 'vật lý giữa kỳ', 'vật lí gk', 'physics gk'],
-          ck: ['lý ck', 'ly ck', 'vật lý ck', 'vật lý cuối kỳ', 'vật lí ck', 'physics ck'],
-          avg: ['lý đtb', 'ly dtb', 'lý tb', 'vật lý', 'vật lí', 'ly', 'điểm lý', 'physics'],
-        },
-        {
-          tx1: matchedStudent?.grades.physics.tx1 ?? 8.0,
-          tx2: matchedStudent?.grades.physics.tx2 ?? 8.5,
-          gk: matchedStudent?.grades.physics.gk ?? 8.5,
-          ck: matchedStudent?.grades.physics.ck ?? 8.8,
-          avg: matchedStudent?.grades.physics.avg ?? 8.5,
-        }
-      );
-
-      // 3. Chemistry
-      const chemistry = parseSubjectScore(
-        'chemistry',
-        {
-          tx1: ['hóa tx1', 'hoa tx1', 'hóa học tx1', 'chemistry tx1'],
-          tx2: ['hóa tx2', 'hoa tx2', 'hóa học tx2', 'chemistry tx2'],
-          gk: ['hóa gk', 'hoa gk', 'hóa học gk', 'hóa học giữa kỳ', 'chemistry gk'],
-          ck: ['hóa ck', 'hoa ck', 'hóa học ck', 'hóa học cuối kỳ', 'chemistry ck'],
-          avg: ['hóa đtb', 'hoa dtb', 'hóa tb', 'hóa học', 'hoa hoc', 'hóa', 'hoa', 'điểm hóa', 'chemistry'],
-        },
-        {
-          tx1: matchedStudent?.grades.chemistry.tx1 ?? 8.0,
-          tx2: matchedStudent?.grades.chemistry.tx2 ?? 8.5,
-          gk: matchedStudent?.grades.chemistry.gk ?? 8.5,
-          ck: matchedStudent?.grades.chemistry.ck ?? 8.8,
-          avg: matchedStudent?.grades.chemistry.avg ?? 8.5,
-        }
-      );
-
-      // 4. Biology
-      const biology = parseSubjectScore(
-        'biology',
-        {
-          tx1: ['sinh tx1', 'sinh học tx1', 'biology tx1'],
-          tx2: ['sinh tx2', 'sinh học tx2', 'biology tx2'],
-          gk: ['sinh gk', 'sinh học gk', 'biology gk'],
-          ck: ['sinh ck', 'sinh học ck', 'biology ck'],
-          avg: ['sinh đtb', 'sinh tb', 'sinh học', 'sinh hoc', 'sinh', 'biology'],
-        },
-        {
-          tx1: matchedStudent?.grades.biology.tx1 ?? 8.2,
-          tx2: matchedStudent?.grades.biology.tx2 ?? 8.2,
-          gk: matchedStudent?.grades.biology.gk ?? 8.2,
-          ck: matchedStudent?.grades.biology.ck ?? 8.2,
-          avg: matchedStudent?.grades.biology.avg ?? 8.2,
-        }
-      );
-
-      // 5. Literature
+      // 2. Literature
       const literature = parseSubjectScore(
         'literature',
         {
@@ -368,14 +304,71 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
           tx2: ['văn tx2', 'ngữ văn tx2', 'literature tx2'],
           gk: ['văn gk', 'ngữ văn gk', 'literature gk'],
           ck: ['văn ck', 'ngữ văn ck', 'literature ck'],
-          avg: ['văn đtb', 'văn tb', 'ngữ văn', 'ngu van', 'văn', 'van', 'literature'],
+          avg: ['văn (đtb)', 'ngữ văn (đtb)', 'văn đtb', 'văn tb', 'ngữ văn', 'ngu van', 'văn', 'van', 'literature'],
         },
         {
-          tx1: matchedStudent?.grades.literature.tx1 ?? 7.8,
-          tx2: matchedStudent?.grades.literature.tx2 ?? 7.8,
-          gk: matchedStudent?.grades.literature.gk ?? 7.8,
-          ck: matchedStudent?.grades.literature.ck ?? 7.8,
-          avg: matchedStudent?.grades.literature.avg ?? 7.8,
+          tx1: matchedStudent?.grades.literature.tx1 ?? 8.0,
+          tx2: matchedStudent?.grades.literature.tx2 ?? 8.0,
+          gk: matchedStudent?.grades.literature.gk ?? 8.0,
+          ck: matchedStudent?.grades.literature.ck ?? 8.0,
+          avg: matchedStudent?.grades.literature.avg ?? 8.0,
+        }
+      );
+
+      // 3. GDCD / GDKT&PL
+      const gdcd = parseSubjectScore(
+        'gdcd',
+        {
+          tx1: ['gdcd tx1', 'gdkt&pl tx1'],
+          tx2: ['gdcd tx2', 'gdkt&pl tx2'],
+          gk: ['gdcd gk', 'gdkt&pl gk'],
+          ck: ['gdcd ck', 'gdkt&pl ck'],
+          avg: ['gdcd (đtb)', 'gdcd/gdkt&pl (đtb)', 'gdcd / gdkt&pl (đtb)', 'gdcd đtb', 'gdcd tb', 'gdcd', 'gdkt&pl', 'gdkt pl', 'giáo dục công dân'],
+        },
+        {
+          tx1: matchedStudent?.grades.gdcd?.tx1 ?? 8.5,
+          tx2: matchedStudent?.grades.gdcd?.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.gdcd?.gk ?? 8.5,
+          ck: matchedStudent?.grades.gdcd?.ck ?? 8.5,
+          avg: matchedStudent?.grades.gdcd?.avg ?? 8.5,
+        }
+      );
+
+      // 4. History
+      const history = parseSubjectScore(
+        'history',
+        {
+          tx1: ['sử tx1', 'lịch sử tx1', 'history tx1'],
+          tx2: ['sử tx2', 'lịch sử tx2', 'history tx2'],
+          gk: ['sử gk', 'lịch sử gk', 'history gk'],
+          ck: ['sử ck', 'lịch sử ck', 'history ck'],
+          avg: ['sử (đtb)', 'lịch sử (đtb)', 'sử đtb', 'sử tb', 'lịch sử', 'lich su', 'sử', 'su', 'history'],
+        },
+        {
+          tx1: matchedStudent?.grades.history?.tx1 ?? 8.0,
+          tx2: matchedStudent?.grades.history?.tx2 ?? 8.0,
+          gk: matchedStudent?.grades.history?.gk ?? 8.0,
+          ck: matchedStudent?.grades.history?.ck ?? 8.0,
+          avg: matchedStudent?.grades.history?.avg ?? 8.0,
+        }
+      );
+
+      // 5. Geography
+      const geography = parseSubjectScore(
+        'geography',
+        {
+          tx1: ['địa tx1', 'địa lý tx1', 'geography tx1'],
+          tx2: ['địa tx2', 'địa lý tx2', 'geography tx2'],
+          gk: ['địa gk', 'địa lý gk', 'geography gk'],
+          ck: ['địa ck', 'địa lý ck', 'geography ck'],
+          avg: ['địa (đtb)', 'địa lý (đtb)', 'địa đtb', 'địa tb', 'địa lý', 'dia ly', 'địa lí', 'dia li', 'địa', 'dia', 'geography'],
+        },
+        {
+          tx1: matchedStudent?.grades.geography?.tx1 ?? 8.2,
+          tx2: matchedStudent?.grades.geography?.tx2 ?? 8.2,
+          gk: matchedStudent?.grades.geography?.gk ?? 8.2,
+          ck: matchedStudent?.grades.geography?.ck ?? 8.2,
+          avg: matchedStudent?.grades.geography?.avg ?? 8.2,
         }
       );
 
@@ -387,7 +380,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
           tx2: ['anh tx2', 'tiếng anh tx2', 'english tx2'],
           gk: ['anh gk', 'tiếng anh gk', 'english gk'],
           ck: ['anh ck', 'tiếng anh ck', 'english ck'],
-          avg: ['anh đtb', 'anh tb', 'tiếng anh', 'tieng anh', 'anh', 'english'],
+          avg: ['anh (đtb)', 'tiếng anh (đtb)', 'anh đtb', 'anh tb', 'tiếng anh', 'tieng anh', 'anh', 'english'],
         },
         {
           tx1: matchedStudent?.grades.english.tx1 ?? 8.6,
@@ -398,45 +391,64 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         }
       );
 
-      // 7. History
-      const history = parseSubjectScore(
-        'history',
+      // 7. Physics
+      const physics = parseSubjectScore(
+        'physics',
         {
-          tx1: ['sử tx1', 'lịch sử tx1', 'history tx1'],
-          tx2: ['sử tx2', 'lịch sử tx2', 'history tx2'],
-          gk: ['sử gk', 'lịch sử gk', 'history gk'],
-          ck: ['sử ck', 'lịch sử ck', 'history ck'],
-          avg: ['sử đtb', 'sử tb', 'lịch sử', 'lich su', 'sử', 'su', 'history'],
+          tx1: ['lý tx1', 'ly tx1', 'vật lý tx1', 'vật lí tx1', 'physics tx1'],
+          tx2: ['lý tx2', 'ly tx2', 'vật lý tx2', 'vật lí tx2', 'physics tx2'],
+          gk: ['lý gk', 'ly gk', 'vật lý gk', 'vật lý giữa kỳ', 'vật lí gk', 'physics gk'],
+          ck: ['lý ck', 'ly ck', 'vật lý ck', 'vật lý cuối kỳ', 'vật lí ck', 'physics ck'],
+          avg: ['lý (đtb)', 'vật lý (đtb)', 'lý đtb', 'ly dtb', 'lý tb', 'vật lý', 'vật lí', 'ly', 'điểm lý', 'physics'],
         },
         {
-          tx1: matchedStudent?.grades.history?.tx1 ?? 8.0,
-          tx2: matchedStudent?.grades.history?.tx2 ?? 8.0,
-          gk: matchedStudent?.grades.history?.gk ?? 8.0,
-          ck: matchedStudent?.grades.history?.ck ?? 8.0,
-          avg: matchedStudent?.grades.history?.avg ?? 8.0,
+          tx1: matchedStudent?.grades.physics.tx1 ?? 8.5,
+          tx2: matchedStudent?.grades.physics.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.physics.gk ?? 8.5,
+          ck: matchedStudent?.grades.physics.ck ?? 8.5,
+          avg: matchedStudent?.grades.physics.avg ?? 8.5,
         }
       );
 
-      // 8. Geography
-      const geography = parseSubjectScore(
-        'geography',
+      // 8. Chemistry
+      const chemistry = parseSubjectScore(
+        'chemistry',
         {
-          tx1: ['địa tx1', 'địa lý tx1', 'geography tx1'],
-          tx2: ['địa tx2', 'địa lý tx2', 'geography tx2'],
-          gk: ['địa gk', 'địa lý gk', 'geography gk'],
-          ck: ['địa ck', 'địa lý ck', 'geography ck'],
-          avg: ['địa đtb', 'địa tb', 'địa lý', 'dia ly', 'địa lí', 'dia li', 'địa', 'dia', 'geography'],
+          tx1: ['hóa tx1', 'hoa tx1', 'hóa học tx1', 'chemistry tx1'],
+          tx2: ['hóa tx2', 'hoa tx2', 'hóa học tx2', 'chemistry tx2'],
+          gk: ['hóa gk', 'hoa gk', 'hóa học gk', 'hóa học giữa kỳ', 'chemistry gk'],
+          ck: ['hóa ck', 'hoa ck', 'hóa học ck', 'hóa học cuối kỳ', 'chemistry ck'],
+          avg: ['hóa (đtb)', 'hóa học (đtb)', 'hóa đtb', 'hoa dtb', 'hóa tb', 'hóa học', 'hoa hoc', 'hóa', 'hoa', 'điểm hóa', 'chemistry'],
         },
         {
-          tx1: matchedStudent?.grades.geography?.tx1 ?? 8.2,
-          tx2: matchedStudent?.grades.geography?.tx2 ?? 8.2,
-          gk: matchedStudent?.grades.geography?.gk ?? 8.2,
-          ck: matchedStudent?.grades.geography?.ck ?? 8.2,
-          avg: matchedStudent?.grades.geography?.avg ?? 8.2,
+          tx1: matchedStudent?.grades.chemistry.tx1 ?? 8.5,
+          tx2: matchedStudent?.grades.chemistry.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.chemistry.gk ?? 8.5,
+          ck: matchedStudent?.grades.chemistry.ck ?? 8.5,
+          avg: matchedStudent?.grades.chemistry.avg ?? 8.5,
         }
       );
 
-      // 9. Informatics
+      // 9. Biology
+      const biology = parseSubjectScore(
+        'biology',
+        {
+          tx1: ['sinh tx1', 'sinh học tx1', 'biology tx1'],
+          tx2: ['sinh tx2', 'sinh học tx2', 'biology tx2'],
+          gk: ['sinh gk', 'sinh học gk', 'biology gk'],
+          ck: ['sinh ck', 'sinh học ck', 'biology ck'],
+          avg: ['sinh (đtb)', 'sinh học (đtb)', 'sinh đtb', 'sinh tb', 'sinh học', 'sinh hoc', 'sinh', 'biology'],
+        },
+        {
+          tx1: matchedStudent?.grades.biology.tx1 ?? 8.2,
+          tx2: matchedStudent?.grades.biology.tx2 ?? 8.2,
+          gk: matchedStudent?.grades.biology.gk ?? 8.2,
+          ck: matchedStudent?.grades.biology.ck ?? 8.2,
+          avg: matchedStudent?.grades.biology.avg ?? 8.2,
+        }
+      );
+
+      // 10. Informatics (Optional)
       const informatics = parseSubjectScore(
         'informatics',
         {
@@ -444,7 +456,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
           tx2: ['tin tx2', 'tin học tx2', 'informatics tx2'],
           gk: ['tin gk', 'tin học gk', 'informatics gk'],
           ck: ['tin ck', 'tin học ck', 'informatics ck'],
-          avg: ['tin đtb', 'tin tb', 'tin học', 'tin hoc', 'tin', 'informatics'],
+          avg: ['tin (đtb)', 'tin đtb', 'tin tb', 'tin học', 'tin hoc', 'tin', 'informatics'],
         },
         {
           tx1: matchedStudent?.grades.informatics?.tx1 ?? 8.5,
@@ -455,18 +467,18 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         }
       );
 
-      // Calculate GPA across all 9 subjects
+      // Calculate GPA across all 9 standard subjects
       const rawGpa = getRowValue(row, ['đtb 9 môn', 'đtb khối a', 'đtb', 'điểm tb', 'gpa', 'dtb', 'điểm trung bình']);
       const allAvgs = [
         math.avg,
+        literature.avg,
+        gdcd.avg,
+        history.avg,
+        geography.avg,
+        english.avg,
         physics.avg,
         chemistry.avg,
         biology.avg,
-        literature.avg,
-        english.avg,
-        history.avg,
-        geography.avg,
-        informatics.avg,
       ];
       const calculatedGpa =
         rawGpa !== undefined && rawGpa !== ''
@@ -482,13 +494,14 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         group: groupVal || matchedStudent?.group || 1,
         matchedStudentId: matchedStudent?.id,
         math,
+        literature,
+        gdcd,
+        history,
+        geography,
+        english,
         physics,
         chemistry,
         biology,
-        literature,
-        english,
-        history,
-        geography,
         informatics,
         gpa: calculatedGpa,
         status,
@@ -665,14 +678,15 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
       const newGrades = updateCurrentGrades
         ? {
             math: { ...stu.grades.math, ...rowData.math },
+            literature: { ...stu.grades.literature, ...rowData.literature },
+            gdcd: { ...(stu.grades.gdcd || {}), ...rowData.gdcd },
+            history: { ...(stu.grades.history || {}), ...rowData.history },
+            geography: { ...(stu.grades.geography || {}), ...rowData.geography },
+            english: { ...stu.grades.english, ...rowData.english },
             physics: { ...stu.grades.physics, ...rowData.physics },
             chemistry: { ...stu.grades.chemistry, ...rowData.chemistry },
             biology: { ...stu.grades.biology, ...rowData.biology },
-            literature: { ...stu.grades.literature, ...rowData.literature },
-            english: { ...stu.grades.english, ...rowData.english },
-            history: { ...(stu.grades.history || {}), ...rowData.history },
-            geography: { ...(stu.grades.geography || {}), ...rowData.geography },
-            informatics: { ...(stu.grades.informatics || {}), ...rowData.informatics },
+            informatics: rowData.informatics ? { ...(stu.grades.informatics || {}), ...rowData.informatics } : stu.grades.informatics,
             gpa: rowData.gpa,
           }
         : stu.grades;
@@ -681,19 +695,22 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
       const existingHistory = [...(stu.progressHistory || [])];
       const periodIdx = existingHistory.findIndex((p) => p.period === effectivePeriod);
 
-      const periodSnapshot = {
+      const periodSnapshot: any = {
         period: effectivePeriod,
         math: rowData.math.avg,
+        literature: rowData.literature.avg,
+        gdcd: rowData.gdcd.avg,
+        history: rowData.history.avg,
+        geography: rowData.geography.avg,
+        english: rowData.english.avg,
         physics: rowData.physics.avg,
         chemistry: rowData.chemistry.avg,
         biology: rowData.biology.avg,
-        literature: rowData.literature.avg,
-        english: rowData.english.avg,
-        history: rowData.history.avg,
-        geography: rowData.geography.avg,
-        informatics: rowData.informatics.avg,
         gpa: rowData.gpa,
       };
+      if (rowData.informatics?.avg) {
+        periodSnapshot.informatics = rowData.informatics.avg;
+      }
 
       if (periodIdx >= 0) {
         existingHistory[periodIdx] = periodSnapshot;
@@ -734,13 +751,14 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
             },
             grades: {
               math: r.math,
+              literature: r.literature,
+              gdcd: r.gdcd,
+              history: r.history,
+              geography: r.geography,
+              english: r.english,
               physics: r.physics,
               chemistry: r.chemistry,
               biology: r.biology,
-              literature: r.literature,
-              english: r.english,
-              history: r.history,
-              geography: r.geography,
               informatics: r.informatics,
               gpa: r.gpa,
             },
@@ -748,14 +766,15 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
               {
                 period: effectivePeriod,
                 math: r.math.avg,
+                literature: r.literature.avg,
+                gdcd: r.gdcd.avg,
+                history: r.history.avg,
+                geography: r.geography.avg,
+                english: r.english.avg,
                 physics: r.physics.avg,
                 chemistry: r.chemistry.avg,
                 biology: r.biology.avg,
-                literature: r.literature.avg,
-                english: r.english.avg,
-                history: r.history.avg,
-                geography: r.geography.avg,
-                informatics: r.informatics.avg,
+                informatics: r.informatics?.avg,
                 gpa: r.gpa,
               },
             ],
@@ -1208,14 +1227,14 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                       <th className="py-2.5 px-3">Mã HS</th>
                       <th className="py-2.5 px-3">Họ và Tên</th>
                       <th className="py-2.5 px-2 text-center text-blue-700">Toán</th>
+                      <th className="py-2.5 px-2 text-center text-purple-700">Văn</th>
+                      <th className="py-2.5 px-2 text-center text-yellow-700">GDCD</th>
+                      <th className="py-2.5 px-2 text-center text-orange-700">Sử</th>
+                      <th className="py-2.5 px-2 text-center text-indigo-700">Địa</th>
+                      <th className="py-2.5 px-2 text-center text-pink-700">Anh</th>
                       <th className="py-2.5 px-2 text-center text-emerald-700">Lý</th>
                       <th className="py-2.5 px-2 text-center text-amber-700">Hóa</th>
                       <th className="py-2.5 px-2 text-center text-teal-700">Sinh</th>
-                      <th className="py-2.5 px-2 text-center text-purple-700">Văn</th>
-                      <th className="py-2.5 px-2 text-center text-pink-700">Anh</th>
-                      <th className="py-2.5 px-2 text-center text-orange-700">Sử</th>
-                      <th className="py-2.5 px-2 text-center text-indigo-700">Địa</th>
-                      <th className="py-2.5 px-2 text-center text-cyan-700">Tin</th>
                       <th className="py-2.5 px-3 text-center text-[#003366] font-extrabold bg-blue-50/80">
                         ĐTB 9 Môn
                       </th>
@@ -1234,6 +1253,21 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                         <td className="py-2 px-2 text-center font-bold text-blue-700">
                           {r.math.avg}
                         </td>
+                        <td className="py-2 px-2 text-center font-semibold text-purple-700">
+                          {r.literature.avg}
+                        </td>
+                        <td className="py-2 px-2 text-center font-semibold text-yellow-700">
+                          {r.gdcd.avg}
+                        </td>
+                        <td className="py-2 px-2 text-center font-semibold text-orange-700">
+                          {r.history.avg}
+                        </td>
+                        <td className="py-2 px-2 text-center font-semibold text-indigo-700">
+                          {r.geography.avg}
+                        </td>
+                        <td className="py-2 px-2 text-center font-semibold text-pink-700">
+                          {r.english.avg}
+                        </td>
                         <td className="py-2 px-2 text-center font-bold text-emerald-700">
                           {r.physics.avg}
                         </td>
@@ -1242,21 +1276,6 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                         </td>
                         <td className="py-2 px-2 text-center font-semibold text-teal-700">
                           {r.biology.avg}
-                        </td>
-                        <td className="py-2 px-2 text-center font-semibold text-purple-700">
-                          {r.literature.avg}
-                        </td>
-                        <td className="py-2 px-2 text-center font-semibold text-pink-700">
-                          {r.english.avg}
-                        </td>
-                        <td className="py-2 px-2 text-center font-semibold text-orange-700">
-                          {r.history.avg}
-                        </td>
-                        <td className="py-2 px-2 text-center font-semibold text-indigo-700">
-                          {r.geography.avg}
-                        </td>
-                        <td className="py-2 px-2 text-center font-semibold text-cyan-700">
-                          {r.informatics.avg}
                         </td>
                         <td className="py-2 px-3 text-center font-black text-[#003366] bg-blue-50/50">
                           {r.gpa}
