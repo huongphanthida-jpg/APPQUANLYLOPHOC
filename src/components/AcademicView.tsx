@@ -112,7 +112,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     { key: 'history', short: 'Sử', fullName: 'Lịch Sử', category: 'KHXH' },
     { key: 'geography', short: 'Địa', fullName: 'Địa Lý', category: 'KHXH' },
     { key: 'gdcd', short: 'GDCD', fullName: 'GDCD & PL', category: 'KHXH' },
-    { key: 'gdqpan', short: 'GDQPAN', fullName: 'GDQP & An Ninh', category: 'Ngoại Ngữ & Khác' },
+    { key: 'gdqpan', short: 'GDQPAN', fullName: 'Giáo Dục Quốc Phòng An Ninh', category: 'Ngoại Ngữ & Khác' },
     { key: 'english', short: 'Anh', fullName: 'Tiếng Anh', category: 'Ngoại Ngữ & Khác' },
     { key: 'informatics', short: 'Tin', fullName: 'Tin Học', category: 'Ngoại Ngữ & Khác' },
     { key: 'technology', short: 'Công Nghệ', fullName: 'Công Nghệ', category: 'Ngoại Ngữ & Khác' },
@@ -1339,6 +1339,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                   </optgroup>
                   <optgroup label="Ngoại Ngữ & Môn Khác">
                     <option value="english">🌐 Tiếng Anh (Anh)</option>
+                    <option value="gdqpan">🪖 GDQPAN (Giáo Dục Quốc Phòng An Ninh)</option>
                     <option value="informatics">💻 Tin Học (Tin)</option>
                     <option value="technology">⚙️ Công Nghệ (Công nghệ)</option>
                   </optgroup>
