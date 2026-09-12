@@ -90,7 +90,7 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedPeriodFocus, setSelectedPeriodFocus] = useState<string>('all');
 
-  // Custom Subject Columns Configuration State (Full KHTN + KHXH + Ngoại Ngữ)
+  // Custom Subject Columns Configuration State (Full 9 Môn: KHTN + KHXH)
   const DEFAULT_SUBJECT_COLS = [
     { key: 'math', short: 'Toán', fullName: 'Toán Học', textColor: 'text-blue-900' },
     { key: 'literature', short: 'Văn', fullName: 'Ngữ Văn', textColor: 'text-purple-900' },
@@ -101,8 +101,6 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     { key: 'physics', short: 'Lý', fullName: 'Vật Lý', textColor: 'text-emerald-900' },
     { key: 'chemistry', short: 'Hóa', fullName: 'Hóa Học', textColor: 'text-amber-900' },
     { key: 'biology', short: 'Sinh', fullName: 'Sinh Học', textColor: 'text-teal-900' },
-    { key: 'informatics', short: 'Tin', fullName: 'Tin Học', textColor: 'text-cyan-900' },
-    { key: 'technology', short: 'Công Nghệ', fullName: 'Công Nghệ', textColor: 'text-slate-900' },
   ];
 
   const PRESET_SUBJECT_OPTIONS = [
@@ -120,11 +118,11 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
   ];
 
   const [activeSubjectCols, setActiveSubjectCols] = useState(() => {
-    const saved = localStorage.getItem('tbm_active_subject_columns');
+    const saved = localStorage.getItem('tbm_active_subject_columns_9');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length >= DEFAULT_SUBJECT_COLS.length) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       } catch (e) {}
     }
     return DEFAULT_SUBJECT_COLS;
@@ -1200,7 +1198,6 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                     </th>
                   ));
                 })()}
-                <th className="py-3 px-4 text-center font-extrabold text-[#003366] bg-blue-50/70">ĐTB Chung</th>
                 <th className="py-3 px-4">Xếp Loại Thi Đua</th>
               </tr>
             </thead>
@@ -1276,13 +1273,6 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                         );
                       });
                     })()}
-
-                    {/* GPA Chung */}
-                    <td className="py-3 px-4 text-center bg-blue-50/40">
-                      <span className="text-sm font-extrabold text-[#003366]">
-                        {student.grades.gpa}
-                      </span>
-                    </td>
 
                     {/* Rating Badge */}
                     <td className="py-3 px-4">
