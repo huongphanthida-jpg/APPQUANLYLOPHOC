@@ -50,6 +50,7 @@ export interface ParsedGradeRow {
   physics: SubjectScoreDetail;
   chemistry: SubjectScoreDetail;
   biology: SubjectScoreDetail;
+  gdqpan?: SubjectScoreDetail;
   informatics?: SubjectScoreDetail;
   gpa: number;
   status: 'valid' | 'matched_by_name' | 'not_found' | 'warning';
@@ -79,6 +80,7 @@ export const SUBJECT_CONFIG = [
   { key: 'physics' as const, label: 'Vật Lý', aliases: ['vật lý', 'vat ly', 'vật lí', 'vat li', 'lý', 'ly', 'physics', 'lý (đtb)', 'vật lý (đtb)', 'lý đtb'], color: 'text-emerald-700' },
   { key: 'chemistry' as const, label: 'Hóa Học', aliases: ['hóa học', 'hoa hoc', 'hóa', 'hoa', 'chemistry', 'hóa (đtb)', 'hóa học (đtb)', 'hóa đtb'], color: 'text-amber-700' },
   { key: 'biology' as const, label: 'Sinh Học', aliases: ['sinh học', 'sinh hoc', 'sinh', 'biology', 'sinh (đtb)', 'sinh học (đtb)', 'sinh đtb'], color: 'text-teal-700' },
+  { key: 'gdqpan' as const, label: 'GDQPAN', aliases: ['gdqpan', 'gdqp', 'qpan', 'quốc phòng', 'quoc phong', 'giáo dục quốc phòng', 'giao duc quoc phong', 'gdqpan (đtb)', 'gdqpan đtb', 'gdqp (đtb)', 'gdqp đtb'], color: 'text-red-700' },
 ];
 
 export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
@@ -448,7 +450,26 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         }
       );
 
-      // 10. Informatics (Optional)
+      // 10. GDQPAN (Giáo dục Quốc phòng và An ninh)
+      const gdqpan = parseSubjectScore(
+        'gdqpan',
+        {
+          tx1: ['gdqpan tx1', 'gdqp tx1', 'quốc phòng tx1'],
+          tx2: ['gdqpan tx2', 'gdqp tx2', 'quốc phòng tx2'],
+          gk: ['gdqpan gk', 'gdqp gk', 'quốc phòng gk'],
+          ck: ['gdqpan ck', 'gdqp ck', 'quốc phòng ck'],
+          avg: ['gdqpan (đtb)', 'gdqp (đtb)', 'gdqpan đtb', 'gdqp đtb', 'gdqpan', 'gdqp', 'qpan', 'quốc phòng', 'quoc phong', 'giáo dục quốc phòng'],
+        },
+        {
+          tx1: matchedStudent?.grades.gdqpan?.tx1 ?? 8.5,
+          tx2: matchedStudent?.grades.gdqpan?.tx2 ?? 8.5,
+          gk: matchedStudent?.grades.gdqpan?.gk ?? 8.5,
+          ck: matchedStudent?.grades.gdqpan?.ck ?? 8.5,
+          avg: matchedStudent?.grades.gdqpan?.avg ?? 8.5,
+        }
+      );
+
+      // 11. Informatics (Optional)
       const informatics = parseSubjectScore(
         'informatics',
         {
@@ -502,6 +523,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         physics,
         chemistry,
         biology,
+        gdqpan,
         informatics,
         gpa: calculatedGpa,
         status,
@@ -686,6 +708,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
             physics: { ...stu.grades.physics, ...rowData.physics },
             chemistry: { ...stu.grades.chemistry, ...rowData.chemistry },
             biology: { ...stu.grades.biology, ...rowData.biology },
+            gdqpan: rowData.gdqpan ? { ...(stu.grades.gdqpan || {}), ...rowData.gdqpan } : stu.grades.gdqpan,
             informatics: rowData.informatics ? { ...(stu.grades.informatics || {}), ...rowData.informatics } : stu.grades.informatics,
             gpa: rowData.gpa,
           }
@@ -708,6 +731,9 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
         biology: rowData.biology.avg,
         gpa: rowData.gpa,
       };
+      if (rowData.gdqpan?.avg) {
+        periodSnapshot.gdqpan = rowData.gdqpan.avg;
+      }
       if (rowData.informatics?.avg) {
         periodSnapshot.informatics = rowData.informatics.avg;
       }
@@ -759,6 +785,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
               physics: r.physics,
               chemistry: r.chemistry,
               biology: r.biology,
+              gdqpan: r.gdqpan,
               informatics: r.informatics,
               gpa: r.gpa,
             },
@@ -774,6 +801,7 @@ export const ImportGradesModal: React.FC<ImportGradesModalProps> = ({
                 physics: r.physics.avg,
                 chemistry: r.chemistry.avg,
                 biology: r.biology.avg,
+                gdqpan: r.gdqpan?.avg,
                 informatics: r.informatics?.avg,
                 gpa: r.gpa,
               },
