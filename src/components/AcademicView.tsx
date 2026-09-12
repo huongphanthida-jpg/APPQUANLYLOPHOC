@@ -90,14 +90,19 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [selectedPeriodFocus, setSelectedPeriodFocus] = useState<string>('all');
 
-  // Custom Subject Columns Configuration State
+  // Custom Subject Columns Configuration State (Full KHTN + KHXH + Ngoại Ngữ)
   const DEFAULT_SUBJECT_COLS = [
     { key: 'math', short: 'Toán', fullName: 'Toán Học', textColor: 'text-blue-900' },
+    { key: 'literature', short: 'Văn', fullName: 'Ngữ Văn', textColor: 'text-purple-900' },
+    { key: 'gdcd', short: 'GDCD', fullName: 'GDCD / GDKT&PL', textColor: 'text-yellow-900' },
+    { key: 'history', short: 'Sử', fullName: 'Lịch Sử', textColor: 'text-orange-900' },
+    { key: 'geography', short: 'Địa', fullName: 'Địa Lý', textColor: 'text-indigo-900' },
+    { key: 'english', short: 'Anh', fullName: 'Tiếng Anh', textColor: 'text-pink-900' },
     { key: 'physics', short: 'Lý', fullName: 'Vật Lý', textColor: 'text-emerald-900' },
     { key: 'chemistry', short: 'Hóa', fullName: 'Hóa Học', textColor: 'text-amber-900' },
     { key: 'biology', short: 'Sinh', fullName: 'Sinh Học', textColor: 'text-teal-900' },
-    { key: 'literature', short: 'Văn', fullName: 'Ngữ Văn', textColor: 'text-purple-900' },
-    { key: 'english', short: 'Anh', fullName: 'Tiếng Anh', textColor: 'text-pink-900' },
+    { key: 'informatics', short: 'Tin', fullName: 'Tin Học', textColor: 'text-cyan-900' },
+    { key: 'technology', short: 'Công Nghệ', fullName: 'Công Nghệ', textColor: 'text-slate-900' },
   ];
 
   const PRESET_SUBJECT_OPTIONS = [
@@ -119,11 +124,74 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length >= DEFAULT_SUBJECT_COLS.length) return parsed;
       } catch (e) {}
     }
     return DEFAULT_SUBJECT_COLS;
   });
+
+  // Calculate Emulation Rating based on Exact User Rules:
+  // 1. Học sinh xuất sắc: >= 6 môn TBM >= 9.0 và KHÔNG có môn nào < 6.5
+  // 2. Học sinh giỏi: >= 6 môn TBM >= 8.0 và KHÔNG có môn nào < 6.5
+  // 3. Cần phụ đạo: Có môn nào TBM < 5.0
+  const getEmulationRating = (student: Student) => {
+    const subjectKeys = [
+      'math',
+      'literature',
+      'gdcd',
+      'history',
+      'geography',
+      'english',
+      'physics',
+      'chemistry',
+      'biology',
+      'informatics',
+      'technology',
+    ];
+
+    const scores: number[] = subjectKeys.map((key) => {
+      const g = (student.grades as any)?.[key];
+      if (g === undefined || g === null) return 8.0;
+      const rawVal = typeof g === 'number' ? g : g?.avg ?? 8.0;
+      return typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
+    });
+
+    // Rule 3: Nếu có môn < 5.0 -> Cần Phụ Đạo
+    const hasLessThan5 = scores.some((s) => s < 5.0);
+    if (hasLessThan5) {
+      return {
+        label: 'Cần Phụ Đạo',
+        badgeClass: 'bg-amber-100 text-amber-900 border border-amber-300 font-extrabold shadow-2xs',
+      };
+    }
+
+    // Condition: Không có môn nào < 6.5
+    const hasLessThan6_5 = scores.some((s) => s < 6.5);
+
+    // Rule 1: >= 6 môn >= 9.0 và không môn nào < 6.5 -> Học sinh Xuất Sắc
+    const countGte9 = scores.filter((s) => s >= 9.0).length;
+    if (countGte9 >= 6 && !hasLessThan6_5) {
+      return {
+        label: 'Học sinh Xuất Sắc',
+        badgeClass: 'bg-emerald-100 text-emerald-900 border border-emerald-300 font-black shadow-2xs',
+      };
+    }
+
+    // Rule 2: >= 6 môn >= 8.0 và không môn nào < 6.5 -> Học sinh Giỏi
+    const countGte8 = scores.filter((s) => s >= 8.0).length;
+    if (countGte8 >= 6 && !hasLessThan6_5) {
+      return {
+        label: 'Học sinh Giỏi',
+        badgeClass: 'bg-blue-100 text-blue-900 border border-blue-300 font-black shadow-2xs',
+      };
+    }
+
+    // Fallback: Học sinh Khá Giỏi
+    return {
+      label: 'Học sinh Khá Giỏi',
+      badgeClass: 'bg-sky-100 text-sky-900 border border-sky-300 font-bold',
+    };
+  };
 
   const [editingColIdx, setEditingColIdx] = useState<number | null>(null);
   const [editColKey, setEditColKey] = useState<string>('math');
@@ -1110,31 +1178,37 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                 <th className="py-3 px-4">Mã HS</th>
                 <th className="py-3 px-4">Họ và Tên</th>
                 <th className="py-3 px-3 text-center">Tổ</th>
-                {activeSubjectCols.map((col, idx) => (
-                  <th key={idx} className="py-3 px-3 text-center">
-                    <div className="inline-flex items-center justify-center gap-1 group/subj">
-                      <span className="font-bold text-slate-800">{col.short} (ĐTB)</span>
-                      {(role === 'gvcn' || role === 'gvbm') && (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenEditSubjectCol(idx)}
-                          className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-blue-600 transition-all cursor-pointer opacity-70 group-hover/subj:opacity-100"
-                          title={`Nhấp để sửa/điều chỉnh môn ${col.short}`}
-                        >
-                          <Edit2 className="w-3 h-3 text-blue-600" />
-                        </button>
-                      )}
-                    </div>
-                  </th>
-                ))}
+                {(() => {
+                  const displayedCols = selectedSubjectFilter === 'all'
+                    ? activeSubjectCols
+                    : activeSubjectCols.filter((c) => c.key === selectedSubjectFilter);
+                  return displayedCols.map((col, idx) => (
+                    <th key={col.key || idx} className="py-3 px-3 text-center">
+                      <div className="inline-flex items-center justify-center gap-1 group/subj">
+                        <span className="font-bold text-slate-800">{col.short} (ĐTB)</span>
+                        {(role === 'gvcn' || role === 'gvbm') && (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditSubjectCol(activeSubjectCols.findIndex((c) => c.key === col.key))}
+                            className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-blue-600 transition-all cursor-pointer opacity-70 group-hover/subj:opacity-100"
+                            title={`Nhấp để sửa/điều chỉnh môn ${col.short}`}
+                          >
+                            <Edit2 className="w-3 h-3 text-blue-600" />
+                          </button>
+                        )}
+                      </div>
+                    </th>
+                  ));
+                })()}
                 <th className="py-3 px-4 text-center font-extrabold text-[#003366] bg-blue-50/70">ĐTB Chung</th>
                 <th className="py-3 px-4">Xếp Loại Thi Đua</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {students.map((student) => {
-                const isWeak = student.grades.gpa < 7.5;
-                const isExcellent = student.grades.gpa >= 9.0;
+                const rating = getEmulationRating(student);
+                const isWeak = rating.label === 'Cần Phụ Đạo';
+                const isExcellent = rating.label === 'Học sinh Xuất Sắc';
                 return (
                   <tr
                     key={student.id}
@@ -1162,41 +1236,46 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
                       </span>
                     </td>
 
-                    {/* Dynamic Subject Grade Cells */}
-                    {activeSubjectCols.map((col, idx) => {
-                      const rawVal = (student.grades as any)[col.key]?.avg ?? (student.grades as any)[col.key] ?? 8.0;
-                      const subjGrade = typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
-                      const isEditingThis = editingCell?.studentId === student.id && editingCell?.subject === col.key;
+                    {/* Dynamic Subject Grade Cells Filtered by Selection */}
+                    {(() => {
+                      const displayedCols = selectedSubjectFilter === 'all'
+                        ? activeSubjectCols
+                        : activeSubjectCols.filter((c) => c.key === selectedSubjectFilter);
+                      return displayedCols.map((col, idx) => {
+                        const rawVal = (student.grades as any)[col.key]?.avg ?? (student.grades as any)[col.key] ?? 8.0;
+                        const subjGrade = typeof rawVal === 'number' ? Number(rawVal.toFixed(1)) : 8.0;
+                        const isEditingThis = editingCell?.studentId === student.id && editingCell?.subject === col.key;
 
-                      return (
-                        <td key={idx} className="py-3 px-3 text-center font-semibold text-slate-800">
-                          {isEditingThis ? (
-                            <input
-                              type="number"
-                              step="0.1"
-                              autoFocus
-                              value={cellValue}
-                              onChange={(e) => setCellValue(e.target.value)}
-                              onBlur={() => handleSaveEdit(student.id, col.key, 'avg')}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') handleSaveEdit(student.id, col.key, 'avg');
-                              }}
-                              className="w-14 px-1 py-0.5 text-center bg-white border border-blue-400 rounded shadow-inner"
-                            />
-                          ) : (
-                            <span
-                              onDoubleClick={() => handleStartEdit(student.id, col.key, 'avg', subjGrade)}
-                              className={`cursor-pointer px-2 py-0.5 rounded transition-all ${
-                                subjGrade >= 9.0 ? 'bg-blue-100 text-blue-900 font-bold' : 'hover:bg-slate-100'
-                              }`}
-                              title="Nhấp đúp để chỉnh sửa điểm môn này"
-                            >
-                              {subjGrade}
-                            </span>
-                          )}
-                        </td>
-                      );
-                    })}
+                        return (
+                          <td key={col.key || idx} className="py-3 px-3 text-center font-semibold text-slate-800">
+                            {isEditingThis ? (
+                              <input
+                                type="number"
+                                step="0.1"
+                                autoFocus
+                                value={cellValue}
+                                onChange={(e) => setCellValue(e.target.value)}
+                                onBlur={() => handleSaveEdit(student.id, col.key, 'avg')}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleSaveEdit(student.id, col.key, 'avg');
+                                }}
+                                className="w-14 px-1 py-0.5 text-center bg-white border border-blue-400 rounded shadow-inner"
+                              />
+                            ) : (
+                              <span
+                                onDoubleClick={() => handleStartEdit(student.id, col.key, 'avg', subjGrade)}
+                                className={`cursor-pointer px-2 py-0.5 rounded transition-all ${
+                                  subjGrade >= 9.0 ? 'bg-blue-100 text-blue-900 font-bold' : 'hover:bg-slate-100'
+                                }`}
+                                title="Nhấp đúp để chỉnh sửa điểm môn này"
+                              >
+                                {subjGrade}
+                              </span>
+                            )}
+                          </td>
+                        );
+                      });
+                    })()}
 
                     {/* GPA Chung */}
                     <td className="py-3 px-4 text-center bg-blue-50/40">
@@ -1207,17 +1286,14 @@ export const AcademicView: React.FC<AcademicViewProps> = ({
 
                     {/* Rating Badge */}
                     <td className="py-3 px-4">
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                          isExcellent
-                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                            : isWeak
-                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
-                            : 'bg-blue-100 text-blue-800 border border-blue-200'
-                        }`}
-                      >
-                        {isExcellent ? 'Học sinh Xuất Sắc' : isWeak ? 'Cần Phụ Đạo' : 'Học sinh Khá Giỏi'}
-                      </span>
+                      {(() => {
+                        const rating = getEmulationRating(student);
+                        return (
+                          <span className={`text-[10px] px-2.5 py-1 rounded-full ${rating.badgeClass}`}>
+                            {rating.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                   </tr>
                 );
