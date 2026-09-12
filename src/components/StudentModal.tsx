@@ -61,7 +61,7 @@ function buildSafeStudent(stu: Student | null): Student {
       careerAspiration: '',
       healthNote: '',
       emergencyContact: {
-        parentName: 'Phụ huynh học sinh',
+        parentName: '',
         relationship: 'Bố',
         phone: '',
         workplace: '',
@@ -89,7 +89,7 @@ function buildSafeStudent(stu: Student | null): Student {
     : defaultGrades;
 
   const emergencyContact = {
-    parentName: stu.emergencyContact?.parentName || 'Phụ huynh học sinh',
+    parentName: stu.emergencyContact?.parentName ?? '',
     relationship: stu.emergencyContact?.relationship || 'Bố',
     phone: stu.emergencyContact?.phone || '',
     workplace: stu.emergencyContact?.workplace || '',
