@@ -139,6 +139,7 @@ export interface Student {
     history?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     geography?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     gdcd?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
+    gdqpan?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     informatics?: { tx1: number; tx2: number; gk: number; ck: number; avg: number };
     gpa: number;
   };
@@ -154,6 +155,7 @@ export interface Student {
     history?: number;
     geography?: number;
     gdcd?: number;
+    gdqpan?: number;
     informatics?: number;
     gpa?: number;
   }[];
