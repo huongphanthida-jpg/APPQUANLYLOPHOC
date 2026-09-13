@@ -17,6 +17,10 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
   students,
   onSave,
 }) => {
+  const [title, setTitle] = useState<string>(seatingChart?.title || 'Sơ Đồ Chỗ Ngồi Lớp Chuẩn');
+  const [description, setDescription] = useState<string>(seatingChart?.description || '4 Dãy x 6 Bàn (48 Chỗ ngồi)');
+  const [updatedAt, setUpdatedAt] = useState<string>(seatingChart?.updatedAt || new Date().toISOString().split('T')[0]);
+
   const [selectedCol, setSelectedCol] = useState<number>(1);
   const [selectedDesk, setSelectedDesk] = useState<number>(1);
   const [selectedSeat, setSelectedSeat] = useState<1 | 2>(1);
@@ -43,9 +47,9 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
     };
 
     const updated: SeatingChartData = {
-      title: seatingChart?.title || 'Sơ Đồ Chỗ Ngồi Lớp Chuẩn',
-      description: seatingChart?.description || '4 Dãy x 6 Bàn x 2 Chỗ ngồi',
-      updatedAt: new Date().toLocaleDateString('vi-VN'),
+      title: title.trim() || 'Sơ Đồ Chỗ Ngồi Lớp Chuẩn',
+      description: description.trim() || '4 Dãy x 6 Bàn x 2 Chỗ ngồi',
+      updatedAt: updatedAt.trim() || new Date().toISOString().split('T')[0],
       assignments: updatedAssignments,
     };
 
@@ -82,6 +86,39 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
 
         {/* Body Form */}
         <form onSubmit={handleSaveSeat} className="p-6 space-y-4 text-xs">
+          {/* Section 1: Cấu hình thông tin tiêu đề & Ngày áp dụng */}
+          <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-3">
+            <div className="font-bold text-[#003366] text-xs uppercase tracking-wider">
+              1. Cấu Hình Tiêu Đề & Ngày Cập Nhật Sơ Đồ
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Tiêu đề sơ đồ lớp:</label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Sơ Đồ Chỗ Ngồi Lớp Chuẩn"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Ngày cập nhật / áp dụng:</label>
+                <input
+                  type="text"
+                  value={updatedAt}
+                  onChange={(e) => setUpdatedAt(e.target.value)}
+                  className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="28/08/2026"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="font-bold text-[#003366] text-xs uppercase tracking-wider pt-1">
+            2. Gán / Chỉnh Sửa Chỗ Ngồi Chi Tiết
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="font-bold text-slate-700 block mb-1">Chọn Dãy / Tổ:</label>
