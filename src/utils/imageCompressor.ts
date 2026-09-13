@@ -5,9 +5,9 @@
 
 export const compressImageBase64 = (
   dataUrl: string,
-  maxWidth = 300,
-  maxHeight = 300,
-  quality = 0.82
+  maxWidth = 240,
+  maxHeight = 240,
+  quality = 0.78
 ): Promise<string> => {
   return new Promise((resolve) => {
     // If not a base64 data URL (e.g. http link or empty), return as-is
