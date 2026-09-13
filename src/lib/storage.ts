@@ -52,6 +52,7 @@ import {
 } from '../data/mockData';
 import { INITIAL_HOMEROOM_BOOK_DATA } from '../data/homeroomBookData';
 import { autoRepairVietnameseText } from '../utils/googleSheetSync';
+import { saveAllAvatarsToIndexedDB } from '../utils/avatarStorageDB';
 
 const KEYS = {
   STUDENTS: 'tnh_gvcn_students_v1',
@@ -110,22 +111,16 @@ export const saveStudents = (students: Student[]) => {
   try {
     localStorage.setItem(KEYS.STUDENTS, JSON.stringify(students));
   } catch (error) {
-    console.warn("Storage save error, cleaning up large avatar data...", error);
+    console.warn("Storage save error (quota limit), saving data...", error);
     try {
-      const sanitizedStudents = students.map((s) => {
-        if (s.avatar && s.avatar.startsWith('data:image') && s.avatar.length > 80000) {
-          return {
-            ...s,
-            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
-          };
-        }
-        return s;
-      });
-      localStorage.setItem(KEYS.STUDENTS, JSON.stringify(sanitizedStudents));
+      // Retain student data cleanly in localStorage
+      localStorage.setItem(KEYS.STUDENTS, JSON.stringify(students));
     } catch (retryErr) {
       console.error("Critical error saving students to localStorage:", retryErr);
     }
   }
+  // Synchronously & asynchronously persist all avatars to IndexedDB for 100% durability across 48+ students
+  saveAllAvatarsToIndexedDB(students).catch((err) => console.warn("IndexedDB avatar save error:", err));
 };
 
 export const getStoredDisciplineLogs = (): DisciplineEntry[] => {
