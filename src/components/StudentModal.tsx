@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Student } from '../types';
 import { ConfirmModal } from './ConfirmModal';
+import { compressImageBase64 } from '../utils/imageCompressor';
 
 interface StudentModalProps {
   student: Student | null;
@@ -184,10 +185,11 @@ export const StudentModal: React.FC<StudentModalProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
-        setFormData((prev) => ({ ...prev, avatar: dataUrl }));
+        const compressed = await compressImageBase64(dataUrl, 300, 300, 0.82);
+        setFormData((prev) => ({ ...prev, avatar: compressed }));
       }
     };
     reader.readAsDataURL(file);
