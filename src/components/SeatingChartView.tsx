@@ -13,6 +13,8 @@ import {
   Award,
   HeartPulse,
   UserCheck,
+  UserPlus,
+  Edit3,
   ShieldCheck,
   HelpCircle,
   CheckCircle2,
@@ -26,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Student, UserRole, SeatingChartData, SeatingDisplayMode, ClassInfo, TeacherInfo } from '../types';
 import { ConfirmModal } from './ConfirmModal';
+import { EditSeatingModal } from './homeroom-book/EditSeatingModal';
 
 interface SeatingChartViewProps {
   students: Student[];
@@ -59,8 +62,124 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [showAssignModal, setShowAssignModal] = useState<string | null>(null); // seatKey to assign
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isEditSeatingModalOpen, setIsEditSeatingModalOpen] = useState(false);
   const [isAutoArrangeOpen, setIsAutoArrangeOpen] = useState<boolean>(false);
   const autoArrangeRef = useRef<HTMLDivElement>(null);
+
+  // Auto-arrange unassigned students only into remaining empty seats without changing existing seats
+  const handleAutoArrangeUnassignedOnly = () => {
+    if (unassignedStudents.length === 0) {
+      showToast('Tất cả học sinh trong lớp đều đã có chỗ ngồi!');
+      return;
+    }
+
+    const totalDesksPerAisle = 6;
+    const totalAisles = 4;
+    const newAssignments = { ...seatingChart.assignments };
+
+    // Find all currently empty seats
+    const emptySeatKeys: string[] = [];
+    for (let col = 1; col <= totalAisles; col++) {
+      for (let desk = 1; desk <= totalDesksPerAisle; desk++) {
+        for (let seat = 1; seat <= 2; seat++) {
+          const key = `${col}-${desk}-${seat}`;
+          if (!newAssignments[key]) {
+            emptySeatKeys.push(key);
+          }
+        }
+      }
+    }
+
+    if (emptySeatKeys.length === 0) {
+      showToast('Sơ đồ lớp đã đầy (48/48 ghế), không còn ghế trống!');
+      return;
+    }
+
+    let assignedCount = 0;
+    const remainingStudents = [...unassignedStudents];
+    const unplaced: Student[] = [];
+
+    // Step 1: Try placing students into their designated Group aisle if an empty seat exists there
+    for (const student of remainingStudents) {
+      const preferredCol = Math.min(4, Math.max(1, student.group || 1));
+      const matchIndex = emptySeatKeys.findIndex((k) => k.startsWith(`${preferredCol}-`));
+      if (matchIndex >= 0) {
+        const targetSeatKey = emptySeatKeys.splice(matchIndex, 1)[0];
+        newAssignments[targetSeatKey] = student.id;
+        assignedCount++;
+      } else {
+        unplaced.push(student);
+      }
+    }
+
+    // Step 2: Place remaining unplaced students into any open empty seat
+    for (const student of unplaced) {
+      if (emptySeatKeys.length > 0) {
+        const targetSeatKey = emptySeatKeys.shift()!;
+        newAssignments[targetSeatKey] = student.id;
+        assignedCount++;
+      }
+    }
+
+    onSaveSeatingChart({
+      ...seatingChart,
+      assignments: newAssignments,
+      updatedAt: new Date().toISOString().split('T')[0],
+    });
+
+    showToast(`Đã tự động xếp chỗ thành công cho ${assignedCount} học sinh chưa có chỗ ngồi!`);
+  };
+
+  const handleAssignSingleUnassignedStudent = (student: Student) => {
+    const totalDesksPerAisle = 6;
+    const totalAisles = 4;
+    const newAssignments = { ...seatingChart.assignments };
+
+    const preferredCol = Math.min(4, Math.max(1, student.group || 1));
+    let targetSeatKey: string | null = null;
+
+    // Try preferred column first
+    for (let desk = 1; desk <= totalDesksPerAisle; desk++) {
+      for (let seat = 1; seat <= 2; seat++) {
+        const key = `${preferredCol}-${desk}-${seat}`;
+        if (!newAssignments[key]) {
+          targetSeatKey = key;
+          break;
+        }
+      }
+      if (targetSeatKey) break;
+    }
+
+    // If preferred column is full, try any column
+    if (!targetSeatKey) {
+      for (let col = 1; col <= totalAisles; col++) {
+        for (let desk = 1; desk <= totalDesksPerAisle; desk++) {
+          for (let seat = 1; seat <= 2; seat++) {
+            const key = `${col}-${desk}-${seat}`;
+            if (!newAssignments[key]) {
+              targetSeatKey = key;
+              break;
+            }
+          }
+          if (targetSeatKey) break;
+        }
+      }
+    }
+
+    if (!targetSeatKey) {
+      showToast('Sơ đồ lớp đã đầy chỗ (48/48)!');
+      return;
+    }
+
+    newAssignments[targetSeatKey] = student.id;
+    onSaveSeatingChart({
+      ...seatingChart,
+      assignments: newAssignments,
+      updatedAt: new Date().toISOString().split('T')[0],
+    });
+
+    showToast(`Đã xếp chỗ cho ${student.name} vào Dãy ${targetSeatKey.split('-')[0]} - Bàn ${targetSeatKey.split('-')[1]}!`);
+  };
 
   // Close auto arrange dropdown when clicking outside
   useEffect(() => {
@@ -374,9 +493,21 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                     4 Dãy × 6 Bàn (48 Chỗ)
                   </span>
                 </h1>
-                <p className="text-xs md:text-sm text-slate-500 mt-0.5">
-                  Quy chuẩn 4 dãy đặt nằm ngang trên một hàng, mỗi dãy 6 bàn, mỗi bàn 2 học sinh. Cập nhật ngày:{' '}
-                  <span className="font-semibold text-slate-700">{seatingChart.updatedAt}</span>
+                <p className="text-xs md:text-sm text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  <span>Quy chuẩn 4 dãy đặt nằm ngang trên một hàng, mỗi dãy 6 bàn, mỗi bàn 2 học sinh.</span>
+                  <span>•</span>
+                  <span>Cập nhật ngày: <strong className="font-semibold text-slate-700">{seatingChart.updatedAt}</strong></span>
+                  {(role === 'gvcn' || role === 'bgh') && (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditSeatingModalOpen(true)}
+                      className="ml-1.5 px-2.5 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Nhấp để điều chỉnh thông tin sơ đồ lớp"
+                    >
+                      <Edit3 className="w-3 h-3 text-amber-700" />
+                      <span>Điều chỉnh</span>
+                    </button>
+                  )}
                 </p>
               </div>
             </div>
@@ -384,6 +515,17 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2">
+            {(role === 'gvcn' || role === 'bgh') && (
+              <button
+                type="button"
+                onClick={() => setIsEditSeatingModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400"
+                title="Điều chỉnh thông tin tiêu đề, ngày áp dụng & xếp chỗ thủ công"
+              >
+                <Edit3 className="w-4 h-4 text-slate-950" />
+                <span>Điều Chỉnh Dữ Liệu</span>
+              </button>
+            )}
             {/* Search Input */}
             <div className="relative min-w-[180px] sm:min-w-[220px]">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -501,8 +643,22 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                   <div className="absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl shadow-2xl border border-slate-200 py-1.5 z-50 animate-fadeIn">
                     <div className="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between border-b border-slate-100 pb-1 mb-1">
                       <span>Thuật Toán Xếp Chỗ AI</span>
-                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-normal">5 Tiêu chí</span>
+                      <span className="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-normal">6 Tùy chọn</span>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleAutoArrangeUnassignedOnly();
+                        setIsAutoArrangeOpen(false);
+                      }}
+                      className="w-full px-3.5 py-2.5 text-left text-xs text-slate-700 hover:bg-amber-50 hover:text-amber-900 flex items-center gap-2.5 font-medium transition-colors cursor-pointer border-b border-slate-100 bg-amber-50/40"
+                    >
+                      <UserPlus className="w-4 h-4 text-amber-600 shrink-0" />
+                      <div>
+                        <div className="font-bold text-amber-950">Tự xếp chỗ cho HS chưa có ghế</div>
+                        <div className="text-[10px] text-amber-700">Điền nốt các bạn chưa có chỗ vào ghế trống</div>
+                      </div>
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
@@ -968,12 +1124,26 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
       {/* UNASSIGNED STUDENTS LIST (If any) */}
       {unassignedStudents.length > 0 && (
-        <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/30">
-          <h3 className="text-sm font-bold text-amber-900 mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-amber-600" />
-            <span>Học sinh chưa xếp chỗ ngồi ({unassignedStudents.length} em):</span>
-          </h3>
-          <div className="flex flex-wrap gap-2">
+        <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/30 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
+              <Users className="w-4 h-4 text-amber-600" />
+              <span>Học sinh chưa xếp chỗ ngồi ({unassignedStudents.length} em):</span>
+            </h3>
+            {role === 'gvcn' && (
+              <button
+                type="button"
+                onClick={handleAutoArrangeUnassignedOnly}
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer border border-amber-400"
+                title="Tự động lấp đầy các ghế trống bằng danh sách các học sinh chưa có chỗ ngồi"
+              >
+                <UserPlus className="w-4 h-4 text-slate-950" />
+                <span>Tự Xếp Chỗ Cho {unassignedStudents.length} Em Chưa Có Ghế</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-1">
             {unassignedStudents.map((s) => (
               <div
                 key={s.id}
@@ -984,6 +1154,16 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                 <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded font-bold">
                   Tổ {s.group}
                 </span>
+                {role === 'gvcn' && (
+                  <button
+                    type="button"
+                    onClick={() => handleAssignSingleUnassignedStudent(s)}
+                    className="ml-1 px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] border border-blue-200 transition-colors cursor-pointer"
+                    title={`Tự xếp chỗ ngay cho ${s.name}`}
+                  >
+                    + Xếp chỗ
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -1095,6 +1275,20 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
         message={confirmAction.message}
         confirmText={confirmAction.confirmText}
       />
+
+      {/* EDIT SEATING CHART METADATA & ASSIGNMENTS MODAL */}
+      {isEditSeatingModalOpen && (
+        <EditSeatingModal
+          isOpen={isEditSeatingModalOpen}
+          onClose={() => setIsEditSeatingModalOpen(false)}
+          seatingChart={seatingChart}
+          students={students}
+          onSave={(newChart) => {
+            onSaveSeatingChart(newChart);
+            showToast('Đã lưu điều chỉnh dữ liệu sơ đồ lớp thành công!');
+          }}
+        />
+      )}
     </div>
   );
 };
