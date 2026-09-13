@@ -21,6 +21,7 @@ import {
 import { Student } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 import { compressImageBase64 } from '../utils/imageCompressor';
+import { saveAvatarToIndexedDB } from '../utils/avatarStorageDB';
 
 interface StudentModalProps {
   student: Student | null;
@@ -188,8 +189,11 @@ export const StudentModal: React.FC<StudentModalProps> = ({
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
-        const compressed = await compressImageBase64(dataUrl, 300, 300, 0.82);
+        const compressed = await compressImageBase64(dataUrl, 240, 240, 0.78);
         setFormData((prev) => ({ ...prev, avatar: compressed }));
+        if (formData.id) {
+          saveAvatarToIndexedDB(formData.id, compressed);
+        }
       }
     };
     reader.readAsDataURL(file);
