@@ -15,6 +15,9 @@ export const EditTimetableModal: React.FC<EditTimetableModalProps> = ({
   timetable,
   onSave,
 }) => {
+  const [academicYear, setAcademicYear] = useState<string>(
+    timetable?.academicYear || 'Năm học 2025 - 2026'
+  );
   const [appliedDate, setAppliedDate] = useState<string>(
     timetable?.appliedDate || '05/01/2026'
   );
@@ -105,7 +108,23 @@ export const EditTimetableModal: React.FC<EditTimetableModalProps> = ({
     }
 
     const updatedTimetable: TimetableData = {
-      academicYear: timetable?.academicYear || '2025 - 2026',
+      academicYear: academicYear || 'Năm học 2025 - 2026',
+      appliedDate: appliedDate || '05/01/2026',
+      morningTime: morningTime || '07:00 - 11:20',
+      morningLabel: morningLabel || 'CÁC MÔN VĂN HÓA CHÍNH KHÓA',
+      afternoonTime: afternoonTime || '13:30 - 17:45',
+      afternoonLabel: afternoonLabel || 'ÔN LUYỆN CHUYÊN ĐỀ & GDTC/HĐTN',
+      days: updatedDays,
+    };
+
+    onSave(updatedTimetable);
+    onClose();
+  };
+
+  const handleSaveGeneralConfigOnly = () => {
+    const updatedDays: DaySchedule[] = JSON.parse(JSON.stringify(timetable?.days || []));
+    const updatedTimetable: TimetableData = {
+      academicYear: academicYear || 'Năm học 2025 - 2026',
       appliedDate: appliedDate || '05/01/2026',
       morningTime: morningTime || '07:00 - 11:20',
       morningLabel: morningLabel || 'CÁC MÔN VĂN HÓA CHÍNH KHÓA',
@@ -164,15 +183,27 @@ export const EditTimetableModal: React.FC<EditTimetableModalProps> = ({
               <span className="text-[10px] text-indigo-700 font-semibold">Tự điều chỉnh hiển thị</span>
             </div>
 
-            <div>
-              <label className="font-bold text-slate-700 block mb-1">Thời gian áp dụng (Hiển thị góc phải TKB):</label>
-              <input
-                type="text"
-                value={appliedDate}
-                onChange={(e) => setAppliedDate(e.target.value)}
-                className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                placeholder="VD: 05/01/2026 hoặc Học kỳ II (05/01/2026)"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Năm học:</label>
+                <input
+                  type="text"
+                  value={academicYear}
+                  onChange={(e) => setAcademicYear(e.target.value)}
+                  className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Năm học 2025 - 2026"
+                />
+              </div>
+              <div>
+                <label className="font-bold text-slate-700 block mb-1">Thời gian áp dụng & Học kỳ:</label>
+                <input
+                  type="text"
+                  value={appliedDate}
+                  onChange={(e) => setAppliedDate(e.target.value)}
+                  className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Áp dụng từ ngày 01/01/2026 (Học kỳ II)"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -311,8 +342,36 @@ export const EditTimetableModal: React.FC<EditTimetableModalProps> = ({
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="VD: Toán, Vật lí, Hóa học, Sinh học, Ngữ văn..."
+                  placeholder="VD: Toán, Vật lí, Hóa học, Sinh học, Ngữ văn, GDQP-AN..."
                 />
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {[
+                    'Toán',
+                    'Ngữ Văn',
+                    'Tiếng Anh',
+                    'Vật Lý',
+                    'Hóa Học',
+                    'Sinh Học',
+                    'Lịch Sử',
+                    'Địa Lý',
+                    'GDCD',
+                    'GDQP-AN',
+                    'Tin Học',
+                    'Thể Dục',
+                    'Chào Cờ',
+                    'Sinh Hoạt Lớp',
+                    'Nghỉ',
+                  ].map((sName) => (
+                    <button
+                      key={sName}
+                      type="button"
+                      onClick={() => setSubject(sName === 'Nghỉ' ? '' : sName)}
+                      className="px-2 py-0.5 rounded-lg bg-white hover:bg-blue-100 text-[10px] font-bold text-blue-800 border border-blue-200 transition-colors cursor-pointer"
+                    >
+                      + {sName}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -363,21 +422,32 @@ export const EditTimetableModal: React.FC<EditTimetableModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-200 flex items-center justify-end gap-2.5 shrink-0">
+          <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2.5 shrink-0">
             <button
               type="button"
-              onClick={onClose}
-              className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+              onClick={handleSaveGeneralConfigOnly}
+              className="px-3.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 font-bold cursor-pointer text-xs transition-all flex items-center gap-1.5"
+              title="Chỉ lưu Năm học, Thời gian áp dụng và Khung giờ buổi sáng/chiều"
             >
-              Hủy bỏ
+              <Save className="w-3.5 h-3.5 text-amber-600" />
+              <span>Lưu Cấu Hình Chung</span>
             </button>
-            <button
-              type="submit"
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#003366] hover:bg-blue-900 text-white font-bold shadow-md cursor-pointer active:scale-95 transition-all"
-            >
-              <Save className="w-4 h-4 text-amber-300" />
-              <span>Lưu Cấu Hình & Thời Khóa Biểu</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="submit"
+                className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#003366] hover:bg-blue-900 text-white font-bold shadow-md cursor-pointer active:scale-95 transition-all"
+              >
+                <Save className="w-4 h-4 text-amber-300" />
+                <span>Lưu Tiết & Cấu Hình</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>
