@@ -338,6 +338,7 @@ export interface SeatingChartData {
   title: string;
   description: string;
   updatedAt: string;
+  aisleGroups?: { [col: number]: number }; // Dynamic mapping Dãy 1, 2, 3, 4 -> Tổ 1, 2, 3, 4
   // Key format: `${column}-${desk}-${seat}` (e.g. "1-1-1", "1-1-2", "4-6-2")
   assignments: { [seatKey: string]: string | null };
 }
