@@ -115,11 +115,12 @@ import {
   saveHomeroomBookData,
   getStoredSubjectTeachers,
   saveSubjectTeachers,
+  syncAndLoadAvatarsFromIndexedDB,
+  saveAvatarToIndexedDB,
 } from './lib/storage';
 import { INITIAL_SEATING_CHART, INITIAL_TIMETABLE } from './data/mockData';
 import { INITIAL_HOMEROOM_BOOK_DATA } from './data/homeroomBookData';
 import { fetchStudentsFromGoogleSheet, fetchOnlineClassesFromGoogleSheet } from './utils/googleSheetSync';
-import { syncAndLoadAvatarsFromIndexedDB, saveAvatarToIndexedDB } from './utils/avatarStorageDB';
 import { compressImageBase64 } from './utils/imageCompressor';
 
 export function App() {
