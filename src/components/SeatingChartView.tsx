@@ -100,8 +100,16 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     const unplaced: Student[] = [];
 
     // Step 1: Try placing students into their designated Group aisle if an empty seat exists there
+    const currentAisleGroups = seatingChart.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 };
+    const getPreferredCol = (groupNum: number): number => {
+      for (let col = 1; col <= 4; col++) {
+        if ((currentAisleGroups[col] ?? col) === groupNum) return col;
+      }
+      return Math.min(4, Math.max(1, groupNum || 1));
+    };
+
     for (const student of remainingStudents) {
-      const preferredCol = Math.min(4, Math.max(1, student.group || 1));
+      const preferredCol = getPreferredCol(student.group || 1);
       const matchIndex = emptySeatKeys.findIndex((k) => k.startsWith(`${preferredCol}-`));
       if (matchIndex >= 0) {
         const targetSeatKey = emptySeatKeys.splice(matchIndex, 1)[0];
@@ -135,7 +143,14 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     const totalAisles = 4;
     const newAssignments = { ...seatingChart.assignments };
 
-    const preferredCol = Math.min(4, Math.max(1, student.group || 1));
+    const currentAisleGroups = seatingChart.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 };
+    let preferredCol = 1;
+    for (let c = 1; c <= 4; c++) {
+      if ((currentAisleGroups[c] ?? c) === student.group) {
+        preferredCol = c;
+        break;
+      }
+    }
     let targetSeatKey: string | null = null;
 
     // Try preferred column first
@@ -337,14 +352,16 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     }
 
     if (type === 'by_group') {
-      // Tổ 1 -> Dãy 1, Tổ 2 -> Dãy 2, Tổ 3 -> Dãy 3, Tổ 4 -> Dãy 4
-      [1, 2, 3, 4].forEach((groupNum) => {
-        const groupStudents = students.filter((s) => s.group === groupNum);
+      // Map Dãy 1, 2, 3, 4 according to configured aisleGroups
+      const currentAisleGroups = seatingChart.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 };
+      [1, 2, 3, 4].forEach((columnNum) => {
+        const targetGroup = currentAisleGroups[columnNum] ?? columnNum;
+        const groupStudents = students.filter((s) => s.group === targetGroup);
         let seatIndex = 0;
         for (let desk = 1; desk <= totalDesksPerAisle; desk++) {
           for (let seat = 1; seat <= 2; seat++) {
             if (seatIndex < groupStudents.length) {
-              newAssignments[`${groupNum}-${desk}-${seat}`] = groupStudents[seatIndex].id;
+              newAssignments[`${columnNum}-${desk}-${seat}`] = groupStudents[seatIndex].id;
               seatIndex++;
             }
           }
@@ -849,21 +866,23 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
         <div className="overflow-x-auto pb-4">
           <div className="grid grid-cols-4 gap-4 md:gap-6 lg:gap-8 min-w-[920px] max-w-7xl mx-auto">
             {[1, 2, 3, 4].map((columnNum) => {
+              const assignedGroup = seatingChart.aisleGroups?.[columnNum] ?? columnNum;
+
               const groupColor =
-                columnNum === 1
+                assignedGroup === 1
                   ? 'border-blue-300 bg-blue-50/40 text-blue-800'
-                  : columnNum === 2
+                  : assignedGroup === 2
                   ? 'border-emerald-300 bg-emerald-50/40 text-emerald-800'
-                  : columnNum === 3
+                  : assignedGroup === 3
                   ? 'border-amber-300 bg-amber-50/40 text-amber-800'
                   : 'border-purple-300 bg-purple-50/40 text-purple-800';
 
               const headerBg =
-                columnNum === 1
+                assignedGroup === 1
                   ? 'bg-blue-600 text-white'
-                  : columnNum === 2
+                  : assignedGroup === 2
                   ? 'bg-emerald-600 text-white'
-                  : columnNum === 3
+                  : assignedGroup === 3
                   ? 'bg-amber-600 text-white'
                   : 'bg-purple-600 text-white';
 
@@ -871,11 +890,42 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                 <div key={columnNum} className="space-y-4 flex flex-col">
                   {/* Aisle / Column Header */}
                   <div
-                    className={`rounded-xl p-3 text-center shadow-xs border ${groupColor} flex flex-col items-center justify-center`}
+                    className={`rounded-xl p-3 text-center shadow-xs border ${groupColor} flex flex-col items-center justify-center relative group/aisle`}
                   >
-                    <span className={`text-xs font-bold px-3 py-0.5 rounded-full ${headerBg}`}>
-                      DÃY {columnNum} (TỔ {columnNum})
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className={`text-xs font-extrabold px-3 py-1 rounded-full ${headerBg} flex items-center gap-1 shadow-2xs`}>
+                        <span>DÃY {columnNum}</span>
+                        <span>(</span>
+                        {role === 'gvcn' || role === 'bgh' ? (
+                          <select
+                            value={assignedGroup}
+                            onChange={(e) => {
+                              const newGrp = Number(e.target.value);
+                              const newAisleGroups = {
+                                ...(seatingChart.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 }),
+                                [columnNum]: newGrp,
+                              };
+                              onSaveSeatingChart({
+                                ...seatingChart,
+                                aisleGroups: newAisleGroups,
+                                updatedAt: new Date().toISOString().split('T')[0],
+                              });
+                              showToast(`Đã điều chỉnh Dãy ${columnNum} gán cho Tổ ${newGrp}!`);
+                            }}
+                            className="bg-white/20 hover:bg-white/30 text-white font-black text-xs border border-white/40 rounded px-1 py-0.2 focus:outline-none cursor-pointer"
+                            title="Nhấp để đổi Tổ gán cho Dãy này"
+                          >
+                            <option value={1} className="bg-slate-900 text-white font-bold">TỔ 1</option>
+                            <option value={2} className="bg-slate-900 text-white font-bold">TỔ 2</option>
+                            <option value={3} className="bg-slate-900 text-white font-bold">TỔ 3</option>
+                            <option value={4} className="bg-slate-900 text-white font-bold">TỔ 4</option>
+                          </select>
+                        ) : (
+                          <span>TỔ {assignedGroup}</span>
+                        )}
+                        <span>)</span>
+                      </span>
+                    </div>
                     <span className="text-[11px] font-medium text-slate-600 mt-1">
                       6 Bàn • 12 Chỗ ngồi
                     </span>
