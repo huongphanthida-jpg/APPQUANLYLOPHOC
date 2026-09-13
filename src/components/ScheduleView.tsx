@@ -6,6 +6,7 @@ import {
   MapPin,
   User,
   Edit2,
+  Edit3,
   Printer,
   Sparkles,
   CheckCircle2,
@@ -29,6 +30,7 @@ import {
 import * as XLSX from 'xlsx';
 import { TimetableData, DaySchedule, TimetablePeriod, UserRole, ClassInfo, TeacherInfo } from '../types';
 import { INITIAL_TIMETABLE } from '../data/mockData';
+import { EditTimetableModal } from './homeroom-book/EditTimetableModal';
 
 interface ScheduleViewProps {
   timetable: TimetableData;
@@ -76,6 +78,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   // Modal & Toast states
   const [isConfirmClearAllOpen, setIsConfirmClearAllOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isEditTimetableModalOpen, setIsEditTimetableModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // File import states
@@ -99,9 +102,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     if (s.includes('văn') || s.includes('ngữ văn')) return { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200' };
     if (s.includes('anh') || s.includes('tiếng anh')) return { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200' };
     if (s.includes('sinh') || s.includes('sinh học')) return { bg: 'bg-teal-50', text: 'text-teal-700', border: 'border-teal-200' };
-    if (s.includes('thể chất') || s.includes('thể thao')) return { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' };
+    if (s.includes('thể chất') || s.includes('thể thao') || s.includes('thể dục')) return { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' };
     if (s.includes('chào cờ') || s.includes('sinh hoạt')) return { bg: 'bg-indigo-50', text: 'text-indigo-800', border: 'border-indigo-200' };
     if (s.includes('tin học')) return { bg: 'bg-cyan-50', text: 'text-cyan-800', border: 'border-cyan-200' };
+    if (s.includes('gdqp') || s.includes('quốc phòng')) return { bg: 'bg-lime-50', text: 'text-lime-800', border: 'border-lime-300' };
     return { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' };
   };
 
@@ -376,9 +380,23 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                     2 Buổi/Ngày • 10 Tiết
                   </span>
                 </h1>
-                <p className="text-xs md:text-sm text-slate-500 mt-0.5">
-                  Lớp: <span className="font-bold text-slate-800">{classInfo?.className || '11D5'}</span> •{' '}
-                  {timetable.academicYear} • <span className="text-slate-600">{timetable.appliedDate}</span>
+                <p className="text-xs md:text-sm text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                  <span>Lớp: <strong className="font-bold text-slate-800">{classInfo?.className || '11D5'}</strong></span>
+                  <span>•</span>
+                  <span className="font-medium text-slate-700">{timetable.academicYear || 'Năm học 2025 - 2026'}</span>
+                  <span>•</span>
+                  <span className="text-slate-600 font-medium">{timetable.appliedDate || 'Áp dụng từ ngày 01/01/2026'}</span>
+                  {(role === 'gvcn' || role === 'bgh') && (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditTimetableModalOpen(true)}
+                      className="ml-1 px-2.5 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                      title="Nhấp để điều chỉnh thông tin Năm học, Học kỳ, Ngày áp dụng TKB"
+                    >
+                      <Edit3 className="w-3 h-3 text-amber-700" />
+                      <span>Điều chỉnh</span>
+                    </button>
+                  )}
                 </p>
               </div>
             </div>
@@ -444,6 +462,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
             {(role === 'gvcn' || role === 'bgh') && (
               <>
+                <button
+                  type="button"
+                  onClick={() => setIsEditTimetableModalOpen(true)}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400"
+                  title="Điều chỉnh thông tin Năm học, Học kỳ, Ngày áp dụng, Khung giờ & Tiết học TKB"
+                >
+                  <Edit3 className="w-4 h-4 text-slate-950" />
+                  <span>Điều Chỉnh Dữ Liệu</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -1030,9 +1057,42 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       data: { ...editingPeriod.data, subject: e.target.value },
                     })
                   }
-                  placeholder="Ví dụ: Toán Học (Giải Tích) - Để trống nếu muốn tiết này thành Tiết Trống"
+                  placeholder="Ví dụ: Toán Học, GDQP-AN... (Để trống nếu muốn thành Tiết Trống)"
                   className="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-[#003366] focus:outline-none"
                 />
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {[
+                    'Toán',
+                    'Ngữ Văn',
+                    'Tiếng Anh',
+                    'Vật Lý',
+                    'Hóa Học',
+                    'Sinh Học',
+                    'Lịch Sử',
+                    'Địa Lý',
+                    'GDCD',
+                    'GDQP-AN',
+                    'Tin Học',
+                    'Thể Dục',
+                    'Chào Cờ',
+                    'Sinh Hoạt Lớp',
+                    'Nghỉ',
+                  ].map((sName) => (
+                    <button
+                      key={sName}
+                      type="button"
+                      onClick={() =>
+                        setEditingPeriod({
+                          ...editingPeriod,
+                          data: { ...editingPeriod.data, subject: sName === 'Nghỉ' ? '' : sName },
+                        })
+                      }
+                      className="px-2 py-0.5 rounded-lg bg-slate-100 hover:bg-blue-100 text-[10px] font-bold text-[#003366] border border-slate-200 transition-colors cursor-pointer"
+                    >
+                      + {sName}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -1319,6 +1379,19 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* EDIT TIMETABLE METADATA & DATA MODAL */}
+      {isEditTimetableModalOpen && (
+        <EditTimetableModal
+          isOpen={isEditTimetableModalOpen}
+          onClose={() => setIsEditTimetableModalOpen(false)}
+          timetable={timetable}
+          onSave={(newTimetable) => {
+            onSaveTimetable(newTimetable);
+            showToast('Đã lưu điều chỉnh dữ liệu Thời khóa biểu thành công!');
+          }}
+        />
       )}
     </div>
   );
