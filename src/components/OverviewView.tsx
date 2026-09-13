@@ -55,6 +55,7 @@ import {
   TeacherInfo,
   BghInfo,
 } from '../types';
+import { compressImageBase64 } from '../utils/imageCompressor';
 import { INITIAL_BGH_INFO } from '../data/mockData';
 
 interface OverviewViewProps {
@@ -137,10 +138,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       if (typeof reader.result === 'string') {
+        const compressed = await compressImageBase64(reader.result, 300, 300, 0.82);
         if (onUpdateBghAvatar) {
-          onUpdateBghAvatar(reader.result);
+          onUpdateBghAvatar(compressed);
         }
       }
     };
@@ -152,10 +154,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       if (typeof reader.result === 'string') {
+        const compressed = await compressImageBase64(reader.result, 400, 400, 0.82);
         if (onUpdateClassAvatar) {
-          onUpdateClassAvatar(reader.result);
+          onUpdateClassAvatar(compressed);
         }
       }
     };
@@ -167,10 +170,11 @@ export const OverviewView: React.FC<OverviewViewProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       if (typeof reader.result === 'string') {
+        const compressed = await compressImageBase64(reader.result, 300, 300, 0.82);
         if (onUpdateTeacherAvatar) {
-          onUpdateTeacherAvatar(reader.result);
+          onUpdateTeacherAvatar(compressed);
         }
       }
     };
