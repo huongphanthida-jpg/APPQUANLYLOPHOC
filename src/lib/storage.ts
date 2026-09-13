@@ -107,7 +107,25 @@ export const getStoredStudents = (): Student[] => {
   }
 };
 export const saveStudents = (students: Student[]) => {
-  localStorage.setItem(KEYS.STUDENTS, JSON.stringify(students));
+  try {
+    localStorage.setItem(KEYS.STUDENTS, JSON.stringify(students));
+  } catch (error) {
+    console.warn("Storage save error, cleaning up large avatar data...", error);
+    try {
+      const sanitizedStudents = students.map((s) => {
+        if (s.avatar && s.avatar.startsWith('data:image') && s.avatar.length > 80000) {
+          return {
+            ...s,
+            avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
+          };
+        }
+        return s;
+      });
+      localStorage.setItem(KEYS.STUDENTS, JSON.stringify(sanitizedStudents));
+    } catch (retryErr) {
+      console.error("Critical error saving students to localStorage:", retryErr);
+    }
+  }
 };
 
 export const getStoredDisciplineLogs = (): DisciplineEntry[] => {
