@@ -119,6 +119,8 @@ import {
 import { INITIAL_SEATING_CHART, INITIAL_TIMETABLE } from './data/mockData';
 import { INITIAL_HOMEROOM_BOOK_DATA } from './data/homeroomBookData';
 import { fetchStudentsFromGoogleSheet, fetchOnlineClassesFromGoogleSheet } from './utils/googleSheetSync';
+import { syncAndLoadAvatarsFromIndexedDB, saveAvatarToIndexedDB } from './utils/avatarStorageDB';
+import { compressImageBase64 } from './utils/imageCompressor';
 
 export function App() {
   // State Initialization
@@ -151,6 +153,22 @@ export function App() {
   const [homeroomBookData, setHomeroomBookData] = useState<HomeroomBookData>(getStoredHomeroomBookData());
   const [subjectTeachers, setSubjectTeachers] = useState<SubjectTeacher[]>(getStoredSubjectTeachers());
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Load and restore all student avatars from IndexedDB (supporting 48+ student avatars without storage loss)
+  useEffect(() => {
+    syncAndLoadAvatarsFromIndexedDB(students).then((syncedStudents) => {
+      let hasDiff = false;
+      for (let i = 0; i < syncedStudents.length; i++) {
+        if (syncedStudents[i]?.avatar !== students[i]?.avatar) {
+          hasDiff = true;
+          break;
+        }
+      }
+      if (hasDiff) {
+        setStudents(syncedStudents);
+      }
+    });
+  }, []);
 
   const handleAddSubjectTeacher = (teacherData: Omit<SubjectTeacher, 'id'>) => {
     const newTeacher: SubjectTeacher = {
@@ -388,12 +406,14 @@ export function App() {
     setSelectedStudentId('');
   };
 
-  const handleUpdateStudentAvatar = (studentId: string, newAvatar: string) => {
-    const updated = students.map((s) => (s.id === studentId ? { ...s, avatar: newAvatar } : s));
+  const handleUpdateStudentAvatar = async (studentId: string, newAvatar: string) => {
+    const compressed = await compressImageBase64(newAvatar, 240, 240, 0.78);
+    const updated = students.map((s) => (s.id === studentId ? { ...s, avatar: compressed } : s));
     setStudents(updated);
     saveStudents(updated);
+    saveAvatarToIndexedDB(studentId, compressed);
     if (selectedStudentForModal && selectedStudentForModal.id === studentId) {
-      setSelectedStudentForModal((prev) => (prev ? { ...prev, avatar: newAvatar } : null));
+      setSelectedStudentForModal((prev) => (prev ? { ...prev, avatar: compressed } : null));
     }
   };
 
