@@ -248,6 +248,21 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     return students.filter((s) => !assignedStudentIds.has(s.id));
   }, [students, assignedStudentIds]);
 
+  // Helper to find which Dãy is assigned to a given Tổ
+  const getAisleForGroup = (groupNum: number): string => {
+    const currentAisleGroups = seatingChart.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 };
+    const matchingCols: number[] = [];
+    for (let c = 1; c <= 4; c++) {
+      if ((currentAisleGroups[c] ?? c) === groupNum) {
+        matchingCols.push(c);
+      }
+    }
+    if (matchingCols.length > 0) {
+      return matchingCols.map((c) => `Dãy ${c}`).join(', ');
+    }
+    return `Dãy ${groupNum}`;
+  };
+
   // Check if student matches search
   const isStudentHighlighted = (studentId: string | null): boolean => {
     if (!searchQuery.trim() || !studentId) return false;
@@ -782,19 +797,19 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
             <span className="font-semibold text-slate-800">Chú thích sơ đồ:</span>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-              <span>Tổ 1 (Dãy 1)</span>
+              <span>Tổ 1 ({getAisleForGroup(1)})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-              <span>Tổ 2 (Dãy 2)</span>
+              <span>Tổ 2 ({getAisleForGroup(2)})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-amber-500"></span>
-              <span>Tổ 3 (Dãy 3)</span>
+              <span>Tổ 3 ({getAisleForGroup(3)})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full bg-purple-500"></span>
-              <span>Tổ 4 (Dãy 4)</span>
+              <span>Tổ 4 ({getAisleForGroup(4)})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="w-3 h-3 rounded-full border border-dashed border-slate-400 bg-slate-100"></span>
