@@ -29,6 +29,7 @@ import {
 import * as XLSX from 'xlsx';
 import { Student, UserRole, ClassInfo, TeacherInfo, GoogleSheetConfig } from '../types';
 import { compressImageBase64 } from '../utils/imageCompressor';
+import { saveAllAvatarsToIndexedDB } from '../utils/avatarStorageDB';
 import { ImportStudentsModal } from './ImportStudentsModal';
 import { ConfirmModal } from './ConfirmModal';
 import { VietnameseFontRepairModal } from './VietnameseFontRepairModal';
@@ -82,6 +83,9 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     onConfirm: () => void;
   } | null>(null);
   const avatarFileInputRef = useRef<HTMLInputElement>(null);
+  const batchAvatarFileInputRef = useRef<HTMLInputElement>(null);
+  const [syncStatusMsg, setSyncStatusMsg] = useState<string | null>(null);
+  const [isSyncingAvatars, setIsSyncingAvatars] = useState(false);
 
   // Count how many students currently suffer from font/encoding corruption (?, , mojibake)
   const corruptedCount = useMemo(() => {
@@ -119,13 +123,108 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
     reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
-        const compressed = await compressImageBase64(dataUrl, 300, 300, 0.82);
+        const compressed = await compressImageBase64(dataUrl, 240, 240, 0.78);
         onUpdateStudentAvatar(targetStudentId, compressed);
+        setSyncStatusMsg('Đã lưu đồng bộ ảnh đại diện thành công!');
+        setTimeout(() => setSyncStatusMsg(null), 4000);
       }
     };
     reader.readAsDataURL(file);
     // Reset file input so selecting same file triggers change
     e.target.value = '';
+  };
+
+  const handleSyncAllAvatars = async () => {
+    setIsSyncingAvatars(true);
+    setSyncStatusMsg(`Đang rà soát và lưu tối ưu hóa ${students.length} ảnh học sinh vào cơ sở dữ liệu...`);
+    try {
+      const updatedStudents = await Promise.all(
+        students.map(async (s) => {
+          if (s.avatar && s.avatar.startsWith('data:image')) {
+            const compressed = await compressImageBase64(s.avatar, 240, 240, 0.78);
+            return { ...s, avatar: compressed };
+          }
+          return s;
+        })
+      );
+      if (onImportStudents) {
+        onImportStudents(updatedStudents, 'replace');
+      }
+      await saveAllAvatarsToIndexedDB(updatedStudents);
+      setSyncStatusMsg(`Đã rà soát & lưu đồng bộ an toàn 100% ảnh cho ${updatedStudents.length} học sinh (IndexedDB & LocalStorage)!`);
+      setTimeout(() => setSyncStatusMsg(null), 5000);
+    } catch (err) {
+      setSyncStatusMsg('Có lỗi xảy ra khi rà soát ảnh.');
+    } finally {
+      setIsSyncingAvatars(false);
+    }
+  };
+
+  const handleBatchAvatarFilesSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !onImportStudents) return;
+
+    setIsSyncingAvatars(true);
+    setSyncStatusMsg(`Đang tải và tối ưu hóa ${files.length} ảnh học sinh...`);
+
+    try {
+      const sortedFiles = files.sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' })
+      );
+
+      const avatarDataMap = new Map<string, string>();
+
+      for (let i = 0; i < sortedFiles.length; i++) {
+        const file = sortedFiles[i];
+        const dataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => resolve((ev.target?.result as string) || '');
+          reader.onerror = () => resolve('');
+          reader.readAsDataURL(file);
+        });
+
+        if (dataUrl) {
+          const compressed = await compressImageBase64(dataUrl, 240, 240, 0.78);
+
+          const fileClean = file.name.toLowerCase();
+          let matchedStudent = students.find(
+            (s) =>
+              (s.code && fileClean.includes(s.code.toLowerCase())) ||
+              (s.name && fileClean.includes(s.name.toLowerCase().replace(/\s+/g, '')))
+          );
+
+          if (!matchedStudent && i < students.length) {
+            matchedStudent = students[i];
+          }
+
+          if (matchedStudent) {
+            avatarDataMap.set(matchedStudent.id, compressed);
+          }
+        }
+      }
+
+      if (avatarDataMap.size > 0) {
+        const updatedList = students.map((s) => {
+          if (avatarDataMap.has(s.id)) {
+            return { ...s, avatar: avatarDataMap.get(s.id)! };
+          }
+          return s;
+        });
+
+        onImportStudents(updatedList, 'replace');
+        await saveAllAvatarsToIndexedDB(updatedList);
+        setSyncStatusMsg(`Thành công! Đã lưu đồng bộ ${avatarDataMap.size} ảnh đại diện học sinh vào cơ sở dữ liệu!`);
+        setTimeout(() => setSyncStatusMsg(null), 5000);
+      } else {
+        setSyncStatusMsg('Không ghép khớp được ảnh với danh sách học sinh.');
+      }
+    } catch (err) {
+      console.error(err);
+      setSyncStatusMsg('Lỗi khi tải ảnh hàng loạt.');
+    } finally {
+      setIsSyncingAvatars(false);
+      e.target.value = '';
+    }
   };
 
   const triggerAvatarUpload = (studentId: string) => {
@@ -206,6 +305,31 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
         onChange={handleAvatarFileSelect}
         className="hidden"
       />
+      <input
+        ref={batchAvatarFileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        onChange={handleBatchAvatarFilesSelect}
+        className="hidden"
+      />
+
+      {/* Sync Status Banner */}
+      {syncStatusMsg && (
+        <div className="p-3.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-900 text-xs font-semibold flex items-center justify-between shadow-2xs">
+          <div className="flex items-center gap-2">
+            <RefreshCw className={`w-4 h-4 text-blue-600 ${isSyncingAvatars ? 'animate-spin' : ''}`} />
+            <span>{syncStatusMsg}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSyncStatusMsg(null)}
+            className="text-blue-500 hover:text-blue-800 text-xs font-bold"
+          >
+            Đóng
+          </button>
+        </div>
+      )}
 
       {/* Import Modal */}
       {isImportModalOpen && onImportStudents && (
@@ -306,6 +430,36 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
             >
               <UploadCloud className="w-4 h-4 text-amber-400" />
               <span>Tải Lên File Excel</span>
+            </button>
+          )}
+
+          {/* Tải Ảnh Hàng Loạt (48 HS) */}
+          {role === 'gvcn' && onImportStudents && (
+            <button
+              id="btn-batch-upload-avatars"
+              type="button"
+              onClick={() => batchAvatarFileInputRef.current?.click()}
+              disabled={isSyncingAvatars}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 border border-indigo-300 text-indigo-800 text-xs font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              title="Tải lên ảnh đại diện cho nhiều hoặc toàn bộ 48 học sinh cùng lúc"
+            >
+              <Camera className="w-4 h-4 text-indigo-600" />
+              <span>Tải Ảnh Hàng Loạt (48 HS)</span>
+            </button>
+          )}
+
+          {/* Rà Soát & Lưu Đồng Bộ Ảnh */}
+          {role === 'gvcn' && (
+            <button
+              id="btn-sync-all-avatars"
+              type="button"
+              onClick={handleSyncAllAvatars}
+              disabled={isSyncingAvatars}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-50 hover:bg-sky-100 border border-sky-300 text-sky-800 text-xs font-bold transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+              title="Rà soát, tối ưu dung lượng và lưu an toàn toàn bộ ảnh vào IndexedDB & LocalStorage"
+            >
+              <ShieldCheck className="w-4 h-4 text-sky-600" />
+              <span>Lưu Đồng Bộ Ảnh (48 HS)</span>
             </button>
           )}
 
