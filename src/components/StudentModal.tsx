@@ -21,7 +21,7 @@ import {
 import { Student } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 import { compressImageBase64 } from '../utils/imageCompressor';
-import { saveAvatarToIndexedDB } from '../utils/avatarStorageDB';
+import { saveAvatarToIndexedDB } from '../lib/storage';
 
 interface StudentModalProps {
   student: Student | null;
