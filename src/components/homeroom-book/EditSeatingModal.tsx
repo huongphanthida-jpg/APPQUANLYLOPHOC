@@ -20,6 +20,9 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
   const [title, setTitle] = useState<string>(seatingChart?.title || 'Sơ Đồ Chỗ Ngồi Lớp Chuẩn');
   const [description, setDescription] = useState<string>(seatingChart?.description || '4 Dãy x 6 Bàn (48 Chỗ ngồi)');
   const [updatedAt, setUpdatedAt] = useState<string>(seatingChart?.updatedAt || new Date().toISOString().split('T')[0]);
+  const [aisleGroups, setAisleGroups] = useState<{ [col: number]: number }>(
+    seatingChart?.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 }
+  );
 
   const [selectedCol, setSelectedCol] = useState<number>(1);
   const [selectedDesk, setSelectedDesk] = useState<number>(1);
@@ -50,6 +53,7 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
       title: title.trim() || 'Sơ Đồ Chỗ Ngồi Lớp Chuẩn',
       description: description.trim() || '4 Dãy x 6 Bàn x 2 Chỗ ngồi',
       updatedAt: updatedAt.trim() || new Date().toISOString().split('T')[0],
+      aisleGroups,
       assignments: updatedAssignments,
     };
 
@@ -111,6 +115,30 @@ export const EditSeatingModal: React.FC<EditSeatingModalProps> = ({
                   className="w-full py-2 px-3 rounded-xl bg-white border border-slate-200 font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   placeholder="28/08/2026"
                 />
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-indigo-200/60">
+              <label className="font-bold text-slate-700 block mb-1.5">Phân công Tổ cho từng Dãy (1 - 4):</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[1, 2, 3, 4].map((colNum) => (
+                  <div key={colNum} className="p-2 rounded-xl bg-white border border-indigo-100 space-y-1">
+                    <span className="font-bold text-indigo-900 text-[11px] block text-center">Dãy {colNum}</span>
+                    <select
+                      value={aisleGroups[colNum] || colNum}
+                      onChange={(e) => {
+                        const newGrp = Number(e.target.value);
+                        setAisleGroups((prev) => ({ ...prev, [colNum]: newGrp }));
+                      }}
+                      className="w-full py-1 px-1 rounded-lg bg-indigo-50 border border-indigo-200 font-bold text-indigo-950 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center cursor-pointer"
+                    >
+                      <option value={1}>Tổ 1</option>
+                      <option value={2}>Tổ 2</option>
+                      <option value={3}>Tổ 3</option>
+                      <option value={4}>Tổ 4</option>
+                    </select>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
