@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { Student, UserRole, ClassInfo, TeacherInfo, GoogleSheetConfig } from '../types';
+import { compressImageBase64 } from '../utils/imageCompressor';
 import { ImportStudentsModal } from './ImportStudentsModal';
 import { ConfirmModal } from './ConfirmModal';
 import { VietnameseFontRepairModal } from './VietnameseFontRepairModal';
@@ -111,13 +112,15 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
 
   const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !activeAvatarStudentId || !onUpdateStudentAvatar) return;
+    const targetStudentId = activeAvatarStudentId;
+    if (!file || !targetStudentId || !onUpdateStudentAvatar) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
-        onUpdateStudentAvatar(activeAvatarStudentId, dataUrl);
+        const compressed = await compressImageBase64(dataUrl, 300, 300, 0.82);
+        onUpdateStudentAvatar(targetStudentId, compressed);
       }
     };
     reader.readAsDataURL(file);
