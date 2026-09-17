@@ -321,16 +321,6 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="hidden lg:flex items-center gap-1.5 border-l border-slate-200 pl-3">
               <button
                 type="button"
-                onClick={handleHeaderRecoverSession}
-                className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
-                title="Tự động dò tìm trong bộ nhớ tạm trình duyệt để khôi phục dữ liệu học sinh bạn đã tạo trước đó"
-              >
-                <RotateCcw className="w-3.5 h-3.5 text-white" />
-                <span>Khôi Phục Dữ Liệu 9h30</span>
-              </button>
-
-              <button
-                type="button"
                 onClick={handleHeaderExportJson}
                 className="px-2.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
                 title="Tải về máy file dự phòng (.JSON) lưu 100% dữ liệu lớp học"
