@@ -498,7 +498,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   Cơ Sở Dữ Liệu Danh Sách Học Sinh Từ Google Sheet
                 </h3>
                 <p className="text-xs text-slate-300">
-                  Tự động kết nối và đồng bộ danh sách học sinh từ bảng tính Google Sheet trực tiếp vào hệ thống DẠ HƯƠNG 2026-2027.
+                  Tự động kết nối và đồng bộ danh sách học sinh từ bảng tính Google Sheet trực tiếp vào hệ thống QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN.
                   {googleSheetConfig?.lastSyncedAt && ` • Lần đồng bộ gần nhất: ${googleSheetConfig.lastSyncedAt}`}
                 </p>
               </div>
@@ -533,7 +533,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   Cơ Sở Dữ Liệu Danh Sách Lớp Học Trực Tuyến Từ Google Sheet
                 </h3>
                 <p className="text-xs text-slate-300">
-                  Đồng bộ realtime danh sách các phòng học Google Meet, Zoom, MS Teams từ Google Sheet vào ứng dụng DẠ HƯƠNG 2026-2027.
+                  Đồng bộ realtime danh sách các phòng học Google Meet, Zoom, MS Teams từ Google Sheet vào ứng dụng QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN.
                 </p>
               </div>
 
