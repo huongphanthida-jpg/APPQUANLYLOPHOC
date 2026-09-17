@@ -393,7 +393,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
     { id: 'discipline-journal' as BookTab, label: 'Nề Nếp & Sổ Đầu Bài', icon: ShieldAlert },
     { id: 'academic' as BookTab, label: 'Bảng Điểm & 2 Mặt GD', icon: GraduationCap },
     { id: 'duty-emulation' as BookTab, label: 'Trực Nhật & Thi Đua', icon: Sparkles },
-    { id: 'special-care' as BookTab, label: 'HS Quan Tâm & Đơn Từ', icon: HeartHandshake },
+    { id: 'special-care' as BookTab, label: 'Phân Nhóm Học Sinh', icon: Users },
     { id: 'minutes-bgh' as BookTab, label: 'Biên Bản & Duyệt BGH', icon: ShieldCheck },
     { id: 'archive' as BookTab, label: 'Lưu Trữ & Xuất File', icon: Archive },
   ];
@@ -647,6 +647,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
               leaveRequests={leaveRequests || []}
               students={students || []}
               role={role}
+              classInfo={classInfo}
               onUpdateSpecialStudents={handleUpdateSpecialStudents}
               onUpdateLeaveRequests={onUpdateLeaveRequests}
             />
