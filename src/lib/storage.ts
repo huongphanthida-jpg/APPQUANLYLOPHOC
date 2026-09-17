@@ -100,6 +100,22 @@ export const saveAvatarToIndexedDB = async (studentId: string, avatarData: strin
   }
 };
 
+export const deleteAvatarFromIndexedDB = async (studentId: string): Promise<void> => {
+  try {
+    if (!studentId) return;
+    const db = await getAvatarDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(AVATAR_STORE_NAME, 'readwrite');
+      const store = tx.objectStore(AVATAR_STORE_NAME);
+      const req = store.delete(studentId);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) {
+    console.warn('Failed to delete avatar from IndexedDB:', err);
+  }
+};
+
 export const saveAllAvatarsToIndexedDB = async (students: { id: string; avatar?: string }[]): Promise<void> => {
   try {
     const db = await getAvatarDB();
@@ -279,9 +295,9 @@ export const getStoredStudents = (): Student[] => {
 
 export const loadStudents = getStoredStudents;
 
-export const saveStudents = (students: Student[]) => {
+export const saveStudentsToStorage = (students: Student[]) => {
   if (!Array.isArray(students)) {
-    console.warn('saveStudents received invalid input.');
+    console.warn('saveStudentsToStorage received invalid input.');
     return;
   }
 
@@ -310,6 +326,8 @@ export const saveStudents = (students: Student[]) => {
 
   try {
     const jsonStr = JSON.stringify(students);
+    localStorage.setItem('app_students_data', jsonStr);
+    localStorage.setItem('students', jsonStr);
     STUDENT_STORAGE_KEYS.forEach((key) => {
       localStorage.setItem(key, jsonStr);
     });
@@ -320,6 +338,8 @@ export const saveStudents = (students: Student[]) => {
   // Synchronously & asynchronously persist all avatars to IndexedDB for 100% durability across 48+ students
   saveAllAvatarsToIndexedDB(students).catch((err) => console.warn('IndexedDB avatar save error:', err));
 };
+
+export const saveStudents = saveStudentsToStorage;
 
 const getFirstValidItem = (...keys: string[]): string | null => {
   for (const k of keys) {
@@ -712,6 +732,32 @@ export const saveSeatingChartDirectlyToLocalStorage = (chart: SeatingChartData) 
 
 export const saveSeatingChart = (chart: SeatingChartData) => {
   saveSeatingChartDirectlyToLocalStorage(chart);
+};
+
+export const removeStudentFromSeatingChartAndStorage = (studentId: string): SeatingChartData | null => {
+  try {
+    if (!studentId) return null;
+    const currentChart = getStoredSeatingChart();
+    if (currentChart && currentChart.assignments) {
+      let modified = false;
+      const updatedAssignments: Record<string, string> = { ...currentChart.assignments };
+      Object.keys(updatedAssignments).forEach((seatId) => {
+        if (updatedAssignments[seatId] === studentId) {
+          delete updatedAssignments[seatId];
+          modified = true;
+        }
+      });
+      if (modified) {
+        const updatedChart: SeatingChartData = { ...currentChart, assignments: updatedAssignments };
+        saveSeatingChartDirectlyToLocalStorage(updatedChart);
+        return updatedChart;
+      }
+    }
+    return null;
+  } catch (err) {
+    console.warn('Failed to unassign deleted student from seating chart:', err);
+    return null;
+  }
 };
 
 export const getStoredTimetable = (): TimetableData => {
