@@ -274,11 +274,17 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       const raw =
         localStorage.getItem('app_seating_chart_data') ||
         localStorage.getItem('seating_chart_data') ||
-        localStorage.getItem('tnh_gvcn_seating_v1');
+        localStorage.getItem('seatingChart') ||
+        localStorage.getItem('homeroom_seating') ||
+        localStorage.getItem('tnh_gvcn_seating_v1') ||
+        localStorage.getItem('tnh_12a1_seating');
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       if (parsed && (parsed.assignments || parsed.seats)) {
-        return parsed;
+        const assign = parsed.assignments || parsed.seats;
+        if (assign && typeof assign === 'object' && Object.keys(assign).length > 0) {
+          return parsed;
+        }
       }
       return null;
     } catch (err) {
@@ -289,6 +295,15 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
   // Helper to persist seating chart directly to localStorage with key 'app_seating_chart_data' and notify parent
   const saveChartToLocalStorage = (chart: SeatingChartData) => {
+    // Safe Guard: Do NOT overwrite non-empty existing chart with empty assignments!
+    if (!chart || !chart.assignments || Object.keys(chart.assignments).length === 0) {
+      const existing = loadSavedSeating();
+      if (existing) {
+        console.warn('Safe Guard (SeatingChartView): Prevented overwriting existing seating chart with empty chart.');
+        return;
+      }
+    }
+
     try {
       const payload = {
         ...(chart || {}),
@@ -299,6 +314,8 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       const jsonStr = JSON.stringify(payload);
       localStorage.setItem('app_seating_chart_data', jsonStr);
       localStorage.setItem('seating_chart_data', jsonStr);
+      localStorage.setItem('seatingChart', jsonStr);
+      localStorage.setItem('homeroom_seating', jsonStr);
       localStorage.setItem('tnh_gvcn_seating_v1', jsonStr);
     } catch (e) {
       console.warn('Failed to save app_seating_chart_data to localStorage:', e);
