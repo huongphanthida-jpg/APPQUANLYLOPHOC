@@ -175,7 +175,7 @@ const KEYS = {
   CLASS_INFO: 'tnh_gvcn_class_info_v1',
   TEACHER_INFO: 'tnh_gvcn_teacher_info_v1',
   BGH_INFO: 'tnh_gvcn_bgh_info_v1',
-  SEATING: 'tnh_gvcn_seating_v1',
+  SEATING: 'seating_chart_data',
   TIMETABLE: 'tnh_gvcn_timetable_v1',
   CHAT_MESSAGES: 'tnh_gvcn_chat_messages_v1',
   PARENT_MEETINGS: 'tnh_gvcn_parent_meetings_v1',
@@ -440,7 +440,7 @@ export const saveBghInfo = (info: BghInfo) => {
 
 export const getStoredSeatingChart = (): SeatingChartData => {
   try {
-    const data = localStorage.getItem(KEYS.SEATING);
+    const data = localStorage.getItem('seating_chart_data') || localStorage.getItem('tnh_gvcn_seating_v1');
     if (!data) return INITIAL_SEATING_CHART;
     const parsed = JSON.parse(data);
     if (parsed && Array.isArray(parsed.columns) && parsed.columns.length > 0) {
@@ -452,7 +452,13 @@ export const getStoredSeatingChart = (): SeatingChartData => {
   }
 };
 export const saveSeatingChart = (chart: SeatingChartData) => {
-  localStorage.setItem(KEYS.SEATING, JSON.stringify(chart));
+  try {
+    const jsonString = JSON.stringify(chart);
+    localStorage.setItem('seating_chart_data', jsonString);
+    localStorage.setItem('tnh_gvcn_seating_v1', jsonString);
+  } catch (error) {
+    console.warn("Storage save error (seating chart):", error);
+  }
 };
 
 export const getStoredTimetable = (): TimetableData => {
