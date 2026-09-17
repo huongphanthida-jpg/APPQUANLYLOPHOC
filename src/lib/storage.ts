@@ -228,11 +228,11 @@ export const isMockStudentList = (list: Student[]): boolean => {
 
 export function getPersistedStudents(): Student[] | null {
   const candidateKeys = [
-    KEYS.STUDENTS,
     'app_students_data',
     'students',
     'class_students',
     'homeroom_book_students',
+    KEYS.STUDENTS,
     'TEAMGVCN_students',
     'tnh_12a1_students',
     'gvcn_students',
@@ -245,7 +245,7 @@ export function getPersistedStudents(): Student[] | null {
       const raw = localStorage.getItem(key);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -259,9 +259,10 @@ export function getPersistedStudents(): Student[] | null {
 
 export const getStoredStudents = (): Student[] => {
   try {
-    const rawList = getPersistedStudents() || INITIAL_STUDENTS;
+    const rawList = getPersistedStudents();
+    const studentsToClean = rawList !== null ? rawList : INITIAL_STUDENTS;
 
-    const cleanedList: Student[] = rawList.map((s) => ({
+    const cleanedList: Student[] = studentsToClean.map((s) => ({
       ...s,
       name: autoRepairVietnameseText(s.name || ''),
       gender: ((s.gender as string) === 'Nữ' || (s.gender as string) === 'Nu') ? 'Nữ' : 'Nam',
@@ -277,16 +278,6 @@ export const getStoredStudents = (): Student[] => {
       },
     }));
 
-    // Auto-sync back to all student keys for complete cross-key consistency
-    try {
-      const jsonStr = JSON.stringify(cleanedList);
-      STUDENT_STORAGE_KEYS.forEach((key) => {
-        localStorage.setItem(key, jsonStr);
-      });
-    } catch {
-      // ignore
-    }
-
     return cleanedList;
   } catch {
     return INITIAL_STUDENTS;
@@ -297,29 +288,6 @@ export const loadStudents = getStoredStudents;
 
 export const syncAllStudentStorageKeys = (updatedStudents: Student[]) => {
   if (!Array.isArray(updatedStudents)) return;
-
-  // Safe Guard: Do NOT overwrite real user student data with default mock student list!
-  if (isMockStudentList(updatedStudents)) {
-    let hasRealUserData = false;
-    for (const key of STUDENT_STORAGE_KEYS) {
-      const existing = localStorage.getItem(key);
-      if (existing) {
-        try {
-          const parsed = JSON.parse(existing);
-          if (Array.isArray(parsed) && parsed.length > 0 && !isMockStudentList(parsed)) {
-            hasRealUserData = true;
-            break;
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-    if (hasRealUserData) {
-      console.warn('Safe Guard: Prevented overwriting real user student list with initial mock data.');
-      return;
-    }
-  }
 
   const payload = JSON.stringify(updatedStudents);
   const targetKeys = [
