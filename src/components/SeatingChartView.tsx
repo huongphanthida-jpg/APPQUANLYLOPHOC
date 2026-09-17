@@ -26,7 +26,12 @@ import {
   BookOpen,
   HeartHandshake,
   Save,
+  Download,
+  UploadCloud,
+  FileSpreadsheet,
+  AlertCircle,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { Student, UserRole, SeatingChartData, SeatingDisplayMode, ClassInfo, TeacherInfo } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 import { EditSeatingModal } from './homeroom-book/EditSeatingModal';
@@ -66,6 +71,176 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const [isEditSeatingModalOpen, setIsEditSeatingModalOpen] = useState(false);
   const [isAutoArrangeOpen, setIsAutoArrangeOpen] = useState(false);
   const autoArrangeRef = useRef<HTMLDivElement>(null);
+
+  // Excel template download & import states
+  const [isImportSeatingModalOpen, setIsImportSeatingModalOpen] = useState(false);
+  const [importSeatingFile, setImportSeatingFile] = useState<File | null>(null);
+  const [parsedAssignments, setParsedAssignments] = useState<{ [seatKey: string]: string | null } | null>(null);
+  const [parsedCount, setParsedCount] = useState<number>(0);
+  const [importSeatingError, setImportSeatingError] = useState<string | null>(null);
+  const [isParsingSeating, setIsParsingSeating] = useState(false);
+  const seatingFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handlePrintSeatingChart = () => {
+    window.print();
+  };
+
+  // Download Sample Excel Template for Seating Chart (4 Aisles x 6 Desks x 2 Seats)
+  const downloadSeatingTemplate = () => {
+    const sampleRows = [
+      ['Dãy', 'Bàn', 'Ghế', 'Mã học sinh', 'Họ và tên học sinh'],
+      [1, 1, 1, 'HS001', 'Nguyễn Văn An'],
+      [1, 1, 2, 'HS002', 'Bùi Thị Bình'],
+      [1, 2, 1, 'HS003', 'Trần Văn Cường'],
+      [1, 2, 2, 'HS004', 'Đỗ Thị Duyên'],
+      [1, 3, 1, 'HS005', 'Lê Hoàng Em'],
+      [1, 3, 2, 'HS006', 'Phạm Thị Giang'],
+      [2, 1, 1, 'HS007', 'Vũ Văn Hùng'],
+      [2, 1, 2, 'HS008', 'Đặng Thị Hương'],
+      [2, 2, 1, 'HS009', 'Hoàng Văn Khoa'],
+      [2, 2, 2, 'HS010', 'Ngô Thị Lan'],
+      [3, 1, 1, 'HS011', 'Trịnh Văn Minh'],
+      [3, 1, 2, 'HS012', 'Lý Thị Ngân'],
+      [4, 1, 1, 'HS013', 'Dương Văn Nam'],
+      [4, 1, 2, 'HS014', 'Mai Thị Oanh'],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(sampleRows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'SoDoLop4Day');
+    const className = classInfo?.className || '11D5';
+    XLSX.writeFile(wb, `mau_so_do_lop_4_day_${className.replace(/\s+/g, '_')}.xlsx`);
+    showToast('Đã tải xuống file Excel mẫu sơ đồ lớp (4 Dãy x 6 Bàn)!');
+  };
+
+  // Parse Excel / CSV Seating Chart File
+  const handleFileSelectSeating = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportSeatingFile(file);
+    setImportSeatingError(null);
+    setIsParsingSeating(true);
+    setParsedAssignments(null);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(new Uint8Array(buffer), { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (rows.length < 2) {
+        setImportSeatingError('File không chứa dữ liệu Sơ đồ lớp hoặc sai định dạng!');
+        setIsParsingSeating(false);
+        return;
+      }
+
+      // Find header row containing column keywords: dãy, bàn, ghế, tên / mã
+      let headerIdx = 0;
+      for (let i = 0; i < Math.min(rows.length, 5); i++) {
+        const rowStr = rows[i].join(' ').toLowerCase();
+        if (rowStr.includes('dãy') || rowStr.includes('bàn') || rowStr.includes('ghế') || rowStr.includes('họ và tên') || rowStr.includes('tên')) {
+          headerIdx = i;
+          break;
+        }
+      }
+
+      const headers = rows[headerIdx].map((h) => String(h || '').trim().toLowerCase());
+      const findCol = (keywords: string[]) =>
+        headers.findIndex((h) => keywords.some((k) => h.includes(k)));
+
+      const colDay = findCol(['dãy', 'day', 'column', 'aisle', 'cot']);
+      const colBan = findCol(['bàn', 'ban', 'row', 'hang']);
+      const colGhe = findCol(['ghế', 'ghe', 'seat', 'vitri', 'vi tri']);
+      const colCode = findCol(['mã', 'ma', 'code', 'stt', 'id']);
+      const colName = findCol(['họ và tên', 'ho va ten', 'tên', 'ten', 'name', 'học sinh', 'hoc sinh']);
+
+      if (colDay === -1 || colBan === -1 || colGhe === -1) {
+        setImportSeatingError('File Excel thiếu các cột vị trí bắt buộc: Dãy, Bàn, Ghế!');
+        setIsParsingSeating(false);
+        return;
+      }
+
+      const newAssignments: { [seatKey: string]: string | null } = { ...(seatingChart?.assignments || {}) };
+      // Clear current seat assignments for fresh import layout
+      for (let col = 1; col <= 4; col++) {
+        for (let desk = 1; desk <= 6; desk++) {
+          newAssignments[`${col}-${desk}-1`] = null;
+          newAssignments[`${col}-${desk}-2`] = null;
+        }
+      }
+
+      let count = 0;
+      const allStudents = students || [];
+
+      for (let i = headerIdx + 1; i < rows.length; i++) {
+        const r = rows[i];
+        if (!r || r.length === 0) continue;
+
+        const dayVal = Number(String(r[colDay] || '').replace(/[^0-9]/g, ''));
+        const banVal = Number(String(r[colBan] || '').replace(/[^0-9]/g, ''));
+        const gheVal = Number(String(r[colGhe] || '').replace(/[^0-9]/g, ''));
+
+        if (!dayVal || !banVal || !gheVal) continue;
+        if (dayVal < 1 || dayVal > 4 || banVal < 1 || banVal > 6 || (gheVal !== 1 && gheVal !== 2)) continue;
+
+        const codeVal = colCode !== -1 && r[colCode] ? String(r[colCode]).trim() : '';
+        const nameVal = colName !== -1 && r[colName] ? String(r[colName]).trim() : '';
+
+        if (!codeVal && !nameVal) continue;
+
+        // Match student by code first, then by name
+        let matchedStudent: Student | undefined;
+        if (codeVal) {
+          matchedStudent = allStudents.find(
+            (s) => s.code.toLowerCase() === codeVal.toLowerCase() || s.id === codeVal
+          );
+        }
+        if (!matchedStudent && nameVal) {
+          matchedStudent = allStudents.find(
+            (s) => s.name.toLowerCase().trim() === nameVal.toLowerCase()
+          );
+        }
+
+        if (matchedStudent) {
+          const seatKey = `${dayVal}-${banVal}-${gheVal}`;
+          newAssignments[seatKey] = matchedStudent.id;
+          count++;
+        }
+      }
+
+      if (count === 0) {
+        setImportSeatingError('Không tìm thấy học sinh khớp theo Mã học sinh hoặc Họ và tên trong danh sách lớp!');
+        setIsParsingSeating(false);
+        return;
+      }
+
+      setParsedAssignments(newAssignments);
+      setParsedCount(count);
+    } catch (err) {
+      console.error("Lỗi đọc file Excel sơ đồ lớp:", err);
+      setImportSeatingError('Lỗi đọc file Excel sơ đồ lớp. Vui lòng sử dụng file mẫu chuẩn!');
+    } finally {
+      setIsParsingSeating(false);
+    }
+  };
+
+  const handleConfirmImportSeating = () => {
+    if (!parsedAssignments) return;
+
+    const updatedChart: SeatingChartData = {
+      ...(seatingChart || {}),
+      assignments: parsedAssignments,
+      updatedAt: new Date().toISOString().split('T')[0],
+    };
+
+    saveChartToLocalStorage(updatedChart);
+    setIsImportSeatingModalOpen(false);
+    setParsedAssignments(null);
+    setImportSeatingFile(null);
+    showToast(`Đã nhập thành công sơ đồ chỗ ngồi từ file Excel! Đã xếp ${parsedCount} học sinh vào vị trí.`);
+  };
 
   // Student map for fast lookup (defined at top to prevent TDZ ReferenceError)
   const studentMap = useMemo(() => {
@@ -730,6 +905,35 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                 <HeartHandshake className="w-4 h-4 text-[#98FF98]" />
                 <span>Kênh Kết Nối PH & HS</span>
               </button>
+            )}
+
+            {(role === 'gvcn' || role === 'bgh') && (
+              <>
+                <button
+                  type="button"
+                  onClick={downloadSeatingTemplate}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                  title="Tải file Excel mẫu sơ đồ lớp 4 dãy (Dãy, Bàn, Ghế, Họ tên)"
+                >
+                  <Download className="w-4 h-4 text-emerald-600" />
+                  <span>Tải File Mẫu Sơ Đồ</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImportSeatingFile(null);
+                    setImportSeatingError(null);
+                    setParsedAssignments(null);
+                    setIsImportSeatingModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                  title="Tải sơ đồ chỗ ngồi từ file Excel (.xlsx, .xls) hoặc .csv từ máy tính"
+                >
+                  <UploadCloud className="w-4 h-4 text-cyan-300" />
+                  <span>Nhập Sơ Đồ Từ File</span>
+                </button>
+              </>
             )}
 
             {/* Print Button */}
@@ -1441,6 +1645,116 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
         message={confirmAction.message}
         confirmText={confirmAction.confirmText}
       />
+
+      {/* MODAL IMPORT SEATING CHART FROM EXCEL / CSV */}
+      {isImportSeatingModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-fadeIn">
+          <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden space-y-0 animate-scaleUp">
+            <div className="p-6 bg-gradient-to-r from-[#003366] via-indigo-900 to-[#001A33] text-white flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black flex items-center gap-2">
+                  <UploadCloud className="w-5 h-5 text-cyan-300" />
+                  Nhập Sơ Đồ Chỗ Ngồi Từ File Excel
+                </h3>
+                <p className="text-xs text-blue-200 mt-0.5">
+                  Tự động gán học sinh vào Dãy (1-4), Bàn (1-6), Ghế (1-2)
+                </p>
+              </div>
+              <button
+                onClick={() => setIsImportSeatingModalOpen(false)}
+                className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="space-y-2">
+                <div className="p-6 border-2 border-dashed border-slate-300 hover:border-blue-500 rounded-3xl bg-slate-50 text-center space-y-3 transition-colors">
+                  <FileSpreadsheet className="w-10 h-10 mx-auto text-[#003366]" />
+                  <div>
+                    <span className="text-xs font-bold text-slate-700 block">
+                      {importSeatingFile ? importSeatingFile.name : 'Kéo thả file Excel Sơ đồ lớp vào đây hoặc bấm chọn tệp'}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                      Cấu trúc chuẩn: Dãy (1-4), Bàn (1-6), Ghế (1-2), Mã học sinh / Họ và tên
+                    </span>
+                  </div>
+
+                  <label className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs cursor-pointer shadow-md">
+                    <UploadCloud className="w-4 h-4 text-cyan-300" />
+                    <span>Chọn File Excel Từ Máy</span>
+                    <input
+                      type="file"
+                      ref={seatingFileInputRef}
+                      accept=".xlsx, .xls, .csv"
+                      onChange={handleFileSelectSeating}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <span className="text-slate-400">Chưa có file sơ đồ lớp mẫu?</span>
+                  <button
+                    type="button"
+                    onClick={downloadSeatingTemplate}
+                    className="font-bold text-blue-600 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Tải File Mẫu Excel (.xlsx)</span>
+                  </button>
+                </div>
+              </div>
+
+              {isParsingSeating && (
+                <div className="p-4 rounded-2xl bg-blue-50 text-blue-700 text-xs font-bold flex items-center justify-center gap-2">
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <span>Đang phân tích dữ liệu sơ đồ lớp từ file Excel...</span>
+                </div>
+              )}
+
+              {importSeatingError && (
+                <div className="p-4 rounded-2xl bg-rose-50 text-rose-700 text-xs font-semibold flex items-center gap-2 border border-rose-200">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{importSeatingError}</span>
+                </div>
+              )}
+
+              {parsedAssignments && parsedCount > 0 && (
+                <div className="p-4 rounded-2xl bg-emerald-50 text-emerald-800 text-xs space-y-1 border border-emerald-200">
+                  <div className="font-bold flex items-center gap-1.5 text-emerald-700">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Đã phân tích thành công file Excel Sơ đồ lớp!</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-600">
+                    Đã đối chiếu và tìm thấy <strong className="font-bold text-emerald-900">{parsedCount}</strong> học sinh trùng khớp theo danh sách lớp để gán vào bàn ghế.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setIsImportSeatingModalOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-white text-slate-700 font-bold text-xs border border-slate-200 hover:bg-slate-100 cursor-pointer"
+              >
+                Hủy Bỏ
+              </button>
+              <button
+                type="button"
+                disabled={!parsedAssignments || parsedCount === 0}
+                onClick={handleConfirmImportSeating}
+                className="px-5 py-2.5 rounded-xl bg-[#003366] hover:bg-[#002244] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Áp Dụng Sơ Đồ Lớp Mới</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* EDIT SEATING CHART METADATA & ASSIGNMENTS MODAL */}
       {isEditSeatingModalOpen && (
