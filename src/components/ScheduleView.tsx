@@ -41,6 +41,26 @@ interface ScheduleViewProps {
   onOpenOnlineClassModal?: () => void;
 }
 
+export interface PeriodConfigItem {
+  id: number;
+  name: string;
+  time: string;
+  session: 'morning' | 'afternoon';
+}
+
+const DEFAULT_PERIODS_CONFIG: PeriodConfigItem[] = [
+  { id: 1, name: 'Tiết 1', time: '07:00 - 07:45', session: 'morning' },
+  { id: 2, name: 'Tiết 2', time: '07:50 - 08:35', session: 'morning' },
+  { id: 3, name: 'Tiết 3', time: '08:55 - 09:40', session: 'morning' },
+  { id: 4, name: 'Tiết 4', time: '09:45 - 10:30', session: 'morning' },
+  { id: 5, name: 'Tiết 5', time: '10:35 - 11:20', session: 'morning' },
+  { id: 6, name: 'Tiết 6', time: '13:00 - 13:45', session: 'afternoon' },
+  { id: 7, name: 'Tiết 7', time: '13:50 - 14:35', session: 'afternoon' },
+  { id: 8, name: 'Tiết 8', time: '14:45 - 15:30', session: 'afternoon' },
+  { id: 9, name: 'Tiết 9', time: '15:35 - 16:20', session: 'afternoon' },
+  { id: 10, name: 'Tiết 10', time: '16:25 - 17:10', session: 'afternoon' },
+];
+
 export const ScheduleView: React.FC<ScheduleViewProps> = ({
   timetable,
   onSaveTimetable,
@@ -66,6 +86,50 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('weekly');
   const [searchSubject, setSearchSubject] = useState('');
   const [selectedSessionFilter, setSelectedSessionFilter] = useState<'all' | 'morning' | 'afternoon'>('all');
+
+  // Periods configuration state reading directly from localStorage 'app_timetable_periods_config'
+  const [periodsConfig, setPeriodsConfig] = useState<PeriodConfigItem[]>(() => {
+    try {
+      const raw = localStorage.getItem('app_timetable_periods_config');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length >= 10) {
+          return parsed;
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi parse app_timetable_periods_config:", err);
+    }
+    return DEFAULT_PERIODS_CONFIG;
+  });
+
+  const [isPeriodConfigModalOpen, setIsPeriodConfigModalOpen] = useState(false);
+  const [tempPeriodsConfig, setTempPeriodsConfig] = useState<PeriodConfigItem[]>(DEFAULT_PERIODS_CONFIG);
+
+  const getPeriodConfig = (periodId: number): PeriodConfigItem => {
+    return periodsConfig.find((p) => p.id === periodId) || {
+      id: periodId,
+      name: `Tiết ${periodId}`,
+      time: periodId <= 5 ? '07:00 - 07:45' : '13:00 - 13:45',
+      session: periodId <= 5 ? 'morning' : 'afternoon',
+    };
+  };
+
+  const handleSavePeriodsConfig = (newConfig: PeriodConfigItem[]) => {
+    setPeriodsConfig(newConfig);
+    try {
+      localStorage.setItem('app_timetable_periods_config', JSON.stringify(newConfig));
+    } catch (err) {
+      console.error("Lỗi ghi app_timetable_periods_config:", err);
+    }
+    setIsPeriodConfigModalOpen(false);
+    showToast("Đã lưu cấu hình Tên tiết & Khung giờ thành công!");
+  };
+
+  const handleResetPeriodsConfig = () => {
+    setTempPeriodsConfig(JSON.parse(JSON.stringify(DEFAULT_PERIODS_CONFIG)));
+    showToast("Đã khôi phục khung giờ mặc định. Hãy bấm 'Lưu Khung Giờ' để xác nhận.");
+  };
 
   // Editing state
   const [editingPeriod, setEditingPeriod] = useState<{
@@ -464,6 +528,18 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               <>
                 <button
                   type="button"
+                  onClick={() => {
+                    setTempPeriodsConfig(JSON.parse(JSON.stringify(periodsConfig)));
+                    setIsPeriodConfigModalOpen(true);
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-purple-500"
+                  title="Chỉnh sửa Tên tiết (Tiết 1, Tiết 6,...) và Khung giờ học"
+                >
+                  <Clock className="w-4 h-4 text-purple-200" />
+                  <span>Cấu Hình Tiết & Khung Giờ</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setIsEditTimetableModalOpen(true)}
                   className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400"
                   title="Điều chỉnh thông tin Năm học, Học kỳ, Ngày áp dụng, Khung giờ & Tiết học TKB"
@@ -565,11 +641,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                         </div>
                       </td>
                     )}
-                    <td className="p-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-50/50">
-                      Tiết {periodIdx + 1}
+                    <td className="p-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-50/50 group/phead relative">
+                      <div className="flex items-center justify-center gap-1">
+                        <span>{getPeriodConfig(periodIdx + 1).name}</span>
+                        {(role === 'gvcn' || role === 'bgh') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTempPeriodsConfig(JSON.parse(JSON.stringify(periodsConfig)));
+                              setIsPeriodConfigModalOpen(true);
+                            }}
+                            className="opacity-0 group-hover/phead:opacity-100 p-0.5 hover:bg-slate-200 rounded text-slate-500 transition-opacity"
+                            title="Đổi tên & khung giờ tiết học này"
+                          >
+                            <Edit3 className="w-3 h-3 text-[#003366]" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="p-2 text-[10px] text-slate-500 font-mono text-center border-r border-slate-200 bg-slate-50/30">
-                      {timetable.days[0]?.morning[periodIdx]?.time || '07:00 - 07:45'}
+                      {getPeriodConfig(periodIdx + 1).time}
                     </td>
 
                     {/* Columns for Mon -> Sat */}
@@ -684,11 +775,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                         </div>
                       </td>
                     )}
-                    <td className="p-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-50/50">
-                      Tiết {periodIdx + 6}
+                    <td className="p-3 font-bold text-slate-700 text-center border-r border-slate-200 bg-slate-50/50 group/phead relative">
+                      <div className="flex items-center justify-center gap-1">
+                        <span>{getPeriodConfig(periodIdx + 6).name}</span>
+                        {(role === 'gvcn' || role === 'bgh') && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setTempPeriodsConfig(JSON.parse(JSON.stringify(periodsConfig)));
+                              setIsPeriodConfigModalOpen(true);
+                            }}
+                            className="opacity-0 group-hover/phead:opacity-100 p-0.5 hover:bg-slate-200 rounded text-slate-500 transition-opacity"
+                            title="Đổi tên & khung giờ tiết học này"
+                          >
+                            <Edit3 className="w-3 h-3 text-[#003366]" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                     <td className="p-2 text-[10px] text-slate-500 font-mono text-center border-r border-slate-200 bg-slate-50/30">
-                      {timetable.days[0]?.afternoon[periodIdx]?.time || '13:00 - 13:45'}
+                      {getPeriodConfig(periodIdx + 6).time}
                     </td>
 
                     {/* Columns for Mon -> Sat */}
@@ -833,6 +939,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 {activeDaySchedule.morning.map((period, idx) => {
                   const colors = getSubjectColor(period.subject);
                   const hasSubject = Boolean(period.subject && period.subject.trim() !== '' && period.subject !== 'Trống');
+                  const pCfg = getPeriodConfig(idx + 1);
 
                   return (
                     <div
@@ -852,9 +959,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-white/80 border border-slate-200 flex flex-col items-center justify-center font-bold shrink-0">
-                          <span className="text-[10px] text-slate-400 leading-none">Tiết</span>
-                          <span className="text-xs text-[#003366] leading-none mt-0.5">{period.period}</span>
+                        <div className="min-w-[52px] px-2 h-9 rounded-xl bg-white/80 border border-slate-200 flex flex-col items-center justify-center font-bold shrink-0">
+                          <span className="text-[10px] text-[#003366] leading-none truncate max-w-[56px]" title={pCfg.name}>
+                            {pCfg.name}
+                          </span>
                         </div>
                         <div className="min-w-0">
                           <h4 className={`font-bold text-xs ${colors.text} truncate`}>
@@ -874,8 +982,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[11px] font-mono text-slate-500 bg-white/60 px-2 py-1 rounded-lg border border-slate-200">
-                          {period.time}
+                        <span className="text-[11px] font-mono text-slate-600 font-semibold bg-white/70 px-2 py-1 rounded-lg border border-slate-200">
+                          {pCfg.time}
                         </span>
                         {(role === 'gvcn' || role === 'bgh') && (
                           <div className="flex items-center gap-1">
@@ -932,6 +1040,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 {activeDaySchedule.afternoon.map((period, idx) => {
                   const colors = getSubjectColor(period.subject);
                   const hasSubject = Boolean(period.subject && period.subject.trim() !== '' && period.subject !== 'Trống');
+                  const pCfg = getPeriodConfig(idx + 6);
 
                   return (
                     <div
@@ -951,9 +1060,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       }}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 rounded-xl bg-white/80 border border-slate-200 flex flex-col items-center justify-center font-bold shrink-0">
-                          <span className="text-[10px] text-slate-400 leading-none">Tiết</span>
-                          <span className="text-xs text-[#003366] leading-none mt-0.5">{period.period}</span>
+                        <div className="min-w-[52px] px-2 h-9 rounded-xl bg-white/80 border border-slate-200 flex flex-col items-center justify-center font-bold shrink-0">
+                          <span className="text-[10px] text-[#003366] leading-none truncate max-w-[56px]" title={pCfg.name}>
+                            {pCfg.name}
+                          </span>
                         </div>
                         <div className="min-w-0">
                           <h4 className={`font-bold text-xs ${colors.text} truncate`}>
@@ -973,8 +1083,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[11px] font-mono text-slate-500 bg-white/60 px-2 py-1 rounded-lg border border-slate-200">
-                          {period.time}
+                        <span className="text-[11px] font-mono text-slate-600 font-semibold bg-white/70 px-2 py-1 rounded-lg border border-slate-200">
+                          {pCfg.time}
                         </span>
                         {(role === 'gvcn' || role === 'bgh') && (
                           <div className="flex items-center gap-1">
@@ -1030,10 +1140,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-sm">
-                    Chỉnh Sửa Tiết {editingPeriod.data.period} ({editingPeriod.session === 'morning' ? 'Buổi Sáng' : 'Buổi Chiều'})
+                    Chỉnh Sửa {getPeriodConfig(editingPeriod.data.period).name} ({editingPeriod.session === 'morning' ? 'Buổi Sáng' : 'Buổi Chiều'})
                   </h3>
                   <p className="text-[11px] text-slate-500">
-                    Thời gian: {editingPeriod.data.time}
+                    Thời gian: {getPeriodConfig(editingPeriod.data.period).time}
                   </p>
                 </div>
               </div>
@@ -1376,6 +1486,165 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                 <span>Áp Dụng Thời Khóa Biểu Mới</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PERIOD & TIME SLOT CONFIGURATION MODAL */}
+      {isPeriodConfigModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-scaleUp max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">Cấu Hình Tên Tiết & Khung Giờ Học</h3>
+                  <p className="text-xs text-slate-500">Tùy biến tên tiết (Tiết 1, Tiết 6, Sinh hoạt...) & giờ bắt đầu - kết thúc</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPeriodConfigModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 p-2 rounded-xl hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="overflow-y-auto py-4 space-y-6 flex-1 pr-1">
+              {/* BUỔI SÁNG SECTION */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-amber-50 p-3 rounded-xl border border-amber-200">
+                  <h4 className="font-bold text-amber-900 text-xs flex items-center gap-2">
+                    <Sun className="w-4 h-4 text-amber-600" />
+                    <span>BUỔI SÁNG (TIẾT 1 - TIẾT 5)</span>
+                  </h4>
+                  <span className="text-[11px] text-amber-700 font-medium">5 tiết học</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {tempPeriodsConfig.slice(0, 5).map((pItem, idx) => (
+                    <div key={pItem.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold text-[#003366]">
+                        <span>Tiết STT #{pItem.id}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 block mb-1">Tên Tiết:</label>
+                          <input
+                            type="text"
+                            value={pItem.name}
+                            onChange={(e) => {
+                              const updated = [...tempPeriodsConfig];
+                              updated[idx] = { ...updated[idx], name: e.target.value };
+                              setTempPeriodsConfig(updated);
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#003366] focus:outline-none"
+                            placeholder="Tiết 1..."
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 block mb-1">Khung Giờ:</label>
+                          <input
+                            type="text"
+                            value={pItem.time}
+                            onChange={(e) => {
+                              const updated = [...tempPeriodsConfig];
+                              updated[idx] = { ...updated[idx], time: e.target.value };
+                              setTempPeriodsConfig(updated);
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#003366] focus:outline-none"
+                            placeholder="07:00 - 07:45"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* BUỔI CHIỀU SECTION */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between bg-indigo-50 p-3 rounded-xl border border-indigo-200">
+                  <h4 className="font-bold text-indigo-900 text-xs flex items-center gap-2">
+                    <Sunset className="w-4 h-4 text-indigo-600" />
+                    <span>BUỔI CHIỀU (TIẾT 6 - TIẾT 10)</span>
+                  </h4>
+                  <span className="text-[11px] text-indigo-700 font-medium">5 tiết học</span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {tempPeriodsConfig.slice(5, 10).map((pItem, idx) => (
+                    <div key={pItem.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-200 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-bold text-[#003366]">
+                        <span>Tiết STT #{pItem.id}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 block mb-1">Tên Tiết:</label>
+                          <input
+                            type="text"
+                            value={pItem.name}
+                            onChange={(e) => {
+                              const updated = [...tempPeriodsConfig];
+                              updated[idx + 5] = { ...updated[idx + 5], name: e.target.value };
+                              setTempPeriodsConfig(updated);
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#003366] focus:outline-none"
+                            placeholder="Tiết 6..."
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-bold text-slate-500 block mb-1">Khung Giờ:</label>
+                          <input
+                            type="text"
+                            value={pItem.time}
+                            onChange={(e) => {
+                              const updated = [...tempPeriodsConfig];
+                              updated[idx + 5] = { ...updated[idx + 5], time: e.target.value };
+                              setTempPeriodsConfig(updated);
+                            }}
+                            className="w-full px-2.5 py-1.5 text-xs font-mono bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#003366] focus:outline-none"
+                            placeholder="13:00 - 13:45"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-200 shrink-0">
+              <button
+                type="button"
+                onClick={handleResetPeriodsConfig}
+                className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold rounded-xl text-xs transition-colors border border-amber-300 flex items-center gap-1.5 cursor-pointer"
+                title="Khôi phục mốc giờ và tên tiết tiêu chuẩn ban đầu"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-amber-700" />
+                <span>Mặc Định Ban Đầu</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPeriodConfigModalOpen(false)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs transition-colors"
+                >
+                  Hủy Bỏ
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSavePeriodsConfig(tempPeriodsConfig)}
+                  className="px-5 py-2 bg-[#003366] hover:bg-[#002244] text-white font-bold rounded-xl text-xs transition-colors flex items-center gap-1.5 shadow-md cursor-pointer"
+                >
+                  <Save className="w-4 h-4 text-emerald-300" />
+                  <span>Lưu Khung Giờ & Tên Tiết</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
