@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   BookOpen,
   FileSpreadsheet,
@@ -20,6 +20,8 @@ import {
   Sliders,
   AlertTriangle,
   RotateCcw,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   Student,
@@ -190,6 +192,42 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<BookTab>('cover');
   const [isPreviewExportModalOpen, setIsPreviewExportModalOpen] = useState(false);
+
+  // Horizontal Scroll Slider Logic for Navigation Sub-Tabs Bar
+  const navTabsRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
+
+  const checkTabScroll = () => {
+    if (navTabsRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = navTabsRef.current;
+      setCanScrollLeft(scrollLeft > 5);
+      setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 5);
+    }
+  };
+
+  useEffect(() => {
+    checkTabScroll();
+    const el = navTabsRef.current;
+    if (el) {
+      el.addEventListener('scroll', checkTabScroll);
+      window.addEventListener('resize', checkTabScroll);
+    }
+    return () => {
+      if (el) el.removeEventListener('scroll', checkTabScroll);
+      window.removeEventListener('resize', checkTabScroll);
+    };
+  }, []);
+
+  const handleScrollTabs = (direction: 'left' | 'right') => {
+    if (navTabsRef.current) {
+      const amount = 300;
+      navTabsRef.current.scrollBy({
+        left: direction === 'left' ? -amount : amount,
+        behavior: 'smooth',
+      });
+    }
+  };
 
   const handleExportExcel = () => {
     exportHomeroomMasterExcel({
@@ -438,9 +476,30 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
         </div>
       </div>
 
-      {/* Navigation Sub-Tabs Bar */}
-      <div className="bg-white p-2 rounded-2xl border border-slate-200 shadow-xs overflow-x-auto no-scrollbar">
-        <div className="flex items-center gap-1.5 min-w-max">
+      {/* Navigation Sub-Tabs Bar with Horizontal Slider & Scroll Control Arrows */}
+      <div className="relative bg-white rounded-2xl border border-slate-200 shadow-xs p-1.5 flex items-center group">
+        {/* Scroll Left Button */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => handleScrollTabs('left')}
+            className="absolute left-1 z-20 p-2 rounded-xl bg-white/95 hover:bg-[#003366] hover:text-white text-slate-700 shadow-md border border-slate-200 transition-all cursor-pointer transform -translate-y-1/2 top-1/2 active:scale-95 flex items-center justify-center"
+            title="Cuộn sang trái"
+          >
+            <ChevronLeft className="w-4 h-4 font-bold" />
+          </button>
+        )}
+
+        {/* Horizontal Scroll Slider Container */}
+        <div
+          ref={navTabsRef}
+          onScroll={checkTabScroll}
+          className="flex items-center gap-1.5 overflow-x-auto scroll-smooth py-1 px-1.5 w-full select-none"
+          style={{
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#003366 #f1f5f9',
+          }}
+        >
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -448,11 +507,13 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
               <button
                 key={item.id}
                 type="button"
-                onClick={() => setActiveTab(item.id)}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                onClick={() => {
+                  setActiveTab(item.id);
+                }}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                   isActive
-                    ? 'bg-[#003366] text-white shadow-sm ring-2 ring-blue-400/20'
-                    : 'text-slate-600 hover:text-[#003366] hover:bg-slate-100'
+                    ? 'bg-[#003366] text-white shadow-sm ring-2 ring-blue-400/30'
+                    : 'text-slate-600 hover:text-[#003366] hover:bg-slate-100 border border-transparent'
                 }`}
               >
                 <Icon className={`w-4 h-4 ${isActive ? 'text-amber-300' : 'text-slate-400'}`} />
@@ -461,6 +522,18 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
             );
           })}
         </div>
+
+        {/* Scroll Right Button */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => handleScrollTabs('right')}
+            className="absolute right-1 z-20 p-2 rounded-xl bg-white/95 hover:bg-[#003366] hover:text-white text-slate-700 shadow-md border border-slate-200 transition-all cursor-pointer transform -translate-y-1/2 top-1/2 active:scale-95 flex items-center justify-center"
+            title="Cuộn sang phải"
+          >
+            <ChevronRight className="w-4 h-4 font-bold" />
+          </button>
+        )}
       </div>
 
       {/* Main Content Area Based on Active Tab */}
