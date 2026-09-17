@@ -114,6 +114,7 @@ export interface Student {
   gender: 'Nam' | 'Nữ';
   dob: string;
   group: 1 | 2 | 3 | 4; // Tổ 1, 2, 3, 4
+  position?: string; // Chức vụ trong lớp: "Lớp trưởng", "Lớp phó học tập", "Tổ trưởng", "Thành viên"...
   avatar: string;
   phone: string;
   email: string;
@@ -629,6 +630,107 @@ export interface OnlineClassSheetConfig {
   syncStatus: 'idle' | 'syncing' | 'success' | 'error';
   lastError?: string;
   syncedCount?: number;
+}
+
+// Additional Types for App & Service Integration
+export type Subject = 'math' | 'physics' | 'chemistry' | 'biology' | 'literature' | 'english' | 'history' | 'geography' | 'gdcd' | 'informatics' | 'gdqpan' | string;
+
+export interface Question {
+  id: string;
+  questionText: string;
+  options: { key: 'A' | 'B' | 'C' | 'D'; text: string }[];
+  correctAnswer: 'A' | 'B' | 'C' | 'D';
+  explanation?: string;
+  points?: number;
+}
+
+export interface StudentInfo {
+  id: string;
+  name: string;
+  code?: string;
+  gender?: 'Nam' | 'Nữ';
+  dob?: string;
+  group?: number;
+  avatar?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+
+export interface SessionRecord {
+  id: string;
+  title: string;
+  date: string;
+  subject?: string;
+  teacherName?: string;
+  note?: string;
+  data?: any;
+}
+
+export interface DocumentLearning {
+  id: string;
+  title: string;
+  subject: string;
+  fileType: string;
+  url?: string;
+  description?: string;
+  uploadedAt?: string;
+}
+
+export interface AppSettings {
+  theme?: 'light' | 'dark' | 'system';
+  notificationsEnabled?: boolean;
+  googleAppsScriptUrl?: string;
+  geminiApiKey?: string;
+  autoSaveIntervalSeconds?: number;
+}
+
+export interface EducationalGame {
+  id: string;
+  title: string;
+  subject: string;
+  description: string;
+  gameType: 'quiz' | 'flashcard' | 'matching' | 'wheel';
+  questions: Question[];
+  createdAt?: string;
+}
+
+export interface AISimulationItem {
+  id: string;
+  title: string;
+  subject: string;
+  scenario: string;
+  prompt: string;
+  parameters?: Record<string, any>;
+  results?: any;
+  createdAt?: string;
+}
+
+export interface AppData {
+  students: Student[];
+  disciplineLogs: DisciplineEntry[];
+  journal: ClassJournalEntry[];
+  leaveRequests: LeaveRequest[];
+  tasks: TaskItem[];
+  dutySchedule: DutySchedule[];
+  materials: StudyMaterial[];
+  submissions: AssignmentSubmission[];
+  onlineExams: OnlineExam[];
+  examAttempts: OnlineExamAttempt[];
+  classInfo: ClassInfo;
+  teacherInfo: TeacherInfo;
+  bghInfo: BghInfo;
+  seatingChart: SeatingChartData;
+  timetable: TimetableData;
+  messages: ChatMessage[];
+  parentMeetings: ParentMeeting[];
+  studyPairs: StudyPair[];
+  randomPicks: RandomPickRecord[];
+  emulationLogs: GroupEmulationLog[];
+  homeroomBookData: HomeroomBookData;
+  subjectTeachers: SubjectTeacher[];
+  onlineClasses?: OnlineClass[];
+  settings?: AppSettings;
 }
 
 
