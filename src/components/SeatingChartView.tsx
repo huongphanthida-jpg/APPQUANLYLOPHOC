@@ -87,13 +87,32 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     return (students || []).filter((s) => s && s.id && !assignedStudentIds.has(s.id));
   }, [students, assignedStudentIds]);
 
+  // Defensive helper function to load saved seating data from localStorage
+  const loadSavedSeating = () => {
+    try {
+      const raw =
+        localStorage.getItem('app_seating_chart_data') ||
+        localStorage.getItem('seating_chart_data') ||
+        localStorage.getItem('tnh_gvcn_seating_v1');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (parsed && (parsed.assignments || parsed.seats)) {
+        return parsed;
+      }
+      return null;
+    } catch (err) {
+      console.error("Lỗi parse dữ liệu sơ đồ:", err);
+      return null;
+    }
+  };
+
   // Helper to persist seating chart directly to localStorage with key 'app_seating_chart_data' and notify parent
   const saveChartToLocalStorage = (chart: SeatingChartData) => {
     try {
       const payload = {
-        ...chart,
-        seats: chart.assignments,
-        unassignedStudents: unassignedStudents.map((s) => s.id),
+        ...(chart || {}),
+        seats: chart?.assignments || {},
+        unassignedStudents: (unassignedStudents || [])?.map((s) => s?.id),
         lastUpdated: new Date().toISOString(),
       };
       const jsonStr = JSON.stringify(payload);
@@ -106,28 +125,18 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     onSaveSeatingChart(chart);
   };
 
-  // Mount effect: Read from localStorage key 'app_seating_chart_data' on component startup
+  // Mount effect: Read from localStorage key 'app_seating_chart_data' on component startup with defensive fallback
   useEffect(() => {
-    try {
-      const stored =
-        localStorage.getItem('app_seating_chart_data') ||
-        localStorage.getItem('seating_chart_data') ||
-        localStorage.getItem('tnh_gvcn_seating_v1');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed && (parsed.assignments || parsed.seats)) {
-          const assignments = parsed.assignments || parsed.seats;
-          if (assignments && Object.keys(assignments).length > 0) {
-            onSaveSeatingChart({
-              ...seatingChart,
-              ...parsed,
-              assignments,
-            });
-          }
-        }
+    const saved = loadSavedSeating();
+    if (saved) {
+      const assignments = saved.assignments || (typeof saved.seats === 'object' ? saved.seats : null);
+      if (assignments && typeof assignments === 'object') {
+        onSaveSeatingChart({
+          ...(seatingChart || {}),
+          ...saved,
+          assignments,
+        });
       }
-    } catch (e) {
-      console.warn('Failed reading app_seating_chart_data from localStorage on mount:', e);
     }
   }, []);
 
@@ -138,7 +147,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
         const payload = {
           ...seatingChart,
           seats: seatingChart.assignments,
-          unassignedStudents: unassignedStudents.map((s) => s.id),
+          unassignedStudents: (unassignedStudents || [])?.map((s) => s?.id),
           lastUpdated: new Date().toISOString(),
         };
         const jsonStr = JSON.stringify(payload);
@@ -1279,12 +1288,12 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       </div>
 
       {/* UNASSIGNED STUDENTS LIST (If any) */}
-      {unassignedStudents.length > 0 && (
+      {(unassignedStudents || [])?.length > 0 && (
         <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/30 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
               <Users className="w-4 h-4 text-amber-600" />
-              <span>Học sinh chưa xếp chỗ ngồi ({unassignedStudents.length} em):</span>
+              <span>Học sinh chưa xếp chỗ ngồi ({(unassignedStudents || [])?.length} em):</span>
             </h3>
             {role === 'gvcn' && (
               <button
@@ -1294,13 +1303,13 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                 title="Tự động lấp đầy các ghế trống bằng danh sách các học sinh chưa có chỗ ngồi"
               >
                 <UserPlus className="w-4 h-4 text-slate-950" />
-                <span>Tự Xếp Chỗ Cho {unassignedStudents.length} Em Chưa Có Ghế</span>
+                <span>Tự Xếp Chỗ Cho {(unassignedStudents || [])?.length} Em Chưa Có Ghế</span>
               </button>
             )}
           </div>
 
           <div className="flex flex-wrap gap-2 pt-1">
-            {unassignedStudents.map((s) => (
+            {(unassignedStudents || [])?.map((s) => (
               <div
                 key={s.id}
                 className="bg-white px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs flex items-center gap-2 text-xs font-semibold text-slate-800"
