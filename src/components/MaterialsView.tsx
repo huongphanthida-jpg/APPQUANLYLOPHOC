@@ -569,7 +569,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
   );
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 pb-8">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 right-5 z-50 bg-[#003366] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-bounce text-sm font-semibold border border-amber-400">
@@ -588,13 +588,13 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
       />
 
       {/* Header & Controls Bar - 1 Single Horizontal Row */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3">
         <div className="flex items-center gap-3 shrink-0">
-          <div className="w-11 h-11 rounded-xl bg-blue-50 text-[#003366] flex items-center justify-center font-bold border border-blue-100">
-            <FileText className="w-6 h-6 text-[#003366]" />
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#003366] flex items-center justify-center font-bold border border-blue-100">
+            <FileText className="w-5 h-5 text-[#003366]" />
           </div>
           <div>
-            <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 flex-wrap">
               Văn Bản & Thông Báo {classInfo?.className || ''}
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold border border-blue-200">
                 {announcements.length} Thông Báo • {documents.length} Công Văn
@@ -616,7 +616,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               placeholder="Tìm thông báo, công văn..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:bg-white transition-all"
+              className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:bg-white transition-all"
             />
             {searchQuery && (
               <button
@@ -633,7 +633,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowAnnounceModal(true)}
-                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap border border-amber-400"
+                className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap border border-amber-400"
               >
                 <Megaphone className="w-4 h-4 text-slate-950" />
                 <span>+ Đăng Thông Báo</span>
@@ -642,7 +642,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={() => setShowDocModal(true)}
-                className="px-3.5 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap border border-blue-900"
+                className="px-3 py-1.5 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs transition-all shadow-xs flex items-center gap-1.5 cursor-pointer whitespace-nowrap border border-blue-900"
               >
                 <UploadCloud className="w-4 h-4 text-cyan-300" />
                 <span>+ Tải Lên Văn Bản</span>
@@ -652,10 +652,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={handleClearEverything}
-                className="px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-rose-200 whitespace-nowrap"
+                className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-rose-200 whitespace-nowrap"
                 title="Xoá sạch toàn bộ Thông báo và Kho Văn bản"
               >
-                <Trash2 className="w-4 h-4 text-rose-600" />
+                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                 <span>Xoá Hết Dữ Liệu</span>
               </button>
 
@@ -663,7 +663,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={handleResetDefaultData}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer border border-slate-200"
+                className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer border border-slate-200"
                 title="Khôi phục dữ liệu mẫu ban đầu"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -674,14 +674,14 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
       </div>
 
       {/* KHU VỰC 1: ĐĂNG THÔNG BÁO NHANH CHỦ NHIỆM */}
-      <section className="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+      <section className="bg-white rounded-2xl p-4 sm:p-4.5 shadow-xs border border-slate-200 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-slate-100 gap-2.5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
               <Bell className="w-4 h-4 text-amber-700" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 Bảng Thông Báo Nhanh Lớp Học
                 <span className="text-xs bg-amber-50 text-amber-800 px-2 py-0.5 rounded-full font-semibold border border-amber-200">
                   {filteredAnnouncements.length} Tin Đăng
@@ -696,7 +696,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={toggleSelectAllAnnouncements}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200"
+                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200"
               >
                 {selectedAnnounceIds.length === filteredAnnouncements.length && filteredAnnouncements.length > 0 ? (
                   <CheckSquare className="w-3.5 h-3.5 text-[#003366]" />
@@ -710,7 +710,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleBulkDeleteAnnouncements}
-                  className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer animate-fadeIn"
+                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer animate-fadeIn"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-white" />
                   <span>Xoá đã chọn ({selectedAnnounceIds.length})</span>
@@ -720,7 +720,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <button
                 type="button"
                 onClick={handleClearAllAnnouncements}
-                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200"
+                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-700 text-xs font-semibold transition-colors cursor-pointer border border-slate-200"
                 title="Xoá tất cả thông báo trong mục này"
               >
                 <span>Xoá Hết Thông Báo</span>
@@ -731,12 +731,12 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
 
         {/* List of Announcements */}
         {filteredAnnouncements.length === 0 ? (
-          <div className="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <Bell className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+          <div className="text-center py-5 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <Bell className="w-6 h-6 text-slate-300 mx-auto mb-1.5" />
             <p className="text-xs text-slate-500 font-medium">Chưa có thông báo nào trong danh sách tìm kiếm.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filteredAnnouncements.map((ann) => {
               const isUrgent = ann.priority === 'urgent';
               const isImportant = ann.priority === 'important';
@@ -745,11 +745,11 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               return (
                 <div
                   key={ann.id}
-                  className={`rounded-2xl p-4 transition-all duration-200 flex flex-col justify-between border relative ${
+                  className={`rounded-xl p-3.5 transition-all duration-200 flex flex-col justify-between border relative ${
                     isSelected ? 'ring-2 ring-[#003366] bg-blue-50/70 border-blue-300' : ''
                   } ${
                     !isSelected && isUrgent
-                      ? 'bg-rose-50/70 border-rose-300 shadow-sm ring-2 ring-rose-400 animate-pulse'
+                      ? 'bg-rose-50/70 border-rose-300 shadow-xs ring-2 ring-rose-400 animate-pulse'
                       : !isSelected && isImportant
                       ? 'bg-amber-50/60 border-amber-300 shadow-xs'
                       : !isSelected
@@ -759,7 +759,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                 >
                   <div>
                     {/* Header: Checkbox + Priority Badge + Timestamp */}
-                    <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-2">
                         {(role === 'gvcn' || role === 'bgh') && (
                           <input
@@ -770,7 +770,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                           />
                         )}
                         <span
-                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                             isUrgent
                               ? 'bg-rose-600 text-white border-rose-700'
                               : isImportant
@@ -788,14 +788,14 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                     </div>
 
                     {/* Announcement Title */}
-                    <h3 className="text-sm font-bold text-slate-900 mb-1.5 leading-snug line-clamp-2">{ann.title}</h3>
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 mb-1 leading-snug line-clamp-2">{ann.title}</h3>
 
                     {/* Content */}
-                    <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line line-clamp-4">{ann.content}</p>
+                    <p className="text-xs text-slate-600 leading-relaxed whitespace-pre-line line-clamp-3">{ann.content}</p>
                   </div>
 
                   {/* Footer Author & Actions */}
-                  <div className="mt-3 pt-2.5 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
+                  <div className="mt-2.5 pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px]">
                     <span className="font-semibold text-slate-700 flex items-center gap-1">
                       <ShieldCheck className="w-3.5 h-3.5 text-[#003366]" />
                       {ann.author}
@@ -819,14 +819,14 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
       </section>
 
       {/* KHU VỰC 2: KHO LƯU TRỮ VĂN BẢN & CÔNG VĂN */}
-      <section className="bg-white rounded-2xl p-5 shadow-xs border border-slate-200 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+      <section className="bg-white rounded-2xl p-4 sm:p-4.5 shadow-xs border border-slate-200 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pb-2.5 border-b border-slate-100">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-100 text-[#003366] flex items-center justify-center font-bold">
+            <div className="w-7 h-7 rounded-lg bg-blue-100 text-[#003366] flex items-center justify-center font-bold">
               <Building2 className="w-4 h-4 text-[#003366]" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 flex items-center gap-2">
                 Kho Văn Bản & Công Văn Nhà Trường
                 <span className="text-xs bg-blue-50 text-blue-800 px-2 py-0.5 rounded-full font-semibold border border-blue-200">
                   {filteredDocs.length} Hồ Sơ
@@ -836,10 +836,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
           </div>
 
           {/* Document Filter Category Tabs */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold overflow-x-auto">
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold overflow-x-auto [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             <button
               onClick={() => setDocFilterTab('all')}
-              className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
                 docFilterTab === 'all'
                   ? 'bg-white text-[#003366] shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -849,7 +849,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
             </button>
             <button
               onClick={() => setDocFilterTab('cong_van')}
-              className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
                 docFilterTab === 'cong_van'
                   ? 'bg-white text-[#003366] shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -859,7 +859,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
             </button>
             <button
               onClick={() => setDocFilterTab('thong_bao')}
-              className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
                 docFilterTab === 'thong_bao'
                   ? 'bg-white text-[#003366] shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -869,7 +869,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
             </button>
             <button
               onClick={() => setDocFilterTab('bieu_mau')}
-              className={`px-3 py-1.5 rounded-lg transition-all whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
                 docFilterTab === 'bieu_mau'
                   ? 'bg-white text-[#003366] shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -882,7 +882,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
 
         {/* Document Bulk Action Bar */}
         {(role === 'gvcn' || role === 'bgh') && filteredDocs.length > 0 && (
-          <div className="flex items-center justify-between gap-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200 text-xs flex-wrap">
+          <div className="flex items-center justify-between gap-3 bg-slate-50 p-2 rounded-xl border border-slate-200 text-xs flex-wrap">
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -901,7 +901,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                 <button
                   type="button"
                   onClick={handleBulkDeleteDocs}
-                  className="px-3 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer animate-fadeIn"
+                  className="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer animate-fadeIn"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-white" />
                   <span>Xoá đã chọn ({selectedDocIds.length})</span>
@@ -922,10 +922,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
 
         {/* Documents Table List */}
         {filteredDocs.length === 0 ? (
-          <div className="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-            <FileText className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm font-semibold text-slate-600">Không tìm thấy văn bản phù hợp.</p>
-            <p className="text-xs text-slate-400 mt-1">Thử thay đổi từ khóa tìm kiếm hoặc bấm Tải Lên Văn Bản Mới.</p>
+          <div className="text-center py-6 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <FileText className="w-7 h-7 text-slate-300 mx-auto mb-1.5" />
+            <p className="text-xs font-semibold text-slate-600">Không tìm thấy văn bản phù hợp.</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">Thử thay đổi từ khóa tìm kiếm hoặc bấm Tải Lên Văn Bản Mới.</p>
           </div>
         ) : (
           <div className="overflow-x-auto rounded-xl border border-slate-200">
@@ -933,7 +933,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
               <thead>
                 <tr className="bg-slate-100/80 text-slate-700 font-bold border-b border-slate-200">
                   {(role === 'gvcn' || role === 'bgh') && (
-                    <th className="py-3 px-3 text-center w-10">
+                    <th className="py-2.5 px-3 text-center w-10">
                       <input
                         type="checkbox"
                         checked={selectedDocIds.length === filteredDocs.length && filteredDocs.length > 0}
@@ -942,12 +942,12 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                       />
                     </th>
                   )}
-                  <th className="py-3 px-4">TÊN VĂN BẢN / CÔNG VĂN</th>
-                  <th className="py-3 px-4 whitespace-nowrap">LOẠI HỒ SƠ</th>
-                  <th className="py-3 px-4 whitespace-nowrap">ĐƠN VỊ BAN HÀNH</th>
-                  <th className="py-3 px-4 whitespace-nowrap">NGÀY BAN HÀNH</th>
-                  <th className="py-3 px-4 whitespace-nowrap">DUNG LƯỢNG</th>
-                  <th className="py-3 px-4 text-center whitespace-nowrap">THAO TÁC</th>
+                  <th className="py-2.5 px-3.5">TÊN VĂN BẢN / CÔNG VĂN</th>
+                  <th className="py-2.5 px-3.5 whitespace-nowrap">LOẠI HỒ SƠ</th>
+                  <th className="py-2.5 px-3.5 whitespace-nowrap">ĐƠN VỊ BAN HÀNH</th>
+                  <th className="py-2.5 px-3.5 whitespace-nowrap">NGÀY BAN HÀNH</th>
+                  <th className="py-2.5 px-3.5 whitespace-nowrap">DUNG LƯỢNG</th>
+                  <th className="py-2.5 px-3.5 text-center whitespace-nowrap">THAO TÁC</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
@@ -964,7 +964,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                       }`}
                     >
                       {(role === 'gvcn' || role === 'bgh') && (
-                        <td className="py-3.5 px-3 text-center">
+                        <td className="py-2.5 px-3 text-center">
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -973,10 +973,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                           />
                         </td>
                       )}
-                      <td className="py-3.5 px-4">
-                        <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-xl border shrink-0 mt-0.5 ${badge.bg}`}>
-                            <IconComp className="w-4 h-4" />
+                      <td className="py-2.5 px-3.5">
+                        <div className="flex items-start gap-2.5">
+                          <div className={`p-1.5 rounded-lg border shrink-0 mt-0.5 ${badge.bg}`}>
+                            <IconComp className="w-3.5 h-3.5" />
                           </div>
                           <div>
                             <div className="font-bold text-slate-900 group-hover:text-[#003366] text-xs leading-snug">
@@ -989,9 +989,9 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                           </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
+                      <td className="py-2.5 px-3.5 whitespace-nowrap">
                         <span
-                          className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border ${
+                          className={`px-2 py-0.5 rounded-full text-[11px] font-semibold border ${
                             doc.documentType === 'cong_van'
                               ? 'bg-blue-100 text-blue-800 border-blue-200'
                               : doc.documentType === 'thong_bao'
@@ -1006,14 +1006,14 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                             : 'Biểu Mẫu'}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 font-medium text-slate-700 whitespace-nowrap">{doc.issuer}</td>
-                      <td className="py-3.5 px-4 text-slate-600 whitespace-nowrap">{doc.issueDate}</td>
-                      <td className="py-3.5 px-4 text-slate-500 font-mono text-[11px] whitespace-nowrap">{doc.fileSize}</td>
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
+                      <td className="py-2.5 px-3.5 font-medium text-slate-700 whitespace-nowrap">{doc.issuer}</td>
+                      <td className="py-2.5 px-3.5 text-slate-600 whitespace-nowrap">{doc.issueDate}</td>
+                      <td className="py-2.5 px-3.5 text-slate-500 font-mono text-[11px] whitespace-nowrap">{doc.fileSize}</td>
+                      <td className="py-2.5 px-3.5 text-center whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => handleViewOrDownloadDoc(doc)}
-                            className="px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#003366] font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer border border-blue-200"
+                            className="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#003366] font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer border border-blue-200"
                             title="Tải xuống hoặc xem file văn bản"
                           >
                             <Download className="w-3.5 h-3.5 text-[#003366]" />
@@ -1023,7 +1023,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({
                           {(role === 'gvcn' || role === 'bgh') && (
                             <button
                               onClick={() => handleDeleteDocument(doc.id)}
-                              className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer border border-slate-200"
+                              className="p-1 rounded-lg bg-slate-100 hover:bg-rose-50 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer border border-slate-200"
                               title="Xoá văn bản"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
