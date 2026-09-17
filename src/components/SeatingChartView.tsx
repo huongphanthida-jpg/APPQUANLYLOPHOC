@@ -850,42 +850,38 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       )}
 
       {/* Header & Controls */}
-      <div className="bg-white rounded-2xl p-5 md:p-6 shadow-xs border border-slate-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#003366] flex items-center justify-center font-bold">
-                <LayoutGrid className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  Sơ Đồ Bố Trí Chỗ Ngồi {classInfo?.className || ''}
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold">
-                    4 Dãy × 6 Bàn (48 Chỗ)
-                  </span>
-                </h1>
-                <p className="text-xs md:text-sm text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                  <span>Quy chuẩn 4 dãy đặt nằm ngang trên một hàng, mỗi dãy 6 bàn, mỗi bàn 2 học sinh.</span>
-                  <span>•</span>
-                  <span>Cập nhật ngày: <strong className="font-semibold text-slate-700">{seatingChart.updatedAt}</strong></span>
-                  {(role === 'gvcn' || role === 'bgh') && (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditSeatingModalOpen(true)}
-                      className="ml-1.5 px-2.5 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
-                      title="Nhấp để điều chỉnh thông tin sơ đồ lớp"
-                    >
-                      <Edit3 className="w-3 h-3 text-amber-700" />
-                      <span>Điều chỉnh</span>
-                    </button>
-                  )}
-                </p>
-              </div>
-            </div>
+      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#003366] flex items-center justify-center font-bold shrink-0">
+            <LayoutGrid className="w-5 h-5" />
           </div>
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center gap-2 flex-wrap">
+              Sơ Đồ Bố Trí Chỗ Ngồi {classInfo?.className || ''}
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold">
+                4 Dãy × 6 Bàn (48 Chỗ)
+              </span>
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+              <span>Cập nhật ngày: <strong className="font-semibold text-slate-700">{seatingChart.updatedAt}</strong></span>
+              {(role === 'gvcn' || role === 'bgh') && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditSeatingModalOpen(true)}
+                  className="ml-1 px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-[11px] transition-colors inline-flex items-center gap-1 cursor-pointer"
+                  title="Nhấp để điều chỉnh thông tin sơ đồ lớp"
+                >
+                  <Edit3 className="w-3 h-3 text-amber-700" />
+                  <span>Điều chỉnh</span>
+                </button>
+              )}
+            </p>
+          </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             {(role === 'gvcn' || role === 'bgh') && (
               <>
                 <button
