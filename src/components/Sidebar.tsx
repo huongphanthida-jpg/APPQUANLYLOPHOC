@@ -159,7 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'tasks', label: 'Nhiệm Vụ & Trực Nhật', icon: CheckSquare },
     { id: 'random-picker', label: 'Gọi Tên Ngẫu Nhiên', icon: Shuffle },
     { id: 'group-emulation', label: 'Tổng Hợp Thi Đua Theo Tổ', icon: Trophy },
-    { id: 'leaves', label: 'Đơn Từ & Phê Duyệt', icon: FileText, badge: pendingLeavesCount },
+    { id: 'leaves', label: 'Phân Nhóm Học Sinh', icon: GraduationCap },
     { id: 'homeroom-book', label: 'Sổ Chủ Nhiệm', icon: BookOpen },
     { id: 'settings', label: 'Cài Đặt', icon: Settings },
     { id: 'ai-advisor', label: 'Cố Vấn Sư Phạm AI', icon: Sparkles, highlight: true },
@@ -178,7 +178,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'tasks', label: 'Thông báo & Kế Hoạch', icon: CheckSquare },
     { id: 'random-picker', label: 'Gọi Tên Ngẫu Nhiên', icon: Shuffle },
     { id: 'group-emulation', label: 'Tổng Hợp Thi Đua Theo Tổ', icon: Trophy },
-    { id: 'leaves', label: 'Đơn Từ', icon: FileText, badge: pendingLeavesCount },
+    { id: 'leaves', label: 'Phân Nhóm Học Sinh', icon: GraduationCap },
     { id: 'homeroom-book', label: 'Sổ Chủ Nhiệm & Báo Cáo', icon: BookOpen },
     { id: 'ai-advisor', label: 'Trợ Lý Chiến Lược BGH AI', icon: Sparkles, highlight: true },
   ];
@@ -194,7 +194,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'discipline', label: 'Theo Dõi Nề Nếp', icon: Award },
     { id: 'random-picker', label: 'Gọi Tên Trả Lời Bài', icon: Shuffle },
     { id: 'group-emulation', label: 'Tổng Hợp Thi Đua Theo Tổ', icon: Trophy },
-    { id: 'leaves', label: 'Danh Sách Vắng Phép', icon: FileText, badge: pendingLeavesCount },
+    { id: 'leaves', label: 'Phân Nhóm Học Sinh', icon: GraduationCap },
     { id: 'homeroom-book', label: 'Sổ Đầu Bài Lớp', icon: BookOpen },
     { id: 'ai-advisor', label: 'Cố Vấn Sư Phạm Bộ Môn AI', icon: Sparkles, highlight: true },
   ];
@@ -212,7 +212,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'tasks', label: 'Phân Công Trực Nhật', icon: CheckSquare },
     { id: 'random-picker', label: 'Vòng Quay Học Tập', icon: Shuffle },
     { id: 'group-emulation', label: 'Thi Đua Tổ Của Tôi', icon: Trophy },
-    { id: 'leaves', label: 'Nộp Đơn Xin Nghỉ Phép', icon: FileText },
+    { id: 'leaves', label: 'Phân Nhóm Học Sinh', icon: GraduationCap },
     { id: 'homeroom-book', label: 'Sổ Đầu Bài & Sổ CN', icon: BookOpen },
     { id: 'ai-advisor', label: 'Gia Sư & Cố Vấn Học Tập AI', icon: Sparkles, highlight: true },
   ];
