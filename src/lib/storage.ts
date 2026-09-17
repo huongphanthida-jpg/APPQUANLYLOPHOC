@@ -189,11 +189,12 @@ const KEYS = {
 };
 
 const STUDENT_STORAGE_KEYS = [
-  KEYS.STUDENTS,
   'students',
   'app_students_data',
   'homeroom_book_students',
   'class_students',
+  'TEAMGVCN_students',
+  KEYS.STUDENTS,
   'tnh_12a1_students',
   'gvcn_students',
   'students_data',
@@ -266,6 +267,8 @@ export const getStoredStudents = (): Student[] => {
     return INITIAL_STUDENTS;
   }
 };
+
+export const loadStudents = getStoredStudents;
 
 export const saveStudents = (students: Student[]) => {
   // Safe Guard 1: Do NOT overwrite existing data with empty array if storage has students!
@@ -599,8 +602,8 @@ export const saveBghInfo = (info: BghInfo) => {
 };
 
 const SEATING_STORAGE_KEYS = [
-  'seating_chart_data',
   'app_seating_chart_data',
+  'seating_chart_data',
   'seatingChart',
   'homeroom_seating',
   'tnh_gvcn_seating_v1',
@@ -655,6 +658,8 @@ export const getStoredSeatingChart = (): SeatingChartData => {
     return INITIAL_SEATING_CHART;
   }
 };
+
+export const loadSeatingChart = getStoredSeatingChart;
 
 export const saveSeatingChartDirectlyToLocalStorage = (chart: SeatingChartData) => {
   // Safe Guard: Do NOT overwrite existing seating data with empty chart
