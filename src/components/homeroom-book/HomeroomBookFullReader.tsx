@@ -281,13 +281,14 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
     {
       page: 9,
       code: 'special-care',
-      title: 'Phần 8: Học Sinh Cần Quan Tâm & Đơn Từ',
+      title: 'Phần 8: Phân Nhóm Học Sinh (4 Nhóm Học Tập)',
       component: (
         <HomeroomBookSpecialCareAndLeaves
           specialStudents={bookData?.specialStudents || []}
           leaveRequests={leaveRequests || []}
           students={students || []}
           role={role}
+          classInfo={classInfo}
           onUpdateSpecialStudents={onUpdateSpecialStudents}
           onUpdateLeaveRequests={onUpdateLeaveRequests}
         />

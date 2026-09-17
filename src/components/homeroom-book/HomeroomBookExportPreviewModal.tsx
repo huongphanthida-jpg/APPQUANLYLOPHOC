@@ -156,7 +156,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
     { id: 5, name: '6. Nề Nếp & Sổ Đầu Bài', icon: ShieldCheck, desc: 'Nhật ký khen thưởng, vi phạm & phân loại tiết dạy' },
     { id: 6, name: '7. Bảng Điểm & 2 Mặt GD', icon: Award, desc: 'Điểm tổng kết các môn, xếp loại học lực & hạnh kiểm' },
     { id: 7, name: '8. Trực Nhật & Thi Đua', icon: Sparkles, desc: 'Lịch trực 8 ca/tuần và bảng điểm cộng trừ 4 tổ' },
-    { id: 8, name: '9. HS Quan Tâm & Đơn Từ', icon: Users, desc: 'Học sinh diện đặc biệt, tiến độ theo dõi và đơn nghỉ' },
+    { id: 8, name: '9. Phân Nhóm Học Sinh', icon: Users, desc: 'Phân loại 4 nhóm học tập (Ưu tú, Phát triển, Cần hỗ trợ, Nền tảng)' },
     { id: 9, name: '10. Biên Bản & Phê Duyệt', icon: Calendar, desc: 'Nội dung họp PHHS và đánh giá kiểm tra của BGH' },
     { id: 10, name: '11. Danh Sách GV Bộ Môn', icon: Users, desc: 'Tên môn, giáo viên phụ trách, liên hệ và số tiết' },
     { id: 11, name: '12. Tổng Hợp & Đánh Giá', icon: FileSpreadsheet, desc: 'Bảng thống kê tỷ lệ hoàn thành chỉ tiêu năm học' },
@@ -171,7 +171,7 @@ export const HomeroomBookExportPreviewModal: React.FC<HomeroomBookExportPreviewM
     { id: 6, title: 'Trang 6: Theo Dõi Nề Nếp Kỷ Luật & Sổ Đầu Bài', section: 'Kỷ luật & Tiết học' },
     { id: 7, title: 'Trang 7: Bảng Điểm Tổng Hợp & Ma Trận 2 Mặt GD', section: 'Học tập & Hạnh kiểm' },
     { id: 8, title: 'Trang 8: Phân Công Trực Nhật & Bảng Điểm Thi Đua', section: 'Lao động & Thi đua' },
-    { id: 9, title: 'Trang 9: Học Sinh Diện Đặc Biệt & Sổ Theo Dõi Nghỉ', section: 'Chăm sóc & Đơn từ' },
+    { id: 9, title: 'Trang 9: Phân Nhóm Học Sinh Theo 6 Môn Học', section: 'Phân nhóm & Học lực' },
     { id: 10, title: 'Trang 10: Biên Bản Họp & Kết Luận Phê Duyệt Của BGH', section: 'Biên bản & Ký duyệt' },
   ];
 
