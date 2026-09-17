@@ -635,3 +635,12 @@ function generateDefaultOnlineClassesFromSheet(_rows: any[]): OnlineClass[] {
     },
   ];
 }
+
+export {
+  validateAppsScriptUrl,
+  syncSessionToGoogleSheets,
+  pushFullAppDataToGoogleSheets,
+  pullFullAppDataFromGoogleSheets,
+  sendChatMessageToCloud,
+  fetchChatMessagesFromCloud,
+} from '../services/sheetSyncService';
