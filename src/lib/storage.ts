@@ -440,20 +440,30 @@ export const saveBghInfo = (info: BghInfo) => {
 
 export const getStoredSeatingChart = (): SeatingChartData => {
   try {
-    const data = localStorage.getItem('seating_chart_data') || localStorage.getItem('tnh_gvcn_seating_v1');
+    const data =
+      localStorage.getItem('app_seating_chart_data') ||
+      localStorage.getItem('seating_chart_data') ||
+      localStorage.getItem('tnh_gvcn_seating_v1');
     if (!data) return INITIAL_SEATING_CHART;
     const parsed = JSON.parse(data);
-    if (parsed && Array.isArray(parsed.columns) && parsed.columns.length > 0) {
-      return parsed;
+    if (parsed && (parsed.assignments || parsed.seats)) {
+      const assignments = parsed.assignments || parsed.seats || INITIAL_SEATING_CHART.assignments;
+      return {
+        ...INITIAL_SEATING_CHART,
+        ...parsed,
+        assignments,
+      };
     }
     return INITIAL_SEATING_CHART;
   } catch {
     return INITIAL_SEATING_CHART;
   }
 };
+
 export const saveSeatingChartDirectlyToLocalStorage = (chart: SeatingChartData) => {
   try {
     const jsonString = JSON.stringify(chart);
+    localStorage.setItem('app_seating_chart_data', jsonString);
     localStorage.setItem('seating_chart_data', jsonString);
     localStorage.setItem('tnh_gvcn_seating_v1', jsonString);
   } catch (error) {
