@@ -63,6 +63,9 @@ import {
 import {
   getStoredStudents,
   saveStudents,
+  saveStudentsToStorage,
+  deleteAvatarFromIndexedDB,
+  removeStudentFromSeatingChartAndStorage,
   getStoredGoogleSheetConfig,
   saveGoogleSheetConfig,
   getStoredOnlineClasses,
@@ -441,22 +444,42 @@ export function App() {
       newStudents = [updatedStudent, ...students];
     }
     setStudents(newStudents);
-    saveStudents(newStudents);
+    saveStudentsToStorage(newStudents);
   };
 
   const handleDeleteStudent = (studentId: string) => {
     const updated = students.filter((s) => s.id !== studentId);
     setStudents(updated);
-    saveStudents(updated);
-    if (currentStudentId === studentId) {
+    saveStudentsToStorage(updated);
+
+    // Auto-remove student assignment from Seating Chart in localStorage & state
+    const updatedChart = removeStudentFromSeatingChartAndStorage(studentId);
+    if (updatedChart) {
+      setSeatingChart(updatedChart);
+    }
+
+    // Clean up student avatar from IndexedDB to free memory
+    deleteAvatarFromIndexedDB(studentId).catch(() => {});
+
+    if (selectedStudentId === studentId) {
       setSelectedStudentId(updated.length > 0 ? updated[0].id : '');
     }
   };
 
   const handleClearAllStudents = () => {
     setStudents([]);
-    saveStudents([]);
+    saveStudentsToStorage([]);
     setSelectedStudentId('');
+    try {
+      const currentChart = getStoredSeatingChart();
+      if (currentChart) {
+        const updatedChart = { ...currentChart, assignments: {} };
+        saveSeatingChart(updatedChart);
+        setSeatingChart(updatedChart);
+      }
+    } catch {
+      // ignore
+    }
   };
 
   const handleUpdateStudentAvatar = async (studentId: string, newAvatar: string) => {
