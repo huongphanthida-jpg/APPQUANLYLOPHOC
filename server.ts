@@ -30,7 +30,7 @@ async function startServer() {
 
   // Health check
   app.get("/api/health", (_req, res) => {
-    res.json({ status: "ok", app: "DẠ HƯƠNG 2026-2027 - THPT Trần Nguyên Hãn" });
+    res.json({ status: "ok", app: "QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN" });
   });
 
   // Google Sheets Proxy Sync Endpoint
@@ -364,7 +364,7 @@ Yêu cầu:
   }
 
   app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Server DẠ HƯƠNG 2026-2027 running at http://0.0.0.0:${PORT}`);
+    console.log(`Server QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN running at http://0.0.0.0:${PORT}`);
   });
 }
 
