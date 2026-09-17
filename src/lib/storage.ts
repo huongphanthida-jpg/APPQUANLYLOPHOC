@@ -194,6 +194,11 @@ const STUDENT_STORAGE_KEYS = [
   'app_students_data',
   'homeroom_book_students',
   'class_students',
+  'tnh_12a1_students',
+  'gvcn_students',
+  'students_data',
+  'students_v1',
+  'students_backup',
 ];
 
 export const getStoredStudents = (): Student[] => {
@@ -288,57 +293,107 @@ export const saveStudents = (students: Student[]) => {
   saveAllAvatarsToIndexedDB(students).catch((err) => console.warn('IndexedDB avatar save error:', err));
 };
 
+const getFirstValidItem = (...keys: string[]): string | null => {
+  for (const k of keys) {
+    const val = localStorage.getItem(k);
+    if (val && val.trim() !== '' && val !== 'null' && val !== 'undefined') {
+      return val;
+    }
+  }
+  return null;
+};
+
 export const getStoredDisciplineLogs = (): DisciplineEntry[] => {
   try {
-    const data = localStorage.getItem(KEYS.DISCIPLINE);
-    return data ? JSON.parse(data) : INITIAL_DISCIPLINE_LOGS;
+    const data = getFirstValidItem(KEYS.DISCIPLINE, 'discipline_logs', 'app_discipline');
+    if (!data) return INITIAL_DISCIPLINE_LOGS;
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_DISCIPLINE_LOGS;
   } catch {
     return INITIAL_DISCIPLINE_LOGS;
   }
 };
 export const saveDisciplineLogs = (logs: DisciplineEntry[]) => {
-  localStorage.setItem(KEYS.DISCIPLINE, JSON.stringify(logs));
+  if (!Array.isArray(logs) || logs.length === 0) {
+    const existing = getFirstValidItem(KEYS.DISCIPLINE, 'discipline_logs');
+    if (existing) return; // Safe Guard
+  }
+  try {
+    const str = JSON.stringify(logs);
+    localStorage.setItem(KEYS.DISCIPLINE, str);
+    localStorage.setItem('discipline_logs', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredJournal = (): ClassJournalEntry[] => {
   try {
-    const data = localStorage.getItem(KEYS.JOURNAL);
-    return data ? JSON.parse(data) : INITIAL_CLASS_JOURNAL;
+    const data = getFirstValidItem(KEYS.JOURNAL, 'class_journal', 'app_journal');
+    if (!data) return INITIAL_CLASS_JOURNAL;
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_CLASS_JOURNAL;
   } catch {
     return INITIAL_CLASS_JOURNAL;
   }
 };
 export const saveJournal = (journal: ClassJournalEntry[]) => {
-  localStorage.setItem(KEYS.JOURNAL, JSON.stringify(journal));
+  if (!Array.isArray(journal) || journal.length === 0) {
+    const existing = getFirstValidItem(KEYS.JOURNAL, 'class_journal');
+    if (existing) return; // Safe Guard
+  }
+  try {
+    const str = JSON.stringify(journal);
+    localStorage.setItem(KEYS.JOURNAL, str);
+    localStorage.setItem('class_journal', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredLeaveRequests = (): LeaveRequest[] => {
   try {
-    const data = localStorage.getItem(KEYS.LEAVE);
-    return data ? JSON.parse(data) : INITIAL_LEAVE_REQUESTS;
+    const data = getFirstValidItem(KEYS.LEAVE, 'leave_requests', 'app_leave_requests', 'leaveRequests', 'leave_logs');
+    if (!data) return INITIAL_LEAVE_REQUESTS;
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_LEAVE_REQUESTS;
   } catch {
     return INITIAL_LEAVE_REQUESTS;
   }
 };
 export const saveLeaveRequests = (requests: LeaveRequest[]) => {
-  localStorage.setItem(KEYS.LEAVE, JSON.stringify(requests));
+  try {
+    const str = JSON.stringify(requests);
+    localStorage.setItem(KEYS.LEAVE, str);
+    localStorage.setItem('leave_requests', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredTasks = (): TaskItem[] => {
   try {
-    const data = localStorage.getItem(KEYS.TASKS);
-    return data ? JSON.parse(data) : INITIAL_TASKS;
+    const data = getFirstValidItem(KEYS.TASKS, 'tasks', 'app_tasks', 'task_items', 'task_list');
+    if (!data) return INITIAL_TASKS;
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) && parsed.length > 0 ? parsed : INITIAL_TASKS;
   } catch {
     return INITIAL_TASKS;
   }
 };
 export const saveTasks = (tasks: TaskItem[]) => {
-  localStorage.setItem(KEYS.TASKS, JSON.stringify(tasks));
+  try {
+    const str = JSON.stringify(tasks);
+    localStorage.setItem(KEYS.TASKS, str);
+    localStorage.setItem('tasks', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredDutySchedule = (): DutySchedule[] => {
   try {
-    const data = localStorage.getItem(KEYS.DUTY);
+    const data = getFirstValidItem(KEYS.DUTY, 'duty_schedule', 'app_duty_schedule', 'dutySchedule', 'duty_list');
     if (!data) return INITIAL_DUTY_SCHEDULE;
     const parsed: DutySchedule[] = JSON.parse(data);
     if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_DUTY_SCHEDULE;
@@ -362,12 +417,18 @@ export const getStoredDutySchedule = (): DutySchedule[] => {
   }
 };
 export const saveDutySchedule = (duty: DutySchedule[]) => {
-  localStorage.setItem(KEYS.DUTY, JSON.stringify(duty));
+  try {
+    const str = JSON.stringify(duty);
+    localStorage.setItem(KEYS.DUTY, str);
+    localStorage.setItem('duty_schedule', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredMaterials = (): StudyMaterial[] => {
   try {
-    const data = localStorage.getItem(KEYS.MATERIALS);
+    const data = getFirstValidItem(KEYS.MATERIALS, 'study_materials', 'app_study_materials', 'materials', 'tnh_12a1_materials');
     if (!data) return INITIAL_MATERIALS;
     const parsed: StudyMaterial[] = JSON.parse(data);
     if (!Array.isArray(parsed) || parsed.length === 0) return INITIAL_MATERIALS;
@@ -379,19 +440,31 @@ export const getStoredMaterials = (): StudyMaterial[] => {
   }
 };
 export const saveMaterials = (materials: StudyMaterial[]) => {
-  localStorage.setItem(KEYS.MATERIALS, JSON.stringify(materials));
+  try {
+    const str = JSON.stringify(materials);
+    localStorage.setItem(KEYS.MATERIALS, str);
+    localStorage.setItem('study_materials', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredSubmissions = (): AssignmentSubmission[] => {
   try {
-    const data = localStorage.getItem(KEYS.SUBMISSIONS);
+    const data = getFirstValidItem(KEYS.SUBMISSIONS, 'assignment_submissions', 'app_submissions', 'submissions');
     return data ? JSON.parse(data) : INITIAL_SUBMISSIONS;
   } catch {
     return INITIAL_SUBMISSIONS;
   }
 };
 export const saveSubmissions = (submissions: AssignmentSubmission[]) => {
-  localStorage.setItem(KEYS.SUBMISSIONS, JSON.stringify(submissions));
+  try {
+    const str = JSON.stringify(submissions);
+    localStorage.setItem(KEYS.SUBMISSIONS, str);
+    localStorage.setItem('assignment_submissions', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredRole = (): UserRole => {
@@ -435,65 +508,60 @@ export const saveSystemAuth = (authenticated: boolean, remember: boolean = true)
 
 export const getStoredClassInfo = (): ClassInfo => {
   try {
-    const data = localStorage.getItem(KEYS.CLASS_INFO);
+    const data = getFirstValidItem(KEYS.CLASS_INFO, 'class_info', 'app_class_info', 'classInfo', 'tnh_12a1_class_info');
     if (!data) return INITIAL_CLASS_INFO;
     const parsed: ClassInfo = JSON.parse(data);
-    if (parsed.className?.includes('12A1')) {
-      const updated = {
-        ...parsed,
-        className: 'LỚP 11D5',
-        academicYear: 'Niên khóa 2024 - 2027',
-        specialization: 'Lớp 11D5 - THPT Trần Nguyên Hãn',
-        streamBadge: 'Lớp 11D5',
-      };
-      saveClassInfo(updated);
-      return updated;
-    }
-    return parsed;
+    return parsed && parsed.className ? parsed : INITIAL_CLASS_INFO;
   } catch {
     return INITIAL_CLASS_INFO;
   }
 };
 export const saveClassInfo = (info: ClassInfo) => {
-  localStorage.setItem(KEYS.CLASS_INFO, JSON.stringify(info));
+  try {
+    const str = JSON.stringify(info);
+    localStorage.setItem(KEYS.CLASS_INFO, str);
+    localStorage.setItem('class_info', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredTeacherInfo = (): TeacherInfo => {
   try {
-    const data = localStorage.getItem(KEYS.TEACHER_INFO);
+    const data = getFirstValidItem(KEYS.TEACHER_INFO, 'teacher_info', 'app_teacher_info', 'teacherInfo', 'tnh_12a1_teacher_info');
     if (!data) return INITIAL_TEACHER_INFO;
     const parsed: TeacherInfo = JSON.parse(data);
-    if (parsed.name?.includes('Nguyễn Văn An')) {
-      const updated = {
-        ...parsed,
-        name: 'Cô Phan Thị Dạ Hương',
-        title: 'Giáo viên Chủ nhiệm - Lớp 11D5',
-        avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=300',
-        email: 'dahuong.gv@tnh.edu.vn',
-        subject: 'Chủ nhiệm / Ngữ Văn',
-      };
-      saveTeacherInfo(updated);
-      return updated;
-    }
-    return parsed;
+    return parsed && parsed.name ? parsed : INITIAL_TEACHER_INFO;
   } catch {
     return INITIAL_TEACHER_INFO;
   }
 };
 export const saveTeacherInfo = (info: TeacherInfo) => {
-  localStorage.setItem(KEYS.TEACHER_INFO, JSON.stringify(info));
+  try {
+    const str = JSON.stringify(info);
+    localStorage.setItem(KEYS.TEACHER_INFO, str);
+    localStorage.setItem('teacher_info', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredBghInfo = (): BghInfo => {
   try {
-    const data = localStorage.getItem(KEYS.BGH_INFO);
+    const data = getFirstValidItem(KEYS.BGH_INFO, 'bgh_info', 'app_bgh_info', 'bghInfo');
     return data ? JSON.parse(data) : INITIAL_BGH_INFO;
   } catch {
     return INITIAL_BGH_INFO;
   }
 };
 export const saveBghInfo = (info: BghInfo) => {
-  localStorage.setItem(KEYS.BGH_INFO, JSON.stringify(info));
+  try {
+    const str = JSON.stringify(info);
+    localStorage.setItem(KEYS.BGH_INFO, str);
+    localStorage.setItem('bgh_info', str);
+  } catch {
+    // ignore
+  }
 };
 
 const SEATING_STORAGE_KEYS = [
@@ -502,6 +570,9 @@ const SEATING_STORAGE_KEYS = [
   'seatingChart',
   'homeroom_seating',
   'tnh_gvcn_seating_v1',
+  'tnh_12a1_seating',
+  'seating_chart',
+  'seatingData',
 ];
 
 export const getStoredSeatingChart = (): SeatingChartData => {
@@ -592,7 +663,7 @@ export const saveSeatingChart = (chart: SeatingChartData) => {
 
 export const getStoredTimetable = (): TimetableData => {
   try {
-    const data = localStorage.getItem(KEYS.TIMETABLE);
+    const data = getFirstValidItem(KEYS.TIMETABLE, 'timetable_data', 'app_timetable', 'timetable', 'tnh_12a1_timetable');
     if (!data) return INITIAL_TIMETABLE;
     const parsed = JSON.parse(data);
     if (parsed && Array.isArray(parsed.days) && parsed.days.length > 0) {
@@ -612,97 +683,144 @@ export const getStoredTimetable = (): TimetableData => {
   }
 };
 export const saveTimetable = (timetable: TimetableData) => {
-  localStorage.setItem(KEYS.TIMETABLE, JSON.stringify(timetable));
+  try {
+    const str = JSON.stringify(timetable);
+    localStorage.setItem(KEYS.TIMETABLE, str);
+    localStorage.setItem('timetable_data', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredChatMessages = (): ChatMessage[] => {
   try {
-    const data = localStorage.getItem(KEYS.CHAT_MESSAGES) || localStorage.getItem('app_chat_messages_v1');
+    const data = getFirstValidItem(KEYS.CHAT_MESSAGES, 'app_chat_messages_v1', 'chat_messages', 'messages');
     return data ? JSON.parse(data) : INITIAL_CHAT_MESSAGES;
   } catch {
     return INITIAL_CHAT_MESSAGES;
   }
 };
 export const saveChatMessages = (messages: ChatMessage[]) => {
-  localStorage.setItem(KEYS.CHAT_MESSAGES, JSON.stringify(messages));
-  localStorage.setItem('app_chat_messages_v1', JSON.stringify(messages));
+  try {
+    const str = JSON.stringify(messages);
+    localStorage.setItem(KEYS.CHAT_MESSAGES, str);
+    localStorage.setItem('app_chat_messages_v1', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredParentMeetings = (): ParentMeeting[] => {
   try {
-    const data = localStorage.getItem(KEYS.PARENT_MEETINGS);
+    const data = getFirstValidItem(KEYS.PARENT_MEETINGS, 'parent_meetings', 'app_parent_meetings', 'parentMeetings');
     return data ? JSON.parse(data) : INITIAL_PARENT_MEETINGS;
   } catch {
     return INITIAL_PARENT_MEETINGS;
   }
 };
 export const saveParentMeetings = (meetings: ParentMeeting[]) => {
-  localStorage.setItem(KEYS.PARENT_MEETINGS, JSON.stringify(meetings));
+  try {
+    const str = JSON.stringify(meetings);
+    localStorage.setItem(KEYS.PARENT_MEETINGS, str);
+    localStorage.setItem('parent_meetings', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredStudyPairs = (): StudyPair[] => {
   try {
-    const data = localStorage.getItem(KEYS.STUDY_PAIRS);
+    const data = getFirstValidItem(KEYS.STUDY_PAIRS, 'study_pairs', 'app_study_pairs', 'studyPairs');
     return data ? JSON.parse(data) : INITIAL_STUDY_PAIRS;
   } catch {
     return INITIAL_STUDY_PAIRS;
   }
 };
 export const saveStudyPairs = (pairs: StudyPair[]) => {
-  localStorage.setItem(KEYS.STUDY_PAIRS, JSON.stringify(pairs));
+  try {
+    const str = JSON.stringify(pairs);
+    localStorage.setItem(KEYS.STUDY_PAIRS, str);
+    localStorage.setItem('study_pairs', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredOnlineExams = (): OnlineExam[] => {
   try {
-    const data = localStorage.getItem(KEYS.ONLINE_EXAMS);
+    const data = getFirstValidItem(KEYS.ONLINE_EXAMS, 'online_exams', 'app_online_exams', 'onlineExams');
     return data ? JSON.parse(data) : INITIAL_ONLINE_EXAMS;
   } catch {
     return INITIAL_ONLINE_EXAMS;
   }
 };
 export const saveOnlineExams = (exams: OnlineExam[]) => {
-  localStorage.setItem(KEYS.ONLINE_EXAMS, JSON.stringify(exams));
+  try {
+    const str = JSON.stringify(exams);
+    localStorage.setItem(KEYS.ONLINE_EXAMS, str);
+    localStorage.setItem('online_exams', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredExamAttempts = (): OnlineExamAttempt[] => {
   try {
-    const data = localStorage.getItem(KEYS.EXAM_ATTEMPTS);
+    const data = getFirstValidItem(KEYS.EXAM_ATTEMPTS, 'exam_attempts', 'app_exam_attempts', 'examAttempts');
     return data ? JSON.parse(data) : INITIAL_EXAM_ATTEMPTS;
   } catch {
     return INITIAL_EXAM_ATTEMPTS;
   }
 };
 export const saveExamAttempts = (attempts: OnlineExamAttempt[]) => {
-  localStorage.setItem(KEYS.EXAM_ATTEMPTS, JSON.stringify(attempts));
+  try {
+    const str = JSON.stringify(attempts);
+    localStorage.setItem(KEYS.EXAM_ATTEMPTS, str);
+    localStorage.setItem('exam_attempts', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredRandomPicks = (): RandomPickRecord[] => {
   try {
-    const data = localStorage.getItem(KEYS.RANDOM_PICKS);
+    const data = getFirstValidItem(KEYS.RANDOM_PICKS, 'random_picks', 'app_random_picks', 'randomPicks');
     return data ? JSON.parse(data) : INITIAL_RANDOM_PICK_RECORDS;
   } catch {
     return INITIAL_RANDOM_PICK_RECORDS;
   }
 };
 export const saveRandomPicks = (picks: RandomPickRecord[]) => {
-  localStorage.setItem(KEYS.RANDOM_PICKS, JSON.stringify(picks));
+  try {
+    const str = JSON.stringify(picks);
+    localStorage.setItem(KEYS.RANDOM_PICKS, str);
+    localStorage.setItem('random_picks', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredGroupEmulationLogs = (): GroupEmulationLog[] => {
   try {
-    const data = localStorage.getItem(KEYS.GROUP_EMULATION);
+    const data = getFirstValidItem(KEYS.GROUP_EMULATION, 'group_emulation', 'app_group_emulation', 'groupEmulation');
     return data ? JSON.parse(data) : INITIAL_GROUP_EMULATION_LOGS;
   } catch {
     return INITIAL_GROUP_EMULATION_LOGS;
   }
 };
 export const saveGroupEmulationLogs = (logs: GroupEmulationLog[]) => {
-  localStorage.setItem(KEYS.GROUP_EMULATION, JSON.stringify(logs));
+  try {
+    const str = JSON.stringify(logs);
+    localStorage.setItem(KEYS.GROUP_EMULATION, str);
+    localStorage.setItem('group_emulation', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredHomeroomBookData = (): HomeroomBookData => {
   try {
-    const data = localStorage.getItem(KEYS.HOMEROOM_BOOK);
+    const data = getFirstValidItem(KEYS.HOMEROOM_BOOK, 'homeroom_book_data', 'app_homeroom_book', 'homeroomBook', 'tnh_12a1_homeroom_book');
     if (!data) return INITIAL_HOMEROOM_BOOK_DATA;
     const parsed: HomeroomBookData = JSON.parse(data);
     return {
@@ -872,7 +990,7 @@ export const INITIAL_ONLINE_CLASSES: OnlineClass[] = [
 ];
 
 export const getStoredOnlineClasses = (): OnlineClass[] => {
-  const stored = localStorage.getItem(ONLINE_CLASSES_STORAGE_KEY);
+  const stored = getFirstValidItem(ONLINE_CLASSES_STORAGE_KEY, 'online_classes', 'app_online_classes', 'onlineClasses');
   if (!stored) return INITIAL_ONLINE_CLASSES;
   try {
     return JSON.parse(stored);
@@ -882,7 +1000,13 @@ export const getStoredOnlineClasses = (): OnlineClass[] => {
 };
 
 export const saveOnlineClasses = (classes: OnlineClass[]) => {
-  localStorage.setItem(ONLINE_CLASSES_STORAGE_KEY, JSON.stringify(classes));
+  try {
+    const str = JSON.stringify(classes);
+    localStorage.setItem(ONLINE_CLASSES_STORAGE_KEY, str);
+    localStorage.setItem('online_classes', str);
+  } catch {
+    // ignore
+  }
 };
 
 export const getStoredOnlineClassSheetConfig = (): OnlineClassSheetConfig | null => {
@@ -902,7 +1026,7 @@ export const saveOnlineClassSheetConfig = (config: OnlineClassSheetConfig) => {
 const SUBJECT_TEACHERS_STORAGE_KEY = 'tnh_gvcn_subject_teachers_v1';
 
 export const getStoredSubjectTeachers = (): SubjectTeacher[] => {
-  const stored = localStorage.getItem(SUBJECT_TEACHERS_STORAGE_KEY);
+  const stored = getFirstValidItem(SUBJECT_TEACHERS_STORAGE_KEY, 'subject_teachers', 'app_subject_teachers', 'subjectTeachers');
   if (!stored) return INITIAL_HOMEROOM_BOOK_DATA.subjectTeachers || [];
   try {
     return JSON.parse(stored);
@@ -912,7 +1036,13 @@ export const getStoredSubjectTeachers = (): SubjectTeacher[] => {
 };
 
 export const saveSubjectTeachers = (teachers: SubjectTeacher[]) => {
-  localStorage.setItem(SUBJECT_TEACHERS_STORAGE_KEY, JSON.stringify(teachers));
+  try {
+    const str = JSON.stringify(teachers);
+    localStorage.setItem(SUBJECT_TEACHERS_STORAGE_KEY, str);
+    localStorage.setItem('subject_teachers', str);
+  } catch {
+    // ignore
+  }
 };
 
 /**
@@ -982,6 +1112,51 @@ export const importFullAppBackupJson = (jsonString: string): { success: boolean;
   } catch (err: any) {
     console.error('Failed to import JSON backup:', err);
     return { success: false, message: 'File sao lưu .JSON không đúng định dạng hoặc đã bị hư hỏng.' };
+  }
+};
+
+/**
+ * Automatically scan and sync all legacy localStorage keys to current version keys
+ */
+export const autoMigrateAndSyncAllLegacyKeys = (): void => {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return;
+
+    // 1. Students
+    const students = getStoredStudents();
+    if (students && students.length > 0) {
+      saveStudents(students);
+    }
+
+    // 2. Seating Chart
+    const seatingChart = getStoredSeatingChart();
+    if (seatingChart && seatingChart.assignments && Object.keys(seatingChart.assignments).length > 0) {
+      saveSeatingChart(seatingChart);
+    }
+
+    // 3. Class & Teacher Info
+    const classInfo = getStoredClassInfo();
+    if (classInfo) saveClassInfo(classInfo);
+
+    const teacherInfo = getStoredTeacherInfo();
+    if (teacherInfo) saveTeacherInfo(teacherInfo);
+
+    // 4. Discipline & Journal
+    const discipline = getStoredDisciplineLogs();
+    if (discipline && discipline.length > 0) saveDisciplineLogs(discipline);
+
+    const journal = getStoredJournal();
+    if (journal && journal.length > 0) saveJournal(journal);
+
+    // 5. Timetable
+    const timetable = getStoredTimetable();
+    if (timetable && timetable.days && timetable.days.length > 0) saveTimetable(timetable);
+
+    // 6. Homeroom Book
+    const homeroomBook = getStoredHomeroomBookData();
+    if (homeroomBook) saveHomeroomBookData(homeroomBook);
+  } catch (err) {
+    console.warn('Auto migration error:', err);
   }
 };
 
