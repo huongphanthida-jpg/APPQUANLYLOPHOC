@@ -24,9 +24,12 @@ import {
   GraduationCap,
   ClipboardCheck,
   BookOpen,
-  Users
+  Users,
+  Download,
+  UploadCloud,
 } from 'lucide-react';
 import { UserRole, Student, ClassInfo, TeacherInfo, BghInfo } from '../types';
+import { exportFullAppBackupJson, importFullAppBackupJson } from '../lib/storage';
 
 interface HeaderProps {
   role: UserRole;
@@ -232,8 +235,35 @@ export const Header: React.FC<HeaderProps> = ({
       changeRoleDirect(pendingStudentRole);
     } else {
       const sampleCodes = students.slice(0, 2).map((s) => s.code).join(', ');
-      setStudentCodeError(`Không tìm thấy mã học sinh "${targetStudentCode}". Vui lòng thử lại${sampleCodes ? ` (Ví dụ: ${sampleCodes}...)` : ''}.`);
-    }
+  const headerFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleHeaderExportJson = () => {
+    const { filename, jsonContent } = exportFullAppBackupJson();
+    const blob = new Blob([jsonContent], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    alert('✅ Đã tải xuống file sao lưu dữ liệu toàn vẹn (.JSON) thành công!');
+  };
+
+  const handleHeaderImportJson = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const content = evt.target?.result as string;
+      const res = importFullAppBackupJson(content);
+      alert(res.message);
+      if (res.success) {
+        window.location.reload();
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -273,6 +303,39 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-semibold">Tự động đồng bộ & Lưu</span>
           </div>
+
+          {/* Quick JSON Backup / Restore Buttons for GVCN */}
+          {role === 'gvcn' && (
+            <div className="hidden lg:flex items-center gap-1.5 border-l border-slate-200 pl-3">
+              <button
+                type="button"
+                onClick={handleHeaderExportJson}
+                className="px-2.5 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-black flex items-center gap-1 shadow-2xs transition-all cursor-pointer"
+                title="Tải về máy file dự phòng (.JSON) lưu 100% dữ liệu lớp học"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-950" />
+                <span>Sao Lưu (.JSON)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => headerFileInputRef.current?.click()}
+                className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1 transition-all cursor-pointer"
+                title="Khôi phục dữ liệu từ file .JSON dự phòng"
+              >
+                <UploadCloud className="w-3.5 h-3.5 text-blue-600" />
+                <span>Phục Hồi (.JSON)</span>
+              </button>
+
+              <input
+                ref={headerFileInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleHeaderImportJson}
+                className="hidden"
+              />
+            </div>
+          )}
         </div>
 
         {/* Right: Role Switcher & Actions */}

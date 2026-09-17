@@ -36,6 +36,7 @@ import {
 } from '../types';
 import { ConfirmModal } from './ConfirmModal';
 import { Video } from 'lucide-react';
+import { exportFullAppBackupJson, importFullAppBackupJson } from '../lib/storage';
 
 interface SettingsViewProps {
   role: UserRole;
@@ -248,26 +249,18 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
   // 3. Full System Backup (.json)
   const handleExportSystemBackup = () => {
-    const backupData = {
-      backupDate: new Date().toISOString(),
-      classInfo,
-      teacherInfo,
-      bghInfo,
-      students,
-      localStorageData: { ...localStorage },
-    };
-
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const { filename, jsonContent } = exportFullAppBackupJson();
+    const blob = new Blob([jsonContent], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `Sao_Luu_He_Thong_${safeClassName}_${new Date().toISOString().split('T')[0]}.json`;
+    link.download = filename;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    showToast(`Đã tải xuống file sao lưu hệ thống toàn vẹn!`);
+    showToast(`Đã tải xuống file sao lưu hệ thống toàn vẹn (${filename})!`);
   };
 
   // 4. Full System Restore (.json)
@@ -277,20 +270,13 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      try {
-        const content = event.target?.result as string;
-        const parsed = JSON.parse(content);
-        if (parsed.localStorageData) {
-          Object.keys(parsed.localStorageData).forEach((key) => {
-            localStorage.setItem(key, parsed.localStorageData[key]);
-          });
-        }
-        showToast('Khôi phục dữ liệu thành công! Đang làm mới hệ thống...');
+      const content = event.target?.result as string;
+      const res = importFullAppBackupJson(content);
+      showToast(res.message);
+      if (res.success) {
         setTimeout(() => {
           window.location.reload();
         }, 1200);
-      } catch (err) {
-        showToast('Lỗi: File sao lưu không hợp lệ hoặc bị hỏng.');
       }
     };
     reader.readAsText(file);
