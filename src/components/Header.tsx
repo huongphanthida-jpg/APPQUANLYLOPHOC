@@ -235,6 +235,10 @@ export const Header: React.FC<HeaderProps> = ({
       changeRoleDirect(pendingStudentRole);
     } else {
       const sampleCodes = students.slice(0, 2).map((s) => s.code).join(', ');
+      setStudentCodeError(`Không tìm thấy mã học sinh "${targetStudentCode}". Vui lòng thử lại${sampleCodes ? ` (Ví dụ: ${sampleCodes}...)` : ''}.`);
+    }
+  };
+
   const headerFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleHeaderExportJson = () => {
