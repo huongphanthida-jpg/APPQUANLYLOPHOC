@@ -24,7 +24,8 @@ import {
   Info,
   ExternalLink,
   BookOpen,
-  HeartHandshake
+  HeartHandshake,
+  Save,
 } from 'lucide-react';
 import { Student, UserRole, SeatingChartData, SeatingDisplayMode, ClassInfo, TeacherInfo } from '../types';
 import { ConfirmModal } from './ConfirmModal';
@@ -573,15 +574,29 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2">
             {(role === 'gvcn' || role === 'bgh') && (
-              <button
-                type="button"
-                onClick={() => setIsEditSeatingModalOpen(true)}
-                className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400"
-                title="Điều chỉnh thông tin tiêu đề, ngày áp dụng & xếp chỗ thủ công"
-              >
-                <Edit3 className="w-4 h-4 text-slate-950" />
-                <span>Điều Chỉnh Dữ Liệu</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    saveChartToLocalStorage(seatingChart);
+                    showToast('Đã lưu sơ đồ chỗ ngồi thành công vào bộ nhớ!');
+                  }}
+                  className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-emerald-500"
+                  title="Lưu vị trí bàn ghế hiện tại vào localStorage"
+                >
+                  <Save className="w-4 h-4 text-white" />
+                  <span>Lưu Sơ Đồ</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditSeatingModalOpen(true)}
+                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400"
+                  title="Điều chỉnh thông tin tiêu đề, ngày áp dụng & xếp chỗ thủ công"
+                >
+                  <Edit3 className="w-4 h-4 text-slate-950" />
+                  <span>Điều Chỉnh Dữ Liệu</span>
+                </button>
+              </>
             )}
             {/* Search Input */}
             <div className="relative min-w-[180px] sm:min-w-[220px]">
