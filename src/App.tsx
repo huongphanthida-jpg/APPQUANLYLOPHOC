@@ -120,7 +120,12 @@ import {
 } from './lib/storage';
 import { INITIAL_SEATING_CHART, INITIAL_TIMETABLE } from './data/mockData';
 import { INITIAL_HOMEROOM_BOOK_DATA } from './data/homeroomBookData';
-import { fetchStudentsFromGoogleSheet, fetchOnlineClassesFromGoogleSheet } from './utils/googleSheetSync';
+import {
+  fetchStudentsFromGoogleSheet,
+  fetchOnlineClassesFromGoogleSheet,
+  sendChatMessageToCloud,
+  validateAppsScriptUrl,
+} from './utils/googleSheetSync';
 import { compressImageBase64 } from './utils/imageCompressor';
 
 export function App() {
@@ -843,18 +848,26 @@ export function App() {
   };
 
   // Connection & Communication Handlers
-  const handleSendMessage = (msgData: Omit<ChatMessage, 'id' | 'timestamp'>) => {
-    const newMsg: ChatMessage = {
-      ...msgData,
-      id: `msg-${Date.now()}`,
-      timestamp: new Date().toLocaleTimeString('vi-VN', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-    };
+  const handleSendMessage = (msgData: Omit<ChatMessage, 'id' | 'timestamp'> | ChatMessage) => {
+    const newMsg: ChatMessage =
+      'id' in msgData && msgData.id
+        ? (msgData as ChatMessage)
+        : {
+            ...msgData,
+            id: `msg-${Date.now()}`,
+            timestamp: new Date().toLocaleTimeString('vi-VN', {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+          };
     const updated = [...messages, newMsg];
     setMessages(updated);
     saveChatMessages(updated);
+
+    const cfg = googleSheetConfig || getStoredGoogleSheetConfig();
+    if (cfg && cfg.sheetUrl && validateAppsScriptUrl(cfg.sheetUrl)) {
+      sendChatMessageToCloud(cfg.sheetUrl, classInfo?.className || '11D5', newMsg);
+    }
   };
 
   const handleDeleteChatMessage = (messageId: string) => {
@@ -1264,6 +1277,12 @@ export function App() {
             onClearAllStudyPairs={handleClearAllStudyPairs}
             classInfo={classInfo}
             teacherInfo={teacherInfo}
+            googleSheetConfig={googleSheetConfig}
+            onUpdateMessages={(newMsgs) => {
+              setMessages(newMsgs);
+              saveChatMessages(newMsgs);
+            }}
+            onOpenGoogleSheetModal={() => setIsGoogleSheetModalOpen(true)}
           />
         </main>
       </div>
@@ -1457,6 +1476,12 @@ export function App() {
               }}
               onlineClasses={onlineClasses}
               onOpenOnlineClassModal={() => setIsOnlineClassModalOpen(true)}
+              googleSheetConfig={googleSheetConfig}
+              onUpdateMessages={(newMsgs) => {
+                setMessages(newMsgs);
+                saveChatMessages(newMsgs);
+              }}
+              onOpenGoogleSheetModal={() => setIsGoogleSheetModalOpen(true)}
             />
           )}
 
