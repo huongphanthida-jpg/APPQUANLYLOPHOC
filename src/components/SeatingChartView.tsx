@@ -64,8 +64,28 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const [showAssignModal, setShowAssignModal] = useState<string | null>(null); // seatKey to assign
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isEditSeatingModalOpen, setIsEditSeatingModalOpen] = useState(false);
-  const [isAutoArrangeOpen, setIsAutoArrangeOpen] = useState<boolean>(false);
   const autoArrangeRef = useRef<HTMLDivElement>(null);
+
+  // Student map for fast lookup (defined at top to prevent TDZ ReferenceError)
+  const studentMap = useMemo(() => {
+    const map = new Map<string, Student>();
+    (students || []).forEach((s) => {
+      if (s && s.id) map.set(s.id, s);
+    });
+    return map;
+  }, [students]);
+
+  // Find all assigned and unassigned students safely
+  const assignedStudentIds = useMemo(() => {
+    if (!seatingChart || !seatingChart.assignments) return new Set<string>();
+    return new Set(
+      Object.values(seatingChart.assignments).filter((id): id is string => id !== null && id !== undefined && id !== '')
+    );
+  }, [seatingChart?.assignments]);
+
+  const unassignedStudents = useMemo(() => {
+    return (students || []).filter((s) => s && s.id && !assignedStudentIds.has(s.id));
+  }, [students, assignedStudentIds]);
 
   // Helper to persist seating chart directly to localStorage with key 'app_seating_chart_data' and notify parent
   const saveChartToLocalStorage = (chart: SeatingChartData) => {
@@ -140,7 +160,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
     const totalDesksPerAisle = 6;
     const totalAisles = 4;
-    const newAssignments = { ...seatingChart.assignments };
+    const newAssignments = { ...(seatingChart?.assignments || {}) };
 
     // Find all currently empty seats
     const emptySeatKeys: string[] = [];
@@ -206,7 +226,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const handleAssignSingleUnassignedStudent = (student: Student) => {
     const totalDesksPerAisle = 6;
     const totalAisles = 4;
-    const newAssignments = { ...seatingChart.assignments };
+    const newAssignments = { ...(seatingChart?.assignments || {}) };
 
     const currentAisleGroups = seatingChart.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 };
     let preferredCol = 1;
@@ -295,23 +315,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Student map for fast lookup
-  const studentMap = useMemo(() => {
-    const map = new Map<string, Student>();
-    students.forEach((s) => map.set(s.id, s));
-    return map;
-  }, [students]);
 
-  // Find all unassigned students
-  const assignedStudentIds = useMemo(() => {
-    return new Set(
-      Object.values(seatingChart.assignments).filter((id): id is string => id !== null && id !== undefined)
-    );
-  }, [seatingChart.assignments]);
-
-  const unassignedStudents = useMemo(() => {
-    return students.filter((s) => !assignedStudentIds.has(s.id));
-  }, [students, assignedStudentIds]);
 
   // Helper to find which Dãy is assigned to a given Tổ
   const getAisleForGroup = (groupNum: number): string => {
@@ -344,8 +348,9 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
   // Handle seat click (Swap or select)
   const handleSeatClick = (seatKey: string) => {
+    const currentAssignments = seatingChart?.assignments || {};
     if (role !== 'gvcn') {
-      const studentId = seatingChart.assignments[seatKey];
+      const studentId = currentAssignments[seatKey];
       if (studentId) {
         const student = studentMap.get(studentId);
         if (student) setViewingStudent(student);
@@ -357,7 +362,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     if (!selectedSeatKey) {
       // First click: select seat
       setSelectedSeatKey(seatKey);
-      const studentId = seatingChart.assignments[seatKey];
+      const studentId = currentAssignments[seatKey];
       const student = studentId ? studentMap.get(studentId) : null;
       if (student) {
         showToast(`Đã chọn học sinh: ${student.name}. Nhấp vào vị trí bàn khác để hoán đổi chỗ ngồi!`);
@@ -369,11 +374,11 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       setSelectedSeatKey(null);
     } else {
       // Second click on a different seat: SWAP
-      const sourceStudentId = seatingChart.assignments[selectedSeatKey] || null;
-      const targetStudentId = seatingChart.assignments[seatKey] || null;
+      const sourceStudentId = currentAssignments[selectedSeatKey] || null;
+      const targetStudentId = currentAssignments[seatKey] || null;
 
       const newAssignments = {
-        ...seatingChart.assignments,
+        ...currentAssignments,
         [selectedSeatKey]: targetStudentId,
         [seatKey]: sourceStudentId,
       };
@@ -394,7 +399,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
   // Assign specific student to a seat
   const handleAssignStudent = (seatKey: string, studentId: string | null) => {
-    const newAssignments = { ...seatingChart.assignments };
+    const newAssignments = { ...(seatingChart?.assignments || {}) };
 
     // If student was previously in another seat, clear it
     if (studentId) {
@@ -1037,8 +1042,8 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                     {[1, 2, 3, 4, 5, 6].map((deskNum) => {
                       const seat1Key = `${columnNum}-${deskNum}-1`;
                       const seat2Key = `${columnNum}-${deskNum}-2`;
-                      const student1Id = seatingChart.assignments[seat1Key];
-                      const student2Id = seatingChart.assignments[seat2Key];
+                      const student1Id = seatingChart?.assignments?.[seat1Key] || null;
+                      const student2Id = seatingChart?.assignments?.[seat2Key] || null;
                       const student1 = student1Id ? studentMap.get(student1Id) : null;
                       const student2 = student2Id ? studentMap.get(student2Id) : null;
 
