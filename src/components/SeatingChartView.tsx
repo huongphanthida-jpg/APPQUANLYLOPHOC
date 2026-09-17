@@ -1431,7 +1431,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleSeatClick(seat1Key)}
-                              className={`text-left p-2 rounded-xl border transition-all relative flex flex-col justify-between min-h-[92px] cursor-pointer ${
+                              className={`text-left p-2 rounded-xl border transition-all relative flex flex-col justify-between min-h-[92px] cursor-pointer group/seat ${
                                 isSeat1Selected
                                   ? 'ring-2 ring-amber-500 border-amber-500 bg-amber-50/80 shadow-md scale-[1.02]'
                                   : isSeat1Match
@@ -1448,7 +1448,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                                   : 'Ghế trống - Nhấp để xếp chỗ'
                               }
                             >
-                              {/* Quick Kick Button for GVCN */}
+                              {/* Quick Kick Button for GVCN (Ẩn mặc định, chỉ hiện khi được chọn/kích vào hoặc di chuột) */}
                               {role === 'gvcn' && student1 && (
                                 <button
                                   type="button"
@@ -1456,10 +1456,14 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                                     e.stopPropagation();
                                     handleUnassignStudent(seat1Key);
                                   }}
-                                  className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-sm z-10 transition-transform hover:scale-110 cursor-pointer"
+                                  className={`absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-700 text-white w-5.5 h-5.5 rounded-full flex items-center justify-center text-[10px] shadow-md z-10 cursor-pointer transition-all duration-200 ${
+                                    isSeat1Selected
+                                      ? 'opacity-100 scale-110 ring-2 ring-white animate-pulse'
+                                      : 'opacity-0 group-hover/seat:opacity-100 hover:scale-110'
+                                  }`}
                                   title={`Kích ${student1.name} ra khỏi chỗ (chuyển vào danh sách chưa xếp chỗ)`}
                                 >
-                                  <X className="w-3 h-3" />
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               )}
 
@@ -1544,7 +1548,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                             <button
                               type="button"
                               onClick={() => handleSeatClick(seat2Key)}
-                              className={`text-left p-2 rounded-xl border transition-all relative flex flex-col justify-between min-h-[92px] cursor-pointer ${
+                              className={`text-left p-2 rounded-xl border transition-all relative flex flex-col justify-between min-h-[92px] cursor-pointer group/seat ${
                                 isSeat2Selected
                                   ? 'ring-2 ring-amber-500 border-amber-500 bg-amber-50/80 shadow-md scale-[1.02]'
                                   : isSeat2Match
@@ -1561,7 +1565,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                                   : 'Ghế trống - Nhấp để xếp chỗ'
                               }
                             >
-                              {/* Quick Kick Button for GVCN */}
+                              {/* Quick Kick Button for GVCN (Ẩn mặc định, chỉ hiện khi được chọn/kích vào hoặc di chuột) */}
                               {role === 'gvcn' && student2 && (
                                 <button
                                   type="button"
@@ -1569,10 +1573,14 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                                     e.stopPropagation();
                                     handleUnassignStudent(seat2Key);
                                   }}
-                                  className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-sm z-10 transition-transform hover:scale-110 cursor-pointer"
+                                  className={`absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-700 text-white w-5.5 h-5.5 rounded-full flex items-center justify-center text-[10px] shadow-md z-10 cursor-pointer transition-all duration-200 ${
+                                    isSeat2Selected
+                                      ? 'opacity-100 scale-110 ring-2 ring-white animate-pulse'
+                                      : 'opacity-0 group-hover/seat:opacity-100 hover:scale-110'
+                                  }`}
                                   title={`Kích ${student2.name} ra khỏi chỗ (chuyển vào danh sách chưa xếp chỗ)`}
                                 >
-                                  <X className="w-3 h-3" />
+                                  <X className="w-3.5 h-3.5" />
                                 </button>
                               )}
 
