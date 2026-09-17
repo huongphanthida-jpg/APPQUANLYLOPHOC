@@ -64,6 +64,7 @@ import {
   getStoredStudents,
   saveStudents,
   saveStudentsToStorage,
+  syncAllStudentStorageKeys,
   deleteAvatarFromIndexedDB,
   removeStudentFromSeatingChartAndStorage,
   getStoredGoogleSheetConfig,
