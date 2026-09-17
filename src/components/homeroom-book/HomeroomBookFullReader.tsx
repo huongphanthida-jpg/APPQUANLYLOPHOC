@@ -236,13 +236,18 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
     {
       page: 6,
       code: 'discipline',
-      title: 'Phần 5: Nề Nếp Kỷ Luật & Sổ Đầu Bài',
+      title: 'Phần 5: Nề Nếp Kỷ Luật & Thi Đua Lớp Học',
       component: (
         <HomeroomBookDisciplineAndJournal
           disciplineLogs={disciplineLogs || []}
           journal={journal || []}
           students={students || []}
           role={role}
+          leaveRequests={leaveRequests || []}
+          classInfo={classInfo}
+          teacherInfo={teacherInfo}
+          onOpenAddDiscipline={onOpenAddDiscipline}
+          onSelectStudent={onSelectStudent}
           onUpdateDisciplineLogs={onUpdateDisciplineLogs}
           onUpdateJournal={onUpdateJournal}
         />
