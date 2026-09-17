@@ -210,54 +210,42 @@ export const isMockStudentList = (list: Student[]): boolean => {
   return false;
 };
 
+export function getPersistedStudents(): Student[] | null {
+  const candidateKeys = ['app_students_data', 'students', 'class_students', 'homeroom_book_students', 'TEAMGVCN_students', KEYS.STUDENTS];
+  for (const key of candidateKeys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length >= 10) {
+          return parsed; // Trả về ngay danh sách 44 học sinh thật
+        }
+      }
+    } catch (e) {
+      console.error("Lỗi đọc key:", key, e);
+    }
+  }
+
+  for (const key of candidateKeys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error("Lỗi đọc key:", key, e);
+    }
+  }
+
+  return null;
+}
+
 export const getStoredStudents = (): Student[] => {
   try {
-    const rawStudentsStr =
-      localStorage.getItem('app_students_data') ||
-      localStorage.getItem('students') ||
-      localStorage.getItem('class_students') ||
-      localStorage.getItem('homeroom_book_students') ||
-      localStorage.getItem('TEAMGVCN_students') ||
-      localStorage.getItem(KEYS.STUDENTS) ||
-      localStorage.getItem('tnh_12a1_students') ||
-      localStorage.getItem('gvcn_students') ||
-      localStorage.getItem('students_data') ||
-      localStorage.getItem('students_v1') ||
-      localStorage.getItem('students_backup');
-
-    let rawList: Student[] | null = null;
-    if (rawStudentsStr) {
-      try {
-        const parsed = JSON.parse(rawStudentsStr);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          rawList = parsed;
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    // Fallback search across all keys if preferred keys did not contain data
-    if (!rawList) {
-      for (const key of STUDENT_STORAGE_KEYS) {
-        const data = localStorage.getItem(key);
-        if (data) {
-          try {
-            const parsed = JSON.parse(data);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              rawList = parsed;
-              break;
-            }
-          } catch {
-            // ignore
-          }
-        }
-      }
-    }
-
-    if (!rawList || !Array.isArray(rawList) || rawList.length === 0) {
-      return INITIAL_STUDENTS;
-    }
+    const rawList = getPersistedStudents() || INITIAL_STUDENTS;
 
     const cleanedList: Student[] = rawList.map((s) => ({
       ...s,
@@ -296,25 +284,15 @@ export const loadStudents = getStoredStudents;
 export const saveStudents = (students: Student[]) => {
   // Safe Guard 1: Do NOT overwrite existing data with empty array if storage has students!
   if (!Array.isArray(students) || students.length === 0) {
-    let hasExisting = false;
-    for (const key of STUDENT_STORAGE_KEYS) {
-      const existing = localStorage.getItem(key);
-      if (existing) {
-        try {
-          const parsed = JSON.parse(existing);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            hasExisting = true;
-            break;
-          }
-        } catch {
-          // ignore
-        }
-      }
-    }
-    if (hasExisting) {
-      console.warn('Safe Guard: Prevented overwriting existing student list with empty array.');
-      return;
-    }
+    console.warn('Safe Guard: Prevented overwriting existing student list with empty array.');
+    return;
+  }
+
+  // Safe Guard 2: Do NOT overwrite existing localStorage if new list has FEWER students than stored data!
+  const currentPersisted = getPersistedStudents();
+  if (currentPersisted && currentPersisted.length > students.length) {
+    console.warn(`Safe Guard: Prevented overwriting ${currentPersisted.length} stored students with ${students.length} students.`);
+    return;
   }
 
   // Safe Guard 2: Do NOT overwrite existing REAL user student data with mock student list!
