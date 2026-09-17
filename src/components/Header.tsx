@@ -29,7 +29,7 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import { UserRole, Student, ClassInfo, TeacherInfo, BghInfo } from '../types';
-import { exportFullAppBackupJson, importFullAppBackupJson } from '../lib/storage';
+import { exportFullAppBackupJson, importFullAppBackupJson, recoverAndRestoreUserSessionData } from '../lib/storage';
 
 interface HeaderProps {
   role: UserRole;
@@ -270,6 +270,14 @@ export const Header: React.FC<HeaderProps> = ({
     reader.readAsText(file);
   };
 
+  const handleHeaderRecoverSession = () => {
+    const res = recoverAndRestoreUserSessionData();
+    alert(res.message);
+    if (res.success) {
+      window.location.reload();
+    }
+  };
+
   return (
     <header
       id="app-top-header"
@@ -308,9 +316,19 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="font-semibold">Tự động đồng bộ & Lưu</span>
           </div>
 
-          {/* Quick JSON Backup / Restore Buttons for GVCN */}
+          {/* Quick JSON Backup / Restore / Session Recovery Buttons for GVCN */}
           {role === 'gvcn' && (
             <div className="hidden lg:flex items-center gap-1.5 border-l border-slate-200 pl-3">
+              <button
+                type="button"
+                onClick={handleHeaderRecoverSession}
+                className="px-2.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                title="Tự động dò tìm trong bộ nhớ tạm trình duyệt để khôi phục dữ liệu học sinh bạn đã tạo trước đó"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-white" />
+                <span>Khôi Phục Dữ Liệu 9h30</span>
+              </button>
+
               <button
                 type="button"
                 onClick={handleHeaderExportJson}
