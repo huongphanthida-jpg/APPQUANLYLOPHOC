@@ -360,63 +360,66 @@ export const SubjectTeachersView: React.FC<SubjectTeachersViewProps> = ({
         className="hidden"
       />
 
-      {/* Top Banner Header */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900 via-indigo-900 to-[#002244] p-6 sm:p-8 text-white shadow-xl">
+      {/* Top Banner Header - 1 Horizontal Row */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-900 via-indigo-900 to-[#002244] px-6 py-4.5 text-white shadow-xl">
         <div className="absolute right-0 top-0 -mt-10 -mr-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-200 text-xs font-bold border border-white/15">
-              <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Phân Hệ Quản Lý Hội Đồng Sư Phạm</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
-              Danh Sách Giáo Viên Bộ Môn {className}
+        <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          {/* Title & Description inline */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2 shrink-0">
+              <GraduationCap className="w-6 h-6 text-amber-400 shrink-0" />
+              <span>Danh Sách Giáo Viên Bộ Môn {className}</span>
             </h1>
-            <p className="text-sm text-blue-100/90 font-medium max-w-2xl">
-              Tổng hợp toàn bộ Thầy/Cô giáo bộ môn giảng dạy trực tiếp cho {className}. GVCN: <strong className="text-amber-300">{gvcnName}</strong>.
-            </p>
+            <span className="text-xs text-blue-100/90 font-medium border-l border-blue-400/40 pl-3 hidden sm:inline-block">
+              Tổng hợp Thầy/Cô giảng dạy • GVCN: <strong className="text-amber-300">{gvcnName}</strong>
+            </span>
           </div>
 
+          {/* Action Buttons in 1 Horizontal Line */}
           {canManage && (
-            <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
               <button
+                type="button"
                 onClick={openAddModal}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 transition-all cursor-pointer whitespace-nowrap"
               >
                 <Plus className="w-4 h-4 stroke-[3]" />
-                <span>Thêm GVBM Mới</span>
+                <span>Thêm GVBM</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => {
                   setImportFile(null);
                   setParsedTeachers([]);
                   setImportError(null);
                   setIsImportModalOpen(true);
                 }}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer backdrop-blur-xs"
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs border border-white/20 transition-all cursor-pointer backdrop-blur-xs whitespace-nowrap"
               >
                 <UploadCloud className="w-4 h-4 text-cyan-300" />
-                <span>Tải Từ Máy Tính</span>
+                <span>Tải Từ Máy</span>
               </button>
 
               <button
+                type="button"
                 onClick={downloadSampleTemplate}
-                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 font-bold text-xs border border-emerald-400/40 transition-all cursor-pointer backdrop-blur-xs"
-                title="Tải file Excel mẫu (.xlsx) để điền thông tin và cập nhật lên hệ thống"
+                className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/25 hover:bg-emerald-500/40 text-emerald-200 font-bold text-xs border border-emerald-400/40 transition-all cursor-pointer backdrop-blur-xs whitespace-nowrap"
+                title="Tải file Excel mẫu (.xlsx)"
               >
                 <Download className="w-4 h-4 text-emerald-300" />
-                <span>Tải File Mẫu Excel</span>
+                <span>File Mẫu</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => setIsConfirmClearModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-bold text-xs border border-rose-400/30 transition-all cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-bold text-xs border border-rose-400/30 transition-all cursor-pointer whitespace-nowrap"
                 title="Xoá toàn bộ dữ liệu hoặc khôi phục mặc định"
               >
                 <Trash2 className="w-4 h-4 text-rose-400" />
-                <span>Xoá Hết Dữ Liệu</span>
+                <span>Xoá Hết</span>
               </button>
             </div>
           )}
