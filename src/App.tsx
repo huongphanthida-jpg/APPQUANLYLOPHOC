@@ -574,6 +574,10 @@ export function App() {
       commendations: ['Gia nhập lớp 12A1'],
     };
 
+    const updatedList = [newStudentTemplate, ...students];
+    setStudents(updatedList);
+    syncAllStudentStorageKeys(updatedList);
+
     setSelectedStudentForModal(newStudentTemplate);
     setIsStudentModalOpen(true);
   };
