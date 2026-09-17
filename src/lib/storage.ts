@@ -212,29 +212,52 @@ export const isMockStudentList = (list: Student[]): boolean => {
 
 export const getStoredStudents = (): Student[] => {
   try {
-    let bestUserList: Student[] | null = null;
-    let fallbackMockList: Student[] | null = null;
+    const rawStudentsStr =
+      localStorage.getItem('app_students_data') ||
+      localStorage.getItem('students') ||
+      localStorage.getItem('class_students') ||
+      localStorage.getItem('homeroom_book_students') ||
+      localStorage.getItem('TEAMGVCN_students') ||
+      localStorage.getItem(KEYS.STUDENTS) ||
+      localStorage.getItem('tnh_12a1_students') ||
+      localStorage.getItem('gvcn_students') ||
+      localStorage.getItem('students_data') ||
+      localStorage.getItem('students_v1') ||
+      localStorage.getItem('students_backup');
 
-    for (const key of STUDENT_STORAGE_KEYS) {
-      const data = localStorage.getItem(key);
-      if (data) {
-        try {
-          const parsed = JSON.parse(data);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            if (!isMockStudentList(parsed)) {
-              bestUserList = parsed;
+    let rawList: Student[] | null = null;
+    if (rawStudentsStr) {
+      try {
+        const parsed = JSON.parse(rawStudentsStr);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          rawList = parsed;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    // Fallback search across all keys if preferred keys did not contain data
+    if (!rawList) {
+      for (const key of STUDENT_STORAGE_KEYS) {
+        const data = localStorage.getItem(key);
+        if (data) {
+          try {
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              rawList = parsed;
               break;
-            } else if (!fallbackMockList) {
-              fallbackMockList = parsed;
             }
+          } catch {
+            // ignore
           }
-        } catch {
-          // ignore parse error
         }
       }
     }
 
-    const rawList = bestUserList || fallbackMockList || INITIAL_STUDENTS;
+    if (!rawList || !Array.isArray(rawList) || rawList.length === 0) {
+      return INITIAL_STUDENTS;
+    }
 
     const cleanedList: Student[] = rawList.map((s) => ({
       ...s,
@@ -614,22 +637,45 @@ const SEATING_STORAGE_KEYS = [
 
 export const getStoredSeatingChart = (): SeatingChartData => {
   try {
-    let parsed: any = null;
+    const rawSeatingStr =
+      localStorage.getItem('app_seating_chart_data') ||
+      localStorage.getItem('seating_chart_data') ||
+      localStorage.getItem('seatingChart') ||
+      localStorage.getItem('homeroom_seating') ||
+      localStorage.getItem('tnh_gvcn_seating_v1') ||
+      localStorage.getItem('tnh_12a1_seating');
 
-    for (const key of SEATING_STORAGE_KEYS) {
-      const data = localStorage.getItem(key);
-      if (data) {
-        try {
-          const res = JSON.parse(data);
-          if (res && (res.assignments || res.seats)) {
-            const assign = res.assignments || res.seats;
-            if (assign && typeof assign === 'object' && Object.keys(assign).length > 0) {
-              parsed = res;
-              break;
-            }
+    let parsed: any = null;
+    if (rawSeatingStr) {
+      try {
+        const res = JSON.parse(rawSeatingStr);
+        if (res && (res.assignments || res.seats)) {
+          const assign = res.assignments || res.seats;
+          if (assign && typeof assign === 'object' && Object.keys(assign).length > 0) {
+            parsed = res;
           }
-        } catch {
-          // ignore parse error
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!parsed) {
+      for (const key of SEATING_STORAGE_KEYS) {
+        const data = localStorage.getItem(key);
+        if (data) {
+          try {
+            const res = JSON.parse(data);
+            if (res && (res.assignments || res.seats)) {
+              const assign = res.assignments || res.seats;
+              if (assign && typeof assign === 'object' && Object.keys(assign).length > 0) {
+                parsed = res;
+                break;
+              }
+            }
+          } catch {
+            // ignore
+          }
         }
       }
     }
