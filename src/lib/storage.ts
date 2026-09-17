@@ -188,14 +188,38 @@ const KEYS = {
   GOOGLE_SHEET: 'tnh_gvcn_google_sheet_v1',
 };
 
+const STUDENT_STORAGE_KEYS = [
+  KEYS.STUDENTS,
+  'students',
+  'app_students_data',
+  'homeroom_book_students',
+  'class_students',
+];
+
 export const getStoredStudents = (): Student[] => {
   try {
-    const data = localStorage.getItem(KEYS.STUDENTS);
-    const rawList: Student[] = data ? JSON.parse(data) : INITIAL_STUDENTS;
-    if (!Array.isArray(rawList)) return INITIAL_STUDENTS;
+    let rawList: Student[] | null = null;
 
-    // Automatically repair any corrupted font encodings (?, , TCVN3/VNI artifacts)
-    return rawList.map((s) => ({
+    for (const key of STUDENT_STORAGE_KEYS) {
+      const data = localStorage.getItem(key);
+      if (data) {
+        try {
+          const parsed = JSON.parse(data);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            rawList = parsed;
+            break;
+          }
+        } catch {
+          // ignore parse error
+        }
+      }
+    }
+
+    if (!rawList || !Array.isArray(rawList) || rawList.length === 0) {
+      return INITIAL_STUDENTS;
+    }
+
+    const cleanedList: Student[] = rawList.map((s) => ({
       ...s,
       name: autoRepairVietnameseText(s.name || ''),
       gender: ((s.gender as string) === 'Nữ' || (s.gender as string) === 'Nu') ? 'Nữ' : 'Nam',
@@ -210,24 +234,58 @@ export const getStoredStudents = (): Student[] => {
         relationship: s.emergencyContact?.relationship || 'Bố',
       },
     }));
+
+    // Auto-sync back to all student keys for complete cross-key consistency
+    try {
+      const jsonStr = JSON.stringify(cleanedList);
+      STUDENT_STORAGE_KEYS.forEach((key) => {
+        localStorage.setItem(key, jsonStr);
+      });
+    } catch {
+      // ignore
+    }
+
+    return cleanedList;
   } catch {
     return INITIAL_STUDENTS;
   }
 };
+
 export const saveStudents = (students: Student[]) => {
-  try {
-    localStorage.setItem(KEYS.STUDENTS, JSON.stringify(students));
-  } catch (error) {
-    console.warn("Storage save error (quota limit), saving data...", error);
-    try {
-      // Retain student data cleanly in localStorage
-      localStorage.setItem(KEYS.STUDENTS, JSON.stringify(students));
-    } catch (retryErr) {
-      console.error("Critical error saving students to localStorage:", retryErr);
+  // Safe Guard: Do NOT overwrite existing data with empty array if storage has students!
+  if (!Array.isArray(students) || students.length === 0) {
+    let hasExisting = false;
+    for (const key of STUDENT_STORAGE_KEYS) {
+      const existing = localStorage.getItem(key);
+      if (existing) {
+        try {
+          const parsed = JSON.parse(existing);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            hasExisting = true;
+            break;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    if (hasExisting) {
+      console.warn('Safe Guard: Prevented overwriting existing student list with empty array.');
+      return;
     }
   }
+
+  try {
+    const jsonStr = JSON.stringify(students);
+    STUDENT_STORAGE_KEYS.forEach((key) => {
+      localStorage.setItem(key, jsonStr);
+    });
+  } catch (error) {
+    console.warn('Storage save error (quota limit):', error);
+  }
+
   // Synchronously & asynchronously persist all avatars to IndexedDB for 100% durability across 48+ students
-  saveAllAvatarsToIndexedDB(students).catch((err) => console.warn("IndexedDB avatar save error:", err));
+  saveAllAvatarsToIndexedDB(students).catch((err) => console.warn('IndexedDB avatar save error:', err));
 };
 
 export const getStoredDisciplineLogs = (): DisciplineEntry[] => {
@@ -438,36 +496,93 @@ export const saveBghInfo = (info: BghInfo) => {
   localStorage.setItem(KEYS.BGH_INFO, JSON.stringify(info));
 };
 
+const SEATING_STORAGE_KEYS = [
+  'seating_chart_data',
+  'app_seating_chart_data',
+  'seatingChart',
+  'homeroom_seating',
+  'tnh_gvcn_seating_v1',
+];
+
 export const getStoredSeatingChart = (): SeatingChartData => {
   try {
-    const data =
-      localStorage.getItem('app_seating_chart_data') ||
-      localStorage.getItem('seating_chart_data') ||
-      localStorage.getItem('tnh_gvcn_seating_v1');
-    if (!data) return INITIAL_SEATING_CHART;
-    const parsed = JSON.parse(data);
-    if (parsed && (parsed.assignments || parsed.seats)) {
-      const assignments = parsed.assignments || parsed.seats || INITIAL_SEATING_CHART.assignments;
-      return {
-        ...INITIAL_SEATING_CHART,
-        ...parsed,
-        assignments,
-      };
+    let parsed: any = null;
+
+    for (const key of SEATING_STORAGE_KEYS) {
+      const data = localStorage.getItem(key);
+      if (data) {
+        try {
+          const res = JSON.parse(data);
+          if (res && (res.assignments || res.seats)) {
+            const assign = res.assignments || res.seats;
+            if (assign && typeof assign === 'object' && Object.keys(assign).length > 0) {
+              parsed = res;
+              break;
+            }
+          }
+        } catch {
+          // ignore parse error
+        }
+      }
     }
-    return INITIAL_SEATING_CHART;
+
+    if (!parsed) return INITIAL_SEATING_CHART;
+
+    const assignments = parsed.assignments || parsed.seats || INITIAL_SEATING_CHART.assignments;
+    const chartData: SeatingChartData = {
+      ...INITIAL_SEATING_CHART,
+      ...parsed,
+      assignments,
+    };
+
+    // Auto-sync back to all seating keys
+    try {
+      const jsonStr = JSON.stringify(chartData);
+      SEATING_STORAGE_KEYS.forEach((key) => {
+        localStorage.setItem(key, jsonStr);
+      });
+    } catch {
+      // ignore
+    }
+
+    return chartData;
   } catch {
     return INITIAL_SEATING_CHART;
   }
 };
 
 export const saveSeatingChartDirectlyToLocalStorage = (chart: SeatingChartData) => {
+  // Safe Guard: Do NOT overwrite existing seating data with empty chart
+  if (!chart || !chart.assignments || Object.keys(chart.assignments).length === 0) {
+    let hasExisting = false;
+    for (const key of SEATING_STORAGE_KEYS) {
+      const existing = localStorage.getItem(key);
+      if (existing) {
+        try {
+          const res = JSON.parse(existing);
+          const assign = res?.assignments || res?.seats;
+          if (assign && typeof assign === 'object' && Object.keys(assign).length > 0) {
+            hasExisting = true;
+            break;
+          }
+        } catch {
+          // ignore
+        }
+      }
+    }
+    if (hasExisting) {
+      console.warn('Safe Guard: Prevented overwriting existing seating chart with empty chart.');
+      return;
+    }
+  }
+
   try {
     const jsonString = JSON.stringify(chart);
-    localStorage.setItem('app_seating_chart_data', jsonString);
-    localStorage.setItem('seating_chart_data', jsonString);
-    localStorage.setItem('tnh_gvcn_seating_v1', jsonString);
+    SEATING_STORAGE_KEYS.forEach((key) => {
+      localStorage.setItem(key, jsonString);
+    });
   } catch (error) {
-    console.warn("Storage save error (seating chart):", error);
+    console.warn('Storage save error (seating chart):', error);
   }
 };
 
@@ -798,6 +913,76 @@ export const getStoredSubjectTeachers = (): SubjectTeacher[] => {
 
 export const saveSubjectTeachers = (teachers: SubjectTeacher[]) => {
   localStorage.setItem(SUBJECT_TEACHERS_STORAGE_KEY, JSON.stringify(teachers));
+};
+
+/**
+ * Full System Backup (.JSON) - Export 100% application data safely
+ */
+export const exportFullAppBackupJson = (): { filename: string; jsonContent: string } => {
+  const allLocalStorageData: Record<string, string> = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key) {
+      allLocalStorageData[key] = localStorage.getItem(key) || '';
+    }
+  }
+
+  const backupPayload = {
+    appName: 'Sổ Chủ Nhiệm Điện Tử THPT Trần Nguyên Hãn',
+    version: '2.0.0',
+    exportedAt: new Date().toISOString(),
+    formattedDate: new Date().toLocaleString('vi-VN'),
+    classInfo: getStoredClassInfo(),
+    teacherInfo: getStoredTeacherInfo(),
+    students: getStoredStudents(),
+    seatingChart: getStoredSeatingChart(),
+    timetable: getStoredTimetable(),
+    localStorageData: allLocalStorageData,
+  };
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
+  const className = getStoredClassInfo()?.className || '11D5';
+  const safeClassName = className.replace(/[^a-zA-Z0-9]/g, '_');
+  const filename = `du_lieu_so_chu_nhiem_${safeClassName}_${dateStr}.json`;
+
+  return {
+    filename,
+    jsonContent: JSON.stringify(backupPayload, null, 2),
+  };
+};
+
+/**
+ * Full System Restore (.JSON) - Safely import and overwrite local data with zero loss
+ */
+export const importFullAppBackupJson = (jsonString: string): { success: boolean; message: string } => {
+  try {
+    if (!jsonString || !jsonString.trim()) {
+      return { success: false, message: 'File sao lưu trống hoặc không hợp lệ.' };
+    }
+    const parsed = JSON.parse(jsonString);
+
+    if (parsed.localStorageData && typeof parsed.localStorageData === 'object') {
+      Object.keys(parsed.localStorageData).forEach((key) => {
+        if (key && parsed.localStorageData[key] !== undefined) {
+          localStorage.setItem(key, parsed.localStorageData[key]);
+        }
+      });
+    }
+
+    if (Array.isArray(parsed.students) && parsed.students.length > 0) {
+      saveStudents(parsed.students);
+    }
+
+    if (parsed.seatingChart && (parsed.seatingChart.assignments || parsed.seatingChart.seats)) {
+      saveSeatingChart(parsed.seatingChart);
+    }
+
+    return { success: true, message: 'Khôi phục 100% dữ liệu hệ thống thành công! Đang làm mới ứng dụng...' };
+  } catch (err: any) {
+    console.error('Failed to import JSON backup:', err);
+    return { success: false, message: 'File sao lưu .JSON không đúng định dạng hoặc đã bị hư hỏng.' };
+  }
 };
 
 
