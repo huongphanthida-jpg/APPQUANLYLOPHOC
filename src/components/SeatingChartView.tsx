@@ -14,6 +14,9 @@ import {
   HeartPulse,
   UserCheck,
   UserPlus,
+  UserMinus,
+  UserX,
+  MapPin,
   Edit3,
   ShieldCheck,
   HelpCircle,
@@ -67,6 +70,8 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const [targetSwapSeatKey, setTargetSwapSeatKey] = useState<string | null>(null);
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [showAssignModal, setShowAssignModal] = useState<string | null>(null); // seatKey to assign
+  const [selectedUnassignedStudentId, setSelectedUnassignedStudentId] = useState<string | null>(null);
+  const [assignModalSearch, setAssignModalSearch] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isEditSeatingModalOpen, setIsEditSeatingModalOpen] = useState(false);
   const [isAutoArrangeOpen, setIsAutoArrangeOpen] = useState(false);
@@ -466,6 +471,65 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     showToast(`Đã xếp chỗ cho ${student.name} vào Dãy ${targetSeatKey.split('-')[0]} - Bàn ${targetSeatKey.split('-')[1]}!`);
   };
 
+  // Kick / Remove a student from a seat out to the unassigned pool
+  const handleUnassignStudent = (seatKey: string) => {
+    const currentAssignments = { ...(seatingChart?.assignments || {}) };
+    const studentId = currentAssignments[seatKey];
+    if (!studentId) return;
+
+    const student = studentMap.get(studentId);
+    currentAssignments[seatKey] = null;
+    delete currentAssignments[seatKey];
+
+    saveChartToLocalStorage({
+      ...seatingChart,
+      assignments: currentAssignments,
+      updatedAt: new Date().toISOString().split('T')[0],
+    });
+
+    if (selectedSeatKey === seatKey) {
+      setSelectedSeatKey(null);
+    }
+
+    showToast(`Đã đưa ${student ? student.name : 'học sinh'} ra khỏi chỗ ngồi (chuyển vào danh sách chưa xếp chỗ)!`);
+  };
+
+  // Assign a student (from unassigned list or modal) directly to a specified target seat
+  const handleAssignUnassignedToSeat = (studentId: string, targetSeatKey: string) => {
+    const newAssignments = { ...(seatingChart?.assignments || {}) };
+    const student = studentMap.get(studentId);
+    const parts = targetSeatKey.split('-');
+    const seatName = `Dãy ${parts[0]} - Bàn ${parts[1]} - Ghế ${parts[2]}`;
+
+    // Clear student from previous seat if assigned
+    Object.keys(newAssignments).forEach((key) => {
+      if (newAssignments[key] === studentId) {
+        newAssignments[key] = null;
+      }
+    });
+
+    const previousStudentId = newAssignments[targetSeatKey];
+    const previousStudent = previousStudentId ? studentMap.get(previousStudentId) : null;
+
+    newAssignments[targetSeatKey] = studentId;
+
+    saveChartToLocalStorage({
+      ...seatingChart,
+      assignments: newAssignments,
+      updatedAt: new Date().toISOString().split('T')[0],
+    });
+
+    setSelectedUnassignedStudentId(null);
+    setSelectedSeatKey(null);
+    setShowAssignModal(null);
+
+    if (previousStudent && previousStudent.id !== studentId) {
+      showToast(`Đã xếp chỗ cho ${student?.name || 'học sinh'} vào ${seatName} (thay thế cho ${previousStudent.name})!`);
+    } else {
+      showToast(`Đã xếp chỗ thành công cho ${student?.name || 'học sinh'} vào ${seatName}!`);
+    }
+  };
+
   // Close auto arrange dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -531,7 +595,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     );
   };
 
-  // Handle seat click (Swap or select)
+  // Handle seat click (Swap, unassigned placement, or select)
   const handleSeatClick = (seatKey: string) => {
     const currentAssignments = seatingChart?.assignments || {};
     if (role !== 'gvcn') {
@@ -543,16 +607,22 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       return;
     }
 
-    // For GVCN only:
+    // If an unassigned student was selected from the list below, place them directly into this seat
+    if (selectedUnassignedStudentId) {
+      handleAssignUnassignedToSeat(selectedUnassignedStudentId, seatKey);
+      return;
+    }
+
+    // For GVCN standard click:
     if (!selectedSeatKey) {
       // First click: select seat
       setSelectedSeatKey(seatKey);
       const studentId = currentAssignments[seatKey];
       const student = studentId ? studentMap.get(studentId) : null;
       if (student) {
-        showToast(`Đã chọn học sinh: ${student.name}. Nhấp vào vị trí bàn khác để hoán đổi chỗ ngồi!`);
+        showToast(`Đã chọn: ${student.name}. Nhấp ghế khác để hoán đổi, hoặc bấm "Kích Ra Danh Sách Chờ".`);
       } else {
-        showToast(`Đã chọn vị trí trống. Nhấp vào học sinh khác để chuyển vào đây hoặc gán trực tiếp.`);
+        showToast(`Đã chọn ghế trống. Nhấp học sinh chưa xếp chỗ hoặc bấm "Gán Học Sinh" để đặt vào.`);
       }
     } else if (selectedSeatKey === seatKey) {
       // Click again on same seat: deselect
@@ -1128,6 +1198,75 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
         </div>
       </div>
 
+      {/* ACTIVE SELECTION BANNERS FOR GVCN */}
+      {selectedUnassignedStudentId && role === 'gvcn' && (
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-[#003366] text-white rounded-2xl p-4 shadow-xl flex flex-wrap items-center justify-between gap-3 animate-slideDown border-2 border-amber-300">
+          <div className="flex items-center gap-3 text-xs md:text-sm font-bold">
+            <div className="w-8 h-8 rounded-full bg-amber-400 text-slate-950 flex items-center justify-center shrink-0 font-black shadow-sm animate-bounce">
+              📍
+            </div>
+            <div>
+              <div className="text-amber-300 font-extrabold text-sm md:text-base">
+                Đang chọn: {studentMap.get(selectedUnassignedStudentId)?.name} (Chưa xếp chỗ)
+              </div>
+              <div className="text-blue-100 text-xs font-normal">
+                Nhấp vào bất kỳ ghế nào trên sơ đồ bên dưới để xếp học sinh này vào ghế đó!
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setSelectedUnassignedStudentId(null)}
+            className="px-3.5 py-2 rounded-xl bg-white/20 hover:bg-white/30 text-white font-bold text-xs border border-white/40 cursor-pointer transition-all"
+          >
+            ✕ Hủy chọn
+          </button>
+        </div>
+      )}
+
+      {selectedSeatKey && role === 'gvcn' && !selectedUnassignedStudentId && (
+        <div className="bg-amber-500 text-slate-950 rounded-2xl p-3.5 shadow-lg flex flex-wrap items-center justify-between gap-3 animate-slideDown border-2 border-amber-400">
+          <div className="flex items-center gap-2.5 text-xs md:text-sm font-bold">
+            <span className="w-3 h-3 rounded-full bg-slate-950 animate-ping shrink-0" />
+            <span>
+              Đang chọn vị trí: Dãy {selectedSeatKey.split('-')[0]} - Bàn {selectedSeatKey.split('-')[1]} - Ghế {selectedSeatKey.split('-')[2]}
+              {seatingChart?.assignments?.[selectedSeatKey]
+                ? ` (${studentMap.get(seatingChart.assignments[selectedSeatKey])?.name || 'Đã có học sinh'})`
+                : ' (Ghế trống)'}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {seatingChart?.assignments?.[selectedSeatKey] && (
+              <button
+                type="button"
+                onClick={() => handleUnassignStudent(selectedSeatKey)}
+                className="px-3 py-1.5 rounded-xl bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                title="Bỏ xếp chỗ cho em này, đưa em ra danh sách chưa xếp chỗ"
+              >
+                <UserMinus className="w-3.5 h-3.5 text-rose-200" />
+                <span>Kích Ra Danh Sách Chờ</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowAssignModal(selectedSeatKey)}
+              className="px-3 py-1.5 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              title="Mở danh sách chọn học sinh chưa có chỗ để xếp vào ghế này"
+            >
+              <UserPlus className="w-3.5 h-3.5 text-cyan-300" />
+              <span>Gán Học Sinh Vào Ghế Này</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedSeatKey(null)}
+              className="px-3 py-1.5 rounded-xl bg-slate-900/10 hover:bg-slate-900/20 text-slate-900 font-bold text-xs cursor-pointer"
+            >
+              Bỏ chọn
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* CLASSROOM ARENA / SEATING MATRIX */}
       <div className="bg-slate-900/5 rounded-3xl p-4 sm:p-6 md:p-8 border border-slate-200/80 shadow-inner">
         {/* FRONT OF THE CLASSROOM (TEACHER'S PODIUM & BLACKBOARD) */}
@@ -1309,6 +1448,29 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                                   : 'Ghế trống - Nhấp để xếp chỗ'
                               }
                             >
+                              {/* Quick Kick Button for GVCN */}
+                              {role === 'gvcn' && student1 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUnassignStudent(seat1Key);
+                                  }}
+                                  className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-sm z-10 transition-transform hover:scale-110 cursor-pointer"
+                                  title={`Kích ${student1.name} ra khỏi chỗ (chuyển vào danh sách chưa xếp chỗ)`}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+
+                              {/* Target placement overlay when selecting an unassigned student */}
+                              {selectedUnassignedStudentId && role === 'gvcn' && (
+                                <div className="absolute inset-0 bg-emerald-500/15 border-2 border-dashed border-emerald-500 rounded-xl flex flex-col items-center justify-center z-20 backdrop-blur-[1px] animate-pulse p-1 text-center">
+                                  <MapPin className="w-4 h-4 text-emerald-700" />
+                                  <span className="text-[9px] font-black text-emerald-950 bg-emerald-100 px-1 py-0.2 rounded mt-0.5">Đặt vào đây</span>
+                                </div>
+                              )}
+
                               {student1 ? (
                                 <div className="space-y-1.5 w-full">
                                   {/* Student Header */}
@@ -1399,6 +1561,28 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                                   : 'Ghế trống - Nhấp để xếp chỗ'
                               }
                             >
+                              {/* Quick Kick Button for GVCN */}
+                              {role === 'gvcn' && student2 && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleUnassignStudent(seat2Key);
+                                  }}
+                                  className="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] shadow-sm z-10 transition-transform hover:scale-110 cursor-pointer"
+                                  title={`Kích ${student2.name} ra khỏi chỗ (chuyển vào danh sách chưa xếp chỗ)`}
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              )}
+
+                              {/* Target placement overlay when selecting an unassigned student */}
+                              {selectedUnassignedStudentId && role === 'gvcn' && (
+                                <div className="absolute inset-0 bg-emerald-500/15 border-2 border-dashed border-emerald-500 rounded-xl flex flex-col items-center justify-center z-20 backdrop-blur-[1px] animate-pulse p-1 text-center">
+                                  <MapPin className="w-4 h-4 text-emerald-700" />
+                                  <span className="text-[9px] font-black text-emerald-950 bg-emerald-100 px-1 py-0.2 rounded mt-0.5">Đặt vào đây</span>
+                                </div>
+                              )}
                               {student2 ? (
                                 <div className="space-y-1.5 w-full">
                                   {/* Student Header */}
@@ -1491,17 +1675,22 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
       {/* UNASSIGNED STUDENTS LIST (If any) */}
       {(unassignedStudents || [])?.length > 0 && (
-        <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/30 space-y-3">
+        <div className="bg-white rounded-2xl p-5 border border-amber-200 bg-amber-50/40 space-y-3 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
-              <Users className="w-4 h-4 text-amber-600" />
-              <span>Học sinh chưa xếp chỗ ngồi ({(unassignedStudents || [])?.length} em):</span>
-            </h3>
+            <div>
+              <h3 className="text-sm font-bold text-amber-950 flex items-center gap-2">
+                <Users className="w-4 h-4 text-amber-600" />
+                <span>Học sinh chưa xếp chỗ ngồi ({(unassignedStudents || [])?.length} em):</span>
+              </h3>
+              <p className="text-[11px] text-amber-800/80 mt-0.5">
+                Mẹo: Bấm <strong>"📍 Chọn đặt ghế"</strong> rồi nhấp vào vị trí ghế bất kỳ trên sơ đồ để xếp chỗ cho em đó.
+              </p>
+            </div>
             {role === 'gvcn' && (
               <button
                 type="button"
                 onClick={handleAutoArrangeUnassignedOnly}
-                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer border border-amber-400"
+                className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs flex items-center gap-1.5 transition-all cursor-pointer border border-amber-400 shrink-0"
                 title="Tự động lấp đầy các ghế trống bằng danh sách các học sinh chưa có chỗ ngồi"
               >
                 <UserPlus className="w-4 h-4 text-slate-950" />
@@ -1511,28 +1700,62 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           </div>
 
           <div className="flex flex-wrap gap-2 pt-1">
-            {(unassignedStudents || [])?.map((s) => (
-              <div
-                key={s.id}
-                className="bg-white px-3 py-1.5 rounded-xl border border-amber-200 shadow-2xs flex items-center gap-2 text-xs font-semibold text-slate-800"
-              >
-                <img src={s.avatar} alt={s.name} className="w-5 h-5 rounded-full object-cover" />
-                <span>{s.name}</span>
-                <span className="text-[10px] text-amber-800 bg-amber-100 px-1.5 py-0.2 rounded font-bold">
-                  Tổ {s.group}
-                </span>
-                {role === 'gvcn' && (
-                  <button
-                    type="button"
-                    onClick={() => handleAssignSingleUnassignedStudent(s)}
-                    className="ml-1 px-2 py-0.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[10px] border border-blue-200 transition-colors cursor-pointer"
-                    title={`Tự xếp chỗ ngay cho ${s.name}`}
-                  >
-                    + Xếp chỗ
-                  </button>
-                )}
-              </div>
-            ))}
+            {(unassignedStudents || [])?.map((s) => {
+              const isSelected = selectedUnassignedStudentId === s.id;
+
+              return (
+                <div
+                  key={s.id}
+                  className={`px-3 py-2 rounded-xl border transition-all flex items-center gap-2 text-xs font-semibold ${
+                    isSelected
+                      ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500 shadow-md text-blue-950 scale-105'
+                      : 'bg-white border-amber-200 text-slate-800 shadow-2xs hover:border-amber-400'
+                  }`}
+                >
+                  <img src={s.avatar} alt={s.name} className="w-6 h-6 rounded-full object-cover border border-white" />
+                  <div className="flex flex-col">
+                    <span className="font-bold text-slate-900 leading-tight">{s.name}</span>
+                    <span className="text-[9px] text-slate-500 font-normal">Tổ {s.group}</span>
+                  </div>
+
+                  {role === 'gvcn' && (
+                    <div className="flex items-center gap-1 ml-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSelectedUnassignedStudentId(null);
+                          } else if (selectedSeatKey) {
+                            handleAssignUnassignedToSeat(s.id, selectedSeatKey);
+                          } else {
+                            setSelectedUnassignedStudentId(s.id);
+                            showToast(`Đã chọn học sinh: ${s.name}. Hãy nhấp vào ghế muốn đặt trên sơ đồ!`);
+                          }
+                        }}
+                        className={`px-2 py-1 rounded-lg font-bold text-[10px] border transition-colors flex items-center gap-1 cursor-pointer ${
+                          isSelected
+                            ? 'bg-blue-600 text-white border-blue-700'
+                            : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                        }`}
+                        title={isSelected ? 'Hủy chọn đặt ghế' : `Chọn đặt chỗ theo ý cho ${s.name}`}
+                      >
+                        <MapPin className="w-3 h-3" />
+                        <span>{isSelected ? 'Đang chọn' : 'Đặt ghế'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleAssignSingleUnassignedStudent(s)}
+                        className="px-2 py-1 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 font-bold text-[10px] border border-amber-300 transition-colors cursor-pointer"
+                        title={`Tự động chọn ghế trống phù hợp nhất cho ${s.name}`}
+                      >
+                        + Tự xếp
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -1608,26 +1831,189 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-2">
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                {role === 'gvcn' && seatingChart?.assignments && Object.keys(seatingChart.assignments).find((k) => seatingChart.assignments[k] === viewingStudent.id) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const currentKey = Object.keys(seatingChart.assignments).find((k) => seatingChart.assignments[k] === viewingStudent.id);
+                      if (currentKey) {
+                        handleUnassignStudent(currentKey);
+                        setViewingStudent(null);
+                      }
+                    }}
+                    className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs border border-rose-200 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    title="Bỏ chỗ ngồi của học sinh này, chuyển ra danh sách chưa xếp"
+                  >
+                    <UserMinus className="w-4 h-4 text-rose-600" />
+                    <span>Kích Ra Danh Sách Chờ</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setViewingStudent(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors cursor-pointer"
+                >
+                  Đóng
+                </button>
+                {onSelectStudent && (
+                  <button
+                    onClick={() => {
+                      const student = viewingStudent;
+                      setViewingStudent(null);
+                      onSelectStudent(student);
+                    }}
+                    className="px-4 py-2 bg-[#003366] hover:bg-[#002244] text-white font-semibold rounded-xl text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Xem Toàn Bộ Hồ Sơ Học Bạ</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL ASSIGN STUDENT DIRECTLY TO A SEAT */}
+      {showAssignModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-[#003366]" />
+                  <span>Xếp Học Sinh Vào Dãy {showAssignModal.split('-')[0]} - Bàn {showAssignModal.split('-')[1]} - Ghế {showAssignModal.split('-')[2]}</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {seatingChart?.assignments?.[showAssignModal]
+                    ? `Hiện tại: ${studentMap.get(seatingChart.assignments[showAssignModal])?.name}`
+                    : 'Hiện tại: Ghế trống'}
+                </p>
+              </div>
               <button
-                onClick={() => setViewingStudent(null)}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs transition-colors"
+                onClick={() => {
+                  setShowAssignModal(null);
+                  setAssignModalSearch('');
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search Box */}
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Tìm theo tên học sinh, mã HS, Tổ..."
+                value={assignModalSearch}
+                onChange={(e) => setAssignModalSearch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#003366]"
+              />
+            </div>
+
+            <div className="max-h-72 overflow-y-auto space-y-2 pr-1">
+              {/* Option to clear seat */}
+              {seatingChart?.assignments?.[showAssignModal] && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleUnassignStudent(showAssignModal);
+                    setShowAssignModal(null);
+                  }}
+                  className="w-full p-2.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-between transition-colors cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <UserMinus className="w-4 h-4 text-rose-600" />
+                    <span>Kích học sinh hiện tại ra ngoài danh sách chờ</span>
+                  </span>
+                  <span className="text-[10px] bg-rose-200 px-2 py-0.5 rounded font-extrabold">Bỏ xếp chỗ</span>
+                </button>
+              )}
+
+              {/* Unassigned Students Section */}
+              <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider pt-1 flex items-center justify-between">
+                <span>Học sinh chưa xếp chỗ ({unassignedStudents.length})</span>
+                <span className="text-[10px] text-slate-400 font-normal">Ưu tiên xếp</span>
+              </div>
+
+              {unassignedStudents
+                .filter(
+                  (s) =>
+                    !assignModalSearch.trim() ||
+                    s.name.toLowerCase().includes(assignModalSearch.toLowerCase()) ||
+                    s.code.toLowerCase().includes(assignModalSearch.toLowerCase()) ||
+                    `tổ ${s.group}`.includes(assignModalSearch.toLowerCase())
+                )
+                .map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleAssignUnassignedToSeat(s.id, showAssignModal)}
+                    className="w-full p-2.5 rounded-xl border border-amber-200 bg-amber-50/70 hover:bg-amber-100 text-slate-800 text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <img src={s.avatar} alt={s.name} className="w-7 h-7 rounded-full object-cover border border-white" />
+                      <div className="text-left">
+                        <div className="font-bold text-slate-900">{s.name}</div>
+                        <div className="text-[10px] text-slate-500">{s.code} • Tổ {s.group}</div>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-[#003366] text-white font-bold text-[10px] shadow-xs">
+                      Đặt vào ghế này
+                    </span>
+                  </button>
+                ))}
+
+              {/* Other Assigned Students (Option to transfer) */}
+              <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider pt-3 border-t border-slate-100">
+                Chuyển học sinh đang ngồi ghế khác sang ghế này
+              </div>
+              {(students || [])
+                .filter((s) => assignedStudentIds.has(s.id) && s.id !== seatingChart?.assignments?.[showAssignModal])
+                .filter(
+                  (s) =>
+                    !assignModalSearch.trim() ||
+                    s.name.toLowerCase().includes(assignModalSearch.toLowerCase()) ||
+                    s.code.toLowerCase().includes(assignModalSearch.toLowerCase())
+                )
+                .map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => handleAssignUnassignedToSeat(s.id, showAssignModal)}
+                    className="w-full p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs flex items-center justify-between transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <img src={s.avatar} alt={s.name} className="w-7 h-7 rounded-full object-cover border border-slate-200" />
+                      <div className="text-left">
+                        <div className="font-semibold text-slate-800">{s.name}</div>
+                        <div className="text-[10px] text-slate-400">{s.code} • Tổ {s.group}</div>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-[10px]">
+                      Chuyển vị trí
+                    </span>
+                  </button>
+                ))}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAssignModal(null);
+                  setAssignModalSearch('');
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl text-xs cursor-pointer"
               >
                 Đóng
               </button>
-              {onSelectStudent && (
-                <button
-                  onClick={() => {
-                    const student = viewingStudent;
-                    setViewingStudent(null);
-                    onSelectStudent(student);
-                  }}
-                  className="px-4 py-2 bg-[#003366] hover:bg-[#002244] text-white font-semibold rounded-xl text-xs transition-colors flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Xem Toàn Bộ Hồ Sơ Học Bạ</span>
-                </button>
-              )}
             </div>
           </div>
         </div>
