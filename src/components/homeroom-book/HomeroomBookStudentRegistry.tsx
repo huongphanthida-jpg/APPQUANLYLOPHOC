@@ -186,103 +186,111 @@ export const HomeroomBookStudentRegistry: React.FC<HomeroomBookStudentRegistryPr
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredStudents.map((s, idx) => (
-                <tr
-                  key={s.id}
-                  onClick={() => onSelectStudent && onSelectStudent(s)}
-                  className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
-                >
-                  <td className="py-3 px-3 text-center font-bold text-slate-500">{idx + 1}</td>
-                  <td className="py-3 px-3 font-mono font-bold text-blue-900 text-[11px] whitespace-nowrap">
-                    {s.code}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center gap-2">
-                      {s.avatar ? (
-                        <img
-                          src={s.avatar}
-                          alt={s.name}
-                          referrerPolicy="no-referrer"
-                          className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0"
-                        />
-                      ) : (
-                        <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px] shrink-0">
-                          {s.name.charAt(0)}
+              {filteredStudents.map((s, idx) => {
+                if (!s) return null;
+                const studentName = (s.name || '').toString();
+                const avatarChar = (studentName.charAt(0) || 'H').toUpperCase();
+                const strengthsText = typeof s.strengths === 'string' ? s.strengths : (s.strengths != null ? String(s.strengths) : '');
+                const healthNoteText = s.healthNote ? String(s.healthNote) : '';
+
+                return (
+                  <tr
+                    key={s.id || idx}
+                    onClick={() => onSelectStudent && onSelectStudent(s)}
+                    className="hover:bg-blue-50/50 transition-colors cursor-pointer group"
+                  >
+                    <td className="py-3 px-3 text-center font-bold text-slate-500">{idx + 1}</td>
+                    <td className="py-3 px-3 font-mono font-bold text-blue-900 text-[11px] whitespace-nowrap">
+                      {s.code}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        {typeof s.avatar === 'string' && s.avatar ? (
+                          <img
+                            src={s.avatar}
+                            alt={studentName}
+                            referrerPolicy="no-referrer"
+                            className="w-7 h-7 rounded-full object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-7 h-7 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-[10px] shrink-0">
+                            {avatarChar}
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-bold text-slate-900 block leading-tight">{studentName}</span>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] text-slate-400">{s.email}</span>
+                            {s.position && typeof s.position === 'string' && s.position.trim() !== 'Thành viên' && s.position.trim() !== 'Học sinh' && (
+                              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9px] font-bold border border-amber-300">
+                                {s.position}
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      <div>
-                        <span className="font-bold text-slate-900 block leading-tight">{s.name}</span>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-[10px] text-slate-400">{s.email}</span>
-                          {s.position && typeof s.position === 'string' && s.position.trim() !== 'Thành viên' && s.position.trim() !== 'Học sinh' && (
-                            <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9px] font-bold border border-amber-300">
-                              {s.position}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-center">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      s.gender === 'Nam' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'
-                    }`}>
-                      {s.gender}
-                    </span>
-                  </td>
-                  <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
-                    {s.dob}
-                  </td>
-                  <td className="py-3 px-3 text-center font-bold text-[#003366]">
-                    Tổ {s.group}
-                  </td>
-                  <td className="py-3 px-3 font-medium text-slate-700 whitespace-nowrap">
-                    {s.phone}
-                  </td>
-                  <td className="py-3 px-4 text-slate-600 max-w-xs truncate" title={s.address}>
-                    {s.address}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div>
-                      <span className="font-bold text-slate-800 block leading-tight">
-                        {s.emergencyContact?.parentName} ({s.emergencyContact?.relationship || 'Bố'})
-                      </span>
-                      <span className="text-[10px] text-purple-700 font-semibold flex items-center gap-1">
-                        <Phone className="w-2.5 h-2.5" /> {s.emergencyContact?.phone}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-3 text-[11px] text-slate-600 max-w-xs truncate" title={`${s.strengths || ''} | ${s.healthNote || ''}`}>
-                    {s.healthNote ? (
-                      <span className="text-rose-700 font-semibold block">{s.healthNote}</span>
-                    ) : (
-                      <span>{s.strengths?.slice(0, 35)}...</span>
-                    )}
-                  </td>
-                  {canEdit && (
-                    <td className="py-3 px-3 text-center">
-                      <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <button
-                          type="button"
-                          onClick={(e) => handleOpenEditStudent(s, e)}
-                          className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
-                          title="Sửa hồ sơ học sinh này"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteStudent(s.id, e)}
-                          className="p-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer"
-                          title="Xóa học sinh"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </div>
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="py-3 px-3 text-center">
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        s.gender === 'Nam' ? 'bg-blue-100 text-blue-800' : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {s.gender}
+                      </span>
+                    </td>
+                    <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
+                      {s.dob}
+                    </td>
+                    <td className="py-3 px-3 text-center font-bold text-[#003366]">
+                      Tổ {s.group}
+                    </td>
+                    <td className="py-3 px-3 font-medium text-slate-700 whitespace-nowrap">
+                      {s.phone}
+                    </td>
+                    <td className="py-3 px-4 text-slate-600 max-w-xs truncate" title={s.address}>
+                      {s.address}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div>
+                        <span className="font-bold text-slate-800 block leading-tight">
+                          {s.emergencyContact?.parentName} ({s.emergencyContact?.relationship || 'Bố'})
+                        </span>
+                        <span className="text-[10px] text-purple-700 font-semibold flex items-center gap-1">
+                          <Phone className="w-2.5 h-2.5" /> {s.emergencyContact?.phone}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-[11px] text-slate-600 max-w-xs truncate" title={`${strengthsText} | ${healthNoteText}`}>
+                      {healthNoteText ? (
+                        <span className="text-rose-700 font-semibold block">{healthNoteText}</span>
+                      ) : (
+                        <span>{strengthsText.slice(0, 35)}...</span>
+                      )}
+                    </td>
+                    {canEdit && (
+                      <td className="py-3 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEditStudent(s, e)}
+                            className="p-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-600 hover:text-white transition-colors cursor-pointer"
+                            title="Sửa hồ sơ học sinh này"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteStudent(s.id, e)}
+                            className="p-1.5 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-600 hover:text-white transition-colors cursor-pointer"
+                            title="Xóa học sinh"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
