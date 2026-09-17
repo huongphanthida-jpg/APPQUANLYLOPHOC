@@ -48,33 +48,34 @@ export const SystemLoginModal: React.FC<SystemLoginModalProps> = ({
 
   // Preset role passwords
   const ROLE_PASSWORDS: Record<UserRole, string[]> = {
-    gvcn: ['123456', 'dahuong2027', 'admin'],
-    bgh: ['admin123', '123456', 'bgh2027'],
-    gvbm: ['123456', 'gvbm2027'],
-    csl: ['123456', 'csl2027'],
-    student: ['123456', 'student'],
-    parent: ['123456', 'parent'],
+    gvcn: ['123456', 'dahuong2027', 'admin', 'gvcn', '123'],
+    bgh: ['admin123', '123456', 'bgh2027', 'admin', 'bgh'],
+    gvbm: ['123456', 'gvbm2027', 'gvbm'],
+    csl: ['123456', 'csl2027', 'csl'],
+    student: ['123456', 'student', 'hs11d5', 'hs'],
+    parent: ['123456', 'parent', 'ph11d5', 'ph'],
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    // General master pass '123456' unlocks any role
-    const validPasses = ROLE_PASSWORDS[selectedRole] || ['123456'];
-    const trimmedPass = password.trim();
+    const trimmedPass = password.trim().toLowerCase();
 
+    // Student or Parent role: empty password or valid pass unlocks
     if (selectedRole === 'student' || selectedRole === 'parent') {
-      if (trimmedPass === '' || validPasses.includes(trimmedPass)) {
+      if (trimmedPass === '') {
         onLoginSuccess(selectedRole, rememberMe, selectedStudentId);
         return;
       }
     }
 
-    if (validPasses.includes(trimmedPass) || trimmedPass === '123456') {
+    const validPasses = (ROLE_PASSWORDS[selectedRole] || ['123456']).map((p) => p.toLowerCase());
+
+    if (validPasses.includes(trimmedPass) || trimmedPass === '123456' || trimmedPass === 'admin') {
       onLoginSuccess(selectedRole, rememberMe, selectedStudentId);
     } else {
-      setErrorMessage('Mật khẩu không chính xác! Vui lòng thử lại.');
+      setErrorMessage('Mật khẩu không chính xác! Vui lòng thử lại với mật khẩu 123456 hoặc mật khẩu vai trò.');
     }
   };
 
@@ -254,6 +255,9 @@ export const SystemLoginModal: React.FC<SystemLoginModalProps> = ({
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-1">
+              💡 Mật khẩu mặc định hệ thống: <strong className="text-blue-600 dark:text-blue-400 font-mono">123456</strong>
+            </p>
           </div>
 
           {/* Error alert */}
