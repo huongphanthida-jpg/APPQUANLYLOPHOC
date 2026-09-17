@@ -145,6 +145,7 @@ interface HomeroomBookViewProps {
   onUpdateDutySchedule?: (duty: DutySchedule[]) => void;
   onUpdateEmulationLogs?: (logs: GroupEmulationLog[]) => void;
   onSelectStudent?: (student: Student) => void;
+  onOpenAddDiscipline?: (studentId?: string) => void;
 }
 
 type BookTab =
@@ -190,6 +191,7 @@ export const HomeroomBookView: React.FC<HomeroomBookViewProps> = ({
   onUpdateDutySchedule,
   onUpdateEmulationLogs,
   onSelectStudent,
+  onOpenAddDiscipline,
 }) => {
   const [activeTab, setActiveTab] = useState<BookTab>('cover');
   const [isPreviewExportModalOpen, setIsPreviewExportModalOpen] = useState(false);
