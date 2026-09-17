@@ -144,7 +144,7 @@ export function exportExamToWord(params: ExamWordExportParams) {
       <div class="title-sub">Môn thi: <b>${escapeHtml(
         subject
       )}</b> | Thời gian làm bài: <b>${durationMinutes} phút</b> (Không kể thời gian phát đề)</div>
-      <div style="font-size: 10pt; margin-top: 4px; color: #555;">Hệ thống AI Cố vấn - DẠ HƯƠNG 2026-2027</div>
+      <div style="font-size: 10pt; margin-top: 4px; color: #555;">Hệ thống AI Cố vấn - QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</div>
     </div>
 
     <!-- Student Name Block -->

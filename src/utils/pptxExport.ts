@@ -68,7 +68,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
       ${escapeHtml(meetingTitle)}
     </h1>
     <h3 style="font-size: 20pt; color: #98FF98; margin: 0 0 30px 0; font-weight: 700;">
-      HỆ THỐNG QUẢN TRỊ & HỌC LIỆU DẠ HƯƠNG 2026-2027
+      HỆ THỐNG QUẢN TRỊ & HỌC LIỆU QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN
     </h3>
     <div style="font-size: 14pt; color: #d0e0f0; background: rgba(255,255,255,0.05); padding: 15px 30px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);">
       <span>Giáo viên chủ nhiệm: <b>${escapeHtml(teacherName)}</b></span> | 
@@ -108,7 +108,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
     </div>
     <div class="footer">
       <span>Trang 2 | Báo cáo GVCN</span>
-      <span>DẠ HƯƠNG 2026-2027</span>
+      <span>QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</span>
     </div>
   </div>
 
@@ -150,7 +150,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
     </table>
     <div class="footer">
       <span>Trang 3 | Bảng Vàng Tuyên Dương</span>
-      <span>DẠ HƯƠNG 2026-2027</span>
+      <span>QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</span>
     </div>
   </div>
 
@@ -180,12 +180,12 @@ xmlns="http://www.w3.org/TR/REC-html40">
     <div style="margin-top: 25px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; font-size: 11pt; line-height: 1.5;">
       <b style="color: #98FF98;">Giải pháp thực hiện trọng tâm:</b><br/>
       1. Triển khai mô hình "Đôi bạn cùng tiến" phân công các học sinh Top 1 kèm cặp môn Vật Lý và Hóa Học.<br/>
-      2. Tăng cường giao bài tập kiểm tra trắc nghiệm AI định kỳ hằng tuần trên hệ thống DẠ HƯƠNG 2026-2027.<br/>
+      2. Tăng cường giao bài tập kiểm tra trắc nghiệm AI định kỳ hằng tuần trên hệ thống QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN.<br/>
       3. Phối hợp chặt chẽ giữa GVCN và Phụ huynh theo dõi sát sao lịch học thêm và giờ tự học tại nhà.
     </div>
     <div class="footer">
       <span>Trang 4 | Kế hoạch Học tập</span>
-      <span>DẠ HƯƠNG 2026-2027</span>
+      <span>QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</span>
     </div>
   </div>
 
@@ -203,7 +203,7 @@ xmlns="http://www.w3.org/TR/REC-html40">
     </div>
     <div class="footer">
       <span>THPT Trần Nguyên Hãn</span>
-      <span>DẠ HƯƠNG 2026-2027</span>
+      <span>QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</span>
     </div>
   </div>
 
