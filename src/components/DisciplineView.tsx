@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Award,
   AlertTriangle,
@@ -16,7 +16,8 @@ import {
   BookmarkCheck,
   ShieldCheck,
   ClipboardCheck,
-  Trash2
+  Trash2,
+  PieChart
 } from 'lucide-react';
 import { DisciplineEntry, ClassJournalEntry, Student, UserRole, LeaveRequest, ClassInfo, TeacherInfo } from '../types';
 import { ConfirmModal } from './ConfirmModal';
@@ -107,6 +108,111 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
 
     return { group: g, score, bonus: bonusCount, penalty: penaltyCount, count: groupStudents.length };
   }).sort((a, b) => b.score - a.score);
+
+  // 1. Load effective students list (prop or localStorage fallback)
+  const effectiveStudents = useMemo(() => {
+    if (students && students.length > 0) return students;
+    try {
+      const saved = localStorage.getItem('app_students_data');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [];
+  }, [students]);
+
+  // 2. Customizations from localStorage
+  const customizations: Record<string, 'elite' | 'development' | 'support' | 'foundation'> = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('app_student_group_customizations');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  // 3. Classification Helper according to 6 core subject grades
+  const classifyStudent = (student: Student): 'elite' | 'development' | 'support' | 'foundation' => {
+    if (student?.id && customizations[student.id]) {
+      return customizations[student.id];
+    }
+    const g = student?.grades || {};
+    const grades = [
+      g.math?.avg ?? 8.5,
+      g.physics?.avg ?? 8.5,
+      g.chemistry?.avg ?? 8.5,
+      g.biology?.avg ?? 8.5,
+      g.english?.avg ?? 8.5,
+      g.literature?.avg ?? 8.5,
+    ];
+    const belowFiveCount = grades.filter((v) => v < 5.0).length;
+    if (belowFiveCount > 1) return 'support';
+    const allGte9 = grades.every((v) => v >= 9.0);
+    const noneLt65 = grades.every((v) => v >= 6.5);
+    if (allGte9 && noneLt65) return 'elite';
+    const allGte8 = grades.every((v) => v >= 8.0);
+    if (allGte8 && noneLt65) return 'development';
+    return 'foundation';
+  };
+
+  // 4. Calculate counts and percentages for 4 academic groups
+  const academicGroupCounts = useMemo(() => {
+    const counts = {
+      elite: 0,
+      development: 0,
+      support: 0,
+      foundation: 0,
+    };
+    (effectiveStudents || []).forEach((s) => {
+      const groupKey = classifyStudent(s);
+      counts[groupKey] = (counts[groupKey] || 0) + 1;
+    });
+    const total = effectiveStudents.length || 1;
+    return {
+      elite: {
+        count: counts.elite,
+        percent: ((counts.elite / total) * 100).toFixed(1),
+      },
+      development: {
+        count: counts.development,
+        percent: ((counts.development / total) * 100).toFixed(1),
+      },
+      support: {
+        count: counts.support,
+        percent: ((counts.support / total) * 100).toFixed(1),
+      },
+      foundation: {
+        count: counts.foundation,
+        percent: ((counts.foundation / total) * 100).toFixed(1),
+      },
+      totalStudents: effectiveStudents.length,
+    };
+  }, [effectiveStudents, customizations]);
+
+  // 5. Compute SVG Donut Chart slice lengths & offsets
+  const donutSlices = useMemo(() => {
+    const total = academicGroupCounts.totalStudents || 1;
+    const C = 2 * Math.PI * 55; // 345.575
+    let cumulativeOffset = 0;
+    const items = [
+      { key: 'elite', count: academicGroupCounts.elite.count, color: '#F59E0B' },
+      { key: 'development', count: academicGroupCounts.development.count, color: '#3B82F6' },
+      { key: 'support', count: academicGroupCounts.support.count, color: '#EF4444' },
+      { key: 'foundation', count: academicGroupCounts.foundation.count, color: '#10B981' },
+    ];
+
+    return items.map((item) => {
+      const ratio = item.count / total;
+      const strokeLength = ratio * C;
+      const gapLength = C - strokeLength;
+      const offset = cumulativeOffset;
+      cumulativeOffset += strokeLength;
+      return {
+        ...item,
+        strokeLength,
+        gapLength,
+        offset,
+      };
+    });
+  }, [academicGroupCounts]);
 
   return (
     <div id="discipline-view" className="space-y-6 pb-12">
@@ -244,8 +350,6 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
         </div>
       )}
 
-
-
       {/* 4 Groups Thi Đua Leaderboard Bar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {groupStats.map((item, idx) => (
@@ -280,15 +384,13 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
         ))}
       </div>
 
-
-
-      {/* Real-time Discipline & Commendation Logs Table */}
+      {/* 1. Real-time Discipline & Commendation Logs Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 sm:p-5 bg-slate-50 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="text-base font-bold text-[#003366] flex items-center gap-2">
               <Award className="w-4 h-4 text-amber-500" />
-              Lịch Sử Điểm Cộng / Trừ Thi Đua Thời Gian Thực
+              1. NHẬT KÝ THEO DÕI THI ĐUA, KHEN THƯỞNG & KỶ LUẬT (THỜI GIAN THỰC)
             </h3>
             <p className="text-xs text-slate-500">
               Minh bạch mọi quyết định tuyên dương và vi phạm kỷ luật của học sinh
@@ -385,6 +487,161 @@ export const DisciplineView: React.FC<DisciplineViewProps> = ({
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* 2. BIỂU ĐỒ HỌC LỰC CỦA LỚP (PHÂN BỐ 4 NHÓM HỌC SINH) */}
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+          <div>
+            <h3 className="text-base font-black text-[#003366] uppercase tracking-wider flex items-center gap-2">
+              <PieChart className="w-5 h-5 text-blue-600" />
+              2. BIỂU ĐỒ HỌC LỰC CỦA LỚP (TỶ LỆ PHÂN NHÓM HỌC TẬP)
+            </h3>
+            <p className="text-xs text-slate-500 font-medium">
+              Tự động phân loại dựa trên điểm số 6 môn học & tùy chỉnh phân nhóm (Sĩ số: {academicGroupCounts.totalStudents} học sinh)
+            </p>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold border border-blue-200 self-start sm:self-auto">
+            Biểu Đồ Tròn Donut Chart
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+          {/* Donut SVG Chart Box (5 cols) */}
+          <div className="lg:col-span-5 flex flex-col items-center justify-center p-4 bg-slate-50/60 rounded-2xl border border-slate-100">
+            <div className="relative w-56 h-56 flex items-center justify-center">
+              <svg viewBox="0 0 200 200" className="w-full h-full transform -rotate-90">
+                {/* Background Ring */}
+                <circle cx="100" cy="100" r="55" stroke="#E2E8F0" strokeWidth="24" fill="none" />
+
+                {/* Donut Slices */}
+                {donutSlices.map((slice, idx) => (
+                  <circle
+                    key={idx}
+                    cx="100"
+                    cy="100"
+                    r="55"
+                    stroke={slice.color}
+                    strokeWidth="24"
+                    fill="none"
+                    strokeDasharray={`${slice.strokeLength} ${slice.gapLength}`}
+                    strokeDashoffset={-slice.offset}
+                    className="transition-all duration-500 hover:opacity-85"
+                  />
+                ))}
+              </svg>
+
+              {/* Center Donut Label */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-3xl font-black text-[#003366] leading-none">
+                  {academicGroupCounts.totalStudents}
+                </span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                  HỌC SINH
+                </span>
+              </div>
+            </div>
+
+            <p className="text-[11px] font-semibold text-slate-500 mt-3 text-center">
+              Phân bố tỷ lệ học lực 4 nhóm học tập của lớp
+            </p>
+          </div>
+
+          {/* 4 Legend Cards Box (7 cols) */}
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Nhóm 1 - Ưu Tú */}
+            <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/90 space-y-1.5 shadow-2xs hover:shadow-xs transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-amber-900 flex items-center gap-1.5">
+                  <span className="text-base">🌟</span> Nhóm Ưu Tú
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[11px] font-black">
+                  {academicGroupCounts.elite.percent}%
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1">
+                <span className="text-2xl font-black text-amber-950">
+                  {academicGroupCounts.elite.count} <span className="text-xs font-bold text-amber-800">em</span>
+                </span>
+                <span className="text-[11px] font-bold text-amber-800">
+                  Chiếm {academicGroupCounts.elite.percent}% sĩ số
+                </span>
+              </div>
+              <p className="text-[10px] text-amber-700/90 font-medium">
+                Cả 6 môn ≥ 9.0 và không môn nào &lt; 6.5
+              </p>
+            </div>
+
+            {/* Nhóm 2 - Phát Triển */}
+            <div className="p-4 rounded-xl bg-blue-50/60 border border-blue-200/90 space-y-1.5 shadow-2xs hover:shadow-xs transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-blue-900 flex items-center gap-1.5">
+                  <span className="text-base">🚀</span> Nhóm Phát Triển
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[11px] font-black">
+                  {academicGroupCounts.development.percent}%
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1">
+                <span className="text-2xl font-black text-blue-950">
+                  {academicGroupCounts.development.count} <span className="text-xs font-bold text-blue-800">em</span>
+                </span>
+                <span className="text-[11px] font-bold text-blue-800">
+                  Chiếm {academicGroupCounts.development.percent}% sĩ số
+                </span>
+              </div>
+              <p className="text-[10px] text-blue-700/90 font-medium">
+                Cả 6 môn ≥ 8.0 và không môn nào &lt; 6.5
+              </p>
+            </div>
+
+            {/* Nhóm 3 - Cần Được Hỗ Trợ */}
+            <div className="p-4 rounded-xl bg-rose-50/60 border border-rose-200/90 space-y-1.5 shadow-2xs hover:shadow-xs transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-rose-900 flex items-center gap-1.5">
+                  <span className="text-base">⚠️</span> Nhóm Cần Hỗ Trợ
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-rose-600 text-white text-[11px] font-black">
+                  {academicGroupCounts.support.percent}%
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1">
+                <span className="text-2xl font-black text-rose-950">
+                  {academicGroupCounts.support.count} <span className="text-xs font-bold text-rose-800">em</span>
+                </span>
+                <span className="text-[11px] font-bold text-rose-800">
+                  Chiếm {academicGroupCounts.support.percent}% sĩ số
+                </span>
+              </div>
+              <p className="text-[10px] text-rose-700/90 font-medium">
+                Hơn 1 môn bị dưới 5.0 điểm
+              </p>
+            </div>
+
+            {/* Nhóm 4 - Nền Tảng */}
+            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/90 space-y-1.5 shadow-2xs hover:shadow-xs transition-all">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black text-emerald-900 flex items-center gap-1.5">
+                  <span className="text-base">🌿</span> Nhóm Nền Tảng
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[11px] font-black">
+                  {academicGroupCounts.foundation.percent}%
+                </span>
+              </div>
+              <div className="flex items-baseline justify-between pt-1">
+                <span className="text-2xl font-black text-emerald-950">
+                  {academicGroupCounts.foundation.count} <span className="text-xs font-bold text-emerald-800">em</span>
+                </span>
+                <span className="text-[11px] font-bold text-emerald-800">
+                  Chiếm {academicGroupCounts.foundation.percent}% sĩ số
+                </span>
+              </div>
+              <p className="text-[10px] text-emerald-700/90 font-medium">
+                Học sinh hoàn thành tốt nhiệm vụ học tập còn lại
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
