@@ -146,7 +146,7 @@ export const OnlineClassDatabaseModal: React.FC<OnlineClassDatabaseModalProps> =
 
     setClassList(updated);
     onSaveOnlineClasses(updated, config);
-    setSuccessMessage(`Đã đồng bộ thành công ${updated.length} lớp học trực tuyến vào hệ thống DẠ HƯƠNG 2026-2027.`);
+    setSuccessMessage(`Đã đồng bộ thành công ${updated.length} lớp học trực tuyến vào hệ thống QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN.`);
     setParsedFromSheet([]);
   };
 
@@ -234,7 +234,7 @@ export const OnlineClassDatabaseModal: React.FC<OnlineClassDatabaseModalProps> =
                 <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-400 text-slate-950 px-2 py-0.5 rounded">
                   DATABASE GOOGLE SHEETS
                 </span>
-                <span className="text-xs text-slate-300 font-semibold">DẠ HƯƠNG 2026-2027</span>
+                <span className="text-xs text-slate-300 font-semibold">QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</span>
               </div>
               <h2 className="text-lg sm:text-xl font-black text-white mt-0.5">
                 Cơ Sở Dữ Liệu Danh Sách Lớp Học Trực Tuyến
@@ -727,7 +727,7 @@ export const OnlineClassDatabaseModal: React.FC<OnlineClassDatabaseModalProps> =
         {/* Modal Footer */}
         <div className="bg-slate-50 p-4 border-t border-slate-200 flex items-center justify-between text-xs text-slate-500">
           <span className="font-semibold">
-            DẠ HƯƠNG 2026-2027 • Hệ thống kết nối lớp học trực tuyến Google Sheets 24/7
+            QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN • Hệ thống kết nối lớp học trực tuyến Google Sheets 24/7
           </span>
           <button
             onClick={onClose}

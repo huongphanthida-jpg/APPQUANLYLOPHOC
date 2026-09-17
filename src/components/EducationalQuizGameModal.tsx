@@ -269,7 +269,7 @@ export const EducationalQuizGameModal: React.FC<EducationalQuizGameModalProps> =
                 <span className="text-[10px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-2 py-0.5 rounded">
                   CLASSROOM QUIZ SHOW
                 </span>
-                <span className="text-xs text-slate-300 font-semibold">DẠ HƯƠNG 2026-2027</span>
+                <span className="text-xs text-slate-300 font-semibold">QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</span>
               </div>
               <h2 className="text-lg sm:text-xl font-black text-white mt-0.5">
                 Đấu Trường Trắc Nghiệm Học Tập Tương Tác

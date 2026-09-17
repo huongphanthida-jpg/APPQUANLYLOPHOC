@@ -84,7 +84,7 @@ export const AiAdvisorModal: React.FC<AiAdvisorModalProps> = ({
     } catch (err) {
       // Fallback local pedagogical logic if server/network isn't reachable
       const fallbackResponses = {
-        roadmap_30days: `### 🎯 LỘ TRÌNH 30 NGÀY BỨT PHÁ ĐIỂM SỐ CÁ NHÂN HÓA - DẠ HƯƠNG 2026-2027
+        roadmap_30days: `### 🎯 LỘ TRÌNH 30 NGÀY BỨT PHÁ ĐIỂM SỐ CÁ NHÂN HÓA - QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN
 **Học sinh:** ${activeStudent?.name} (Mã HS: ${activeStudent?.code} - Tổ ${activeStudent?.group})
 **Mục tiêu:** Nâng ĐTB từ **${activeStudent?.grades.gpa}** lên **${Math.min(10, (activeStudent?.grades.gpa || 8.0) + 0.8).toFixed(1)}** • Chuẩn bị thi Tốt nghiệp THPT 2027
 
@@ -96,7 +96,7 @@ export const AiAdvisorModal: React.FC<AiAdvisorModalProps> = ({
 - **Phối hợp:** Phân công Đôi bạn cùng tiến kèm cặp 20 phút sau giờ học.
 
 #### 📌 TUẦN 2: TĂNG TỐC KỸ NĂNG GIẢI TRẮC NGHIỆM TỐC ĐỘ HIGH-SPEED
-- **Môn Hóa Học & Tiếng Anh:** Luyện giải trắc nghiệm bấm giờ 45 phút trên app DẠ HƯƠNG 2026-2027.
+- **Môn Hóa Học & Tiếng Anh:** Luyện giải trắc nghiệm bấm giờ 45 phút trên app QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN.
 - **Nề nếp:** Duy trì 100 điểm thi đua nề nếp tổ, không vắng học hay đi muộn.
 
 #### 📌 TUẦN 3: LUYỆN ĐỀ THI THỬ CHUYÊN ĐỀ PHÂN HÓA 8.5+

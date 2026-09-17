@@ -132,7 +132,7 @@ export const GoogleSheetSyncModal: React.FC<GoogleSheetSyncModalProps> = ({
                 Kết Nối Cơ Sở Dữ Liệu Lớp Học Trực Tuyến
               </h2>
               <p className="text-xs text-slate-300">
-                Đồng bộ realtime danh sách học sinh từ Google Sheet vào ứng dụng DẠ HƯƠNG 2026-2027
+                Đồng bộ realtime danh sách học sinh từ Google Sheet vào ứng dụng QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN
               </p>
             </div>
           </div>
@@ -380,7 +380,7 @@ export const GoogleSheetSyncModal: React.FC<GoogleSheetSyncModalProps> = ({
             className="px-6 py-2.5 rounded-xl bg-[#003366] hover:bg-[#002244] text-white text-xs font-black transition-all shadow-md flex items-center gap-2 disabled:opacity-40 cursor-pointer"
           >
             <Check className="w-4 h-4 text-emerald-300" />
-            <span>Xác Nhận Đồng Bộ Vào DẠ HƯƠNG 2026-2027</span>
+            <span>Xác Nhận Đồng Bộ Vào QUẢN LÝ LỚP CHỦ NHIỆM- THPT TRẦN NGUYÊN HÃN</span>
           </button>
         </div>
       </div>
