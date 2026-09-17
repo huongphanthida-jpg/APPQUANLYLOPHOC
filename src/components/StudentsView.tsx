@@ -29,7 +29,7 @@ import {
 import * as XLSX from 'xlsx';
 import { Student, UserRole, ClassInfo, TeacherInfo, GoogleSheetConfig } from '../types';
 import { compressImageBase64 } from '../utils/imageCompressor';
-import { saveAllAvatarsToIndexedDB } from '../lib/storage';
+import { saveAllAvatarsToIndexedDB, saveStudentsToStorage } from '../lib/storage';
 import { ImportStudentsModal } from './ImportStudentsModal';
 import { ConfirmModal } from './ConfirmModal';
 import { VietnameseFontRepairModal } from './VietnameseFontRepairModal';
