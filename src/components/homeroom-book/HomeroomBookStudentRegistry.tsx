@@ -212,7 +212,14 @@ export const HomeroomBookStudentRegistry: React.FC<HomeroomBookStudentRegistryPr
                       )}
                       <div>
                         <span className="font-bold text-slate-900 block leading-tight">{s.name}</span>
-                        <span className="text-[10px] text-slate-400">{s.email}</span>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] text-slate-400">{s.email}</span>
+                          {s.position && typeof s.position === 'string' && s.position.trim() !== 'Thành viên' && s.position.trim() !== 'Học sinh' && (
+                            <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[9px] font-bold border border-amber-300">
+                              {s.position}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </td>

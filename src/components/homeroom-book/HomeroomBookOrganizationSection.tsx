@@ -75,6 +75,8 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
   const [isEditingYearInline, setIsEditingYearInline] = useState(false);
   const [inlineYearValue, setInlineYearValue] = useState<string>(displayAcademicYear);
 
+  const canEdit = role === 'gvcn' || role === 'bgh' || (role as string) === 'admin' || (role as string) === 'teacher' || (role as string) === 'csl';
+
   const handleSaveAcademicYear = (e: React.FormEvent) => {
     e.preventDefault();
     if (!yearInput.trim()) return;
@@ -154,7 +156,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
 
   // Helper for generating standard main duty descriptions based on position title
   const getMainDutyForRole = (roleName: string): string => {
-    const nameLower = roleName.toLowerCase();
+    const nameLower = (roleName || '').toString().toLowerCase();
     if (nameLower.includes('lớp trưởng')) {
       return 'Quản lý chung các hoạt động của lớp, điều hành nề nếp kỷ luật & phối hợp trực tiếp với GVCN';
     }
@@ -185,7 +187,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
   // Filter students who have a valid class position assigned in "Hồ Sơ Học Sinh"
   const officerStudentsFromProfile = useMemo(() => {
     return (students || []).filter((s) => {
-      const pos = (s.position || '').trim();
+      const pos = (typeof s?.position === 'string' ? s.position : (s?.position != null ? String(s.position) : '')).trim();
       return pos && pos !== 'Thành viên' && pos !== 'Học sinh (Thành viên)' && pos !== 'Học sinh';
     });
   }, [students]);
@@ -194,15 +196,16 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
   const effectiveCommittee = useMemo(() => {
     const currentList = [...(committee || [])];
     officerStudentsFromProfile.forEach((student) => {
-      const pos = student.position!.trim();
+      const pos = (typeof student.position === 'string' ? student.position : String(student.position || '')).trim();
+      if (!pos) return;
       const existing = currentList.find(
-        (c) => c.studentId === student.id || c.roleName.toLowerCase() === pos.toLowerCase()
+        (c) => c && (c.studentId === student.id || (typeof c.roleName === 'string' && c.roleName.toLowerCase() === pos.toLowerCase()))
       );
       if (!existing) {
         currentList.push({
           roleName: pos,
           studentId: student.id,
-          studentName: student.name,
+          studentName: student.name || '',
           phone: student.phone || student.emergencyContact?.phone || '',
           mainDuty: getMainDutyForRole(pos),
         });
@@ -216,7 +219,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
     const leaders = { ...groupLeaders };
     [1, 2, 3, 4].forEach((gNum) => {
       const studentOfficer = (students || []).find(
-        (s) => s.group === gNum && s.position && s.position.toLowerCase().includes('tổ trưởng')
+        (s) => s && s.group === gNum && s.position && typeof s.position === 'string' && s.position.toLowerCase().includes('tổ trưởng')
       );
       if (studentOfficer) {
         leaders[gNum] = studentOfficer.name;
@@ -240,15 +243,16 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
     let updatedCommittee = [...(committee || [])];
 
     officerStudentsFromProfile.forEach((student) => {
-      const pos = student.position!.trim();
+      const pos = (typeof student.position === 'string' ? student.position : String(student.position || '')).trim();
+      if (!pos) return;
       const existingIdx = updatedCommittee.findIndex(
-        (c) => c.studentId === student.id || c.roleName.toLowerCase() === pos.toLowerCase()
+        (c) => c && (c.studentId === student.id || (typeof c.roleName === 'string' && c.roleName.toLowerCase() === pos.toLowerCase()))
       );
 
       const newRoleObj: ClassCommitteeRole = {
         roleName: pos,
         studentId: student.id,
-        studentName: student.name,
+        studentName: student.name || '',
         phone: student.phone || student.emergencyContact?.phone || '',
         mainDuty: getMainDutyForRole(pos),
       };
