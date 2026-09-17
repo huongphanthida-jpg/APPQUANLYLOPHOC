@@ -502,7 +502,7 @@ export const saveTimetable = (timetable: TimetableData) => {
 
 export const getStoredChatMessages = (): ChatMessage[] => {
   try {
-    const data = localStorage.getItem(KEYS.CHAT_MESSAGES);
+    const data = localStorage.getItem(KEYS.CHAT_MESSAGES) || localStorage.getItem('app_chat_messages_v1');
     return data ? JSON.parse(data) : INITIAL_CHAT_MESSAGES;
   } catch {
     return INITIAL_CHAT_MESSAGES;
@@ -510,6 +510,7 @@ export const getStoredChatMessages = (): ChatMessage[] => {
 };
 export const saveChatMessages = (messages: ChatMessage[]) => {
   localStorage.setItem(KEYS.CHAT_MESSAGES, JSON.stringify(messages));
+  localStorage.setItem('app_chat_messages_v1', JSON.stringify(messages));
 };
 
 export const getStoredParentMeetings = (): ParentMeeting[] => {
