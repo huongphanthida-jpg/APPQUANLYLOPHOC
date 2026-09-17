@@ -239,6 +239,7 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
       'Giới tính': s.gender,
       'Ngày sinh': s.dob,
       'Tổ': s.group,
+      'Chức vụ': s.position || 'Thành viên',
       'SĐT': s.phone,
       'Email': s.email,
       'Địa chỉ': s.address,
@@ -602,10 +603,15 @@ export const StudentsView: React.FC<StudentsViewProps> = ({
                     )}
                   </div>
                   <div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-[#003366]/10 text-[#003366]">
                         TỔ {student.group}
                       </span>
+                      {student.position && student.position !== 'Thành viên' && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                          {student.position}
+                        </span>
+                      )}
                       <span className="text-[10px] text-slate-400 font-mono">
                         {student.code}
                       </span>

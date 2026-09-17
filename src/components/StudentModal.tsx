@@ -55,6 +55,7 @@ function buildSafeStudent(stu: Student | null): Student {
       gender: 'Nam',
       dob: '2008-01-01',
       group: 1,
+      position: 'Thành viên',
       avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
       phone: '',
       email: '',
@@ -104,6 +105,7 @@ function buildSafeStudent(stu: Student | null): Student {
     gender: stu.gender || 'Nam',
     dob: stu.dob || '2008-01-01',
     group: (stu.group && stu.group >= 1 && stu.group <= 4 ? stu.group : 1) as 1 | 2 | 3 | 4,
+    position: stu.position || 'Thành viên',
     avatar: stu.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&auto=format&fit=crop&q=80',
     phone: stu.phone || '',
     email: stu.email || '',
@@ -471,6 +473,39 @@ export const StudentModal: React.FC<StudentModalProps> = ({
                     <option value={3}>Tổ 3</option>
                     <option value={4}>Tổ 4</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Chức Vụ Trong Lớp
+                  </label>
+                  <input
+                    type="text"
+                    disabled={!isGVCN}
+                    list="class-positions-list"
+                    placeholder="VD: Lớp Trưởng, Lớp Phó, Tổ Trưởng..."
+                    value={formData.position || ''}
+                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 font-bold text-[#003366] focus:outline-none focus:ring-2 focus:ring-[#003366]"
+                  />
+                  <datalist id="class-positions-list">
+                    <option value="Thành viên (Học sinh)" />
+                    <option value="Lớp Trưởng" />
+                    <option value="Lớp Phó Học Tập" />
+                    <option value="Lớp Phó Kỷ Luật & Nề Nếp" />
+                    <option value="Lớp Phó Phong Trào & Văn Thể" />
+                    <option value="Tổ Trưởng Tổ 1" />
+                    <option value="Tổ Trưởng Tổ 2" />
+                    <option value="Tổ Trưởng Tổ 3" />
+                    <option value="Tổ Trưởng Tổ 4" />
+                    <option value="Tổ Phó Tổ 1" />
+                    <option value="Tổ Phó Tổ 2" />
+                    <option value="Tổ Phó Tổ 3" />
+                    <option value="Tổ Phó Tổ 4" />
+                    <option value="Cán Sự Bộ Môn Toán" />
+                    <option value="Cán Sự Bộ Môn Tiếng Anh" />
+                    <option value="Thủ Quỹ Lớp" />
+                  </datalist>
                 </div>
 
                 <div>
