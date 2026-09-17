@@ -153,6 +153,7 @@ export function App() {
   const [emulationLogs, setEmulationLogs] = useState<GroupEmulationLog[]>(getStoredGroupEmulationLogs());
   const [homeroomBookData, setHomeroomBookData] = useState<HomeroomBookData>(getStoredHomeroomBookData());
   const [subjectTeachers, setSubjectTeachers] = useState<SubjectTeacher[]>(getStoredSubjectTeachers());
+  const [searchQuery, setSearchQuery] = useState<string>('');
   // Check if URL query mode is connect_portal
   const isConnectPortal = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'connect_portal';
 
@@ -180,16 +181,21 @@ export function App() {
   const handlePortalLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const pass = portalPasswordInput.trim().toUpperCase();
-    if (pass === 'PH11D5' || pass === 'PH') {
+    if (pass === 'PH11D5' || pass === 'PH' || pass === 'PHUHUYNH' || pass === 'PARENT') {
       sessionStorage.setItem('tnh_connect_portal_role', 'parent');
       setConnectPortalRole('parent');
       setPortalLoginError(null);
-    } else if (pass === 'HS11D5' || pass === 'HS') {
+    } else if (pass === 'HS11D5' || pass === 'HS' || pass === 'HOCSINH' || pass === 'STUDENT') {
       sessionStorage.setItem('tnh_connect_portal_role', 'student');
       setConnectPortalRole('student');
       setPortalLoginError(null);
+    } else if (pass === '123456' || pass === 'ADMIN') {
+      // Default master password unlocks parent mode
+      sessionStorage.setItem('tnh_connect_portal_role', 'parent');
+      setConnectPortalRole('parent');
+      setPortalLoginError(null);
     } else {
-      setPortalLoginError('Mật khẩu không chính xác! Vui lòng nhập PH11D5 (cho Phụ huynh) hoặc HS11D5 (cho Học sinh).');
+      setPortalLoginError('Mật khẩu không chính xác! Vui lòng nhập PH11D5 (cho Phụ huynh), HS11D5 (cho Học sinh) hoặc 123456.');
     }
   };
 
