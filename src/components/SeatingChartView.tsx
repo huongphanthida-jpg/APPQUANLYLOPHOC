@@ -67,30 +67,69 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const [isAutoArrangeOpen, setIsAutoArrangeOpen] = useState<boolean>(false);
   const autoArrangeRef = useRef<HTMLDivElement>(null);
 
-  // Helper to persist seating chart directly to localStorage with key 'seating_chart_data' and notify parent
+  // Helper to persist seating chart directly to localStorage with key 'app_seating_chart_data' and notify parent
   const saveChartToLocalStorage = (chart: SeatingChartData) => {
     try {
-      localStorage.setItem('seating_chart_data', JSON.stringify(chart));
+      const payload = {
+        ...chart,
+        seats: chart.assignments,
+        unassignedStudents: unassignedStudents.map((s) => s.id),
+        lastUpdated: new Date().toISOString(),
+      };
+      const jsonStr = JSON.stringify(payload);
+      localStorage.setItem('app_seating_chart_data', jsonStr);
+      localStorage.setItem('seating_chart_data', jsonStr);
+      localStorage.setItem('tnh_gvcn_seating_v1', jsonStr);
     } catch (e) {
-      console.warn('Failed to save seating_chart_data to localStorage:', e);
+      console.warn('Failed to save app_seating_chart_data to localStorage:', e);
     }
     onSaveSeatingChart(chart);
   };
 
-  // Automatically read from localStorage ('seating_chart_data') when page/component mounts (useEffect)
+  // Mount effect: Read from localStorage key 'app_seating_chart_data' on component startup
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('seating_chart_data');
+      const stored =
+        localStorage.getItem('app_seating_chart_data') ||
+        localStorage.getItem('seating_chart_data') ||
+        localStorage.getItem('tnh_gvcn_seating_v1');
       if (stored) {
-        const parsed: SeatingChartData = JSON.parse(stored);
-        if (parsed && parsed.columns && Array.isArray(parsed.columns) && parsed.columns.length > 0) {
-          onSaveSeatingChart(parsed);
+        const parsed = JSON.parse(stored);
+        if (parsed && (parsed.assignments || parsed.seats)) {
+          const assignments = parsed.assignments || parsed.seats;
+          if (assignments && Object.keys(assignments).length > 0) {
+            onSaveSeatingChart({
+              ...seatingChart,
+              ...parsed,
+              assignments,
+            });
+          }
         }
       }
     } catch (e) {
-      console.warn('Failed to read seating_chart_data from localStorage on mount:', e);
+      console.warn('Failed reading app_seating_chart_data from localStorage on mount:', e);
     }
   }, []);
+
+  // Auto-persist effect: Watch seatingChart & unassignedStudents changes and save persistently to localStorage
+  useEffect(() => {
+    if (seatingChart && seatingChart.assignments && Object.keys(seatingChart.assignments).length > 0) {
+      try {
+        const payload = {
+          ...seatingChart,
+          seats: seatingChart.assignments,
+          unassignedStudents: unassignedStudents.map((s) => s.id),
+          lastUpdated: new Date().toISOString(),
+        };
+        const jsonStr = JSON.stringify(payload);
+        localStorage.setItem('app_seating_chart_data', jsonStr);
+        localStorage.setItem('seating_chart_data', jsonStr);
+        localStorage.setItem('tnh_gvcn_seating_v1', jsonStr);
+      } catch (e) {
+        console.warn('Auto-persist app_seating_chart_data error:', e);
+      }
+    }
+  }, [seatingChart, unassignedStudents]);
 
   // Auto-arrange unassigned students only into remaining empty seats without changing existing seats
   const handleAutoArrangeUnassignedOnly = () => {
@@ -816,6 +855,13 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                     message: `Bạn có chắc chắn muốn khôi phục lại sơ đồ vị trí chỗ ngồi ban đầu của lớp ${classInfo?.className || ''}?`,
                     confirmText: 'Tải Lại Sơ Đồ',
                     onConfirm: () => {
+                      try {
+                        localStorage.removeItem('app_seating_chart_data');
+                        localStorage.removeItem('seating_chart_data');
+                        localStorage.removeItem('tnh_gvcn_seating_v1');
+                      } catch (e) {
+                        console.warn('Error clearing seating chart from localStorage:', e);
+                      }
                       onResetSeatingChart();
                       setSelectedSeatKey(null);
                       showToast('Đã khôi phục lại sơ đồ chỗ ngồi mặc định của lớp!');
