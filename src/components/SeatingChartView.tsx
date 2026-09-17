@@ -64,6 +64,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const [showAssignModal, setShowAssignModal] = useState<string | null>(null); // seatKey to assign
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isEditSeatingModalOpen, setIsEditSeatingModalOpen] = useState(false);
+  const [isAutoArrangeOpen, setIsAutoArrangeOpen] = useState(false);
   const autoArrangeRef = useRef<HTMLDivElement>(null);
 
   // Student map for fast lookup (defined at top to prevent TDZ ReferenceError)
@@ -348,10 +349,10 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     if (!s) return false;
     const query = searchQuery.toLowerCase().trim();
     return (
-      s.name.toLowerCase().includes(query) ||
-      s.code.toLowerCase().includes(query) ||
-      `tổ ${s.group}`.includes(query) ||
-      s.strengths.toLowerCase().includes(query)
+      (s.name || '').toLowerCase().includes(query) ||
+      (s.code || '').toLowerCase().includes(query) ||
+      `tổ ${s.group || ''}`.includes(query) ||
+      (s.strengths || '').toLowerCase().includes(query)
     );
   };
 
