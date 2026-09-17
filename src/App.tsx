@@ -153,7 +153,45 @@ export function App() {
   const [emulationLogs, setEmulationLogs] = useState<GroupEmulationLog[]>(getStoredGroupEmulationLogs());
   const [homeroomBookData, setHomeroomBookData] = useState<HomeroomBookData>(getStoredHomeroomBookData());
   const [subjectTeachers, setSubjectTeachers] = useState<SubjectTeacher[]>(getStoredSubjectTeachers());
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  // Check if URL query mode is connect_portal
+  const isConnectPortal = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'connect_portal';
+
+  // Standalone Connect Portal Role State
+  const [connectPortalRole, setConnectPortalRole] = useState<'parent' | 'student' | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const stored = sessionStorage.getItem('tnh_connect_portal_role');
+    if (stored === 'parent' || stored === 'student') return stored;
+    return null;
+  });
+  const [portalPasswordInput, setPortalPasswordInput] = useState('');
+  const [portalLoginError, setPortalLoginError] = useState<string | null>(null);
+
+  // Sync real-time storage event for chat messages
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'tnh_gvcn_chat_messages_v1' || e.key === 'app_chat_messages_v1') {
+        setMessages(getStoredChatMessages());
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  const handlePortalLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const pass = portalPasswordInput.trim().toUpperCase();
+    if (pass === 'PH11D5' || pass === 'PH') {
+      sessionStorage.setItem('tnh_connect_portal_role', 'parent');
+      setConnectPortalRole('parent');
+      setPortalLoginError(null);
+    } else if (pass === 'HS11D5' || pass === 'HS') {
+      sessionStorage.setItem('tnh_connect_portal_role', 'student');
+      setConnectPortalRole('student');
+      setPortalLoginError(null);
+    } else {
+      setPortalLoginError('Mật khẩu không chính xác! Vui lòng nhập PH11D5 (cho Phụ huynh) hoặc HS11D5 (cho Học sinh).');
+    }
+  };
 
   // Load and restore all student avatars from IndexedDB (supporting 48+ student avatars without storage loss)
   useEffect(() => {
@@ -1099,6 +1137,132 @@ export function App() {
     role === 'parent' || role === 'student'
       ? students.filter((s) => s.id === currentStudentId)
       : students;
+
+  // Standalone Cổng Kết Nối Router (Phụ Huynh & Học Sinh truy cập từ QR Code)
+  if (isConnectPortal) {
+    if (!connectPortalRole) {
+      return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-sans relative overflow-hidden">
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-10 right-10 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border border-slate-200 relative z-10 space-y-6 animate-scaleUp">
+            <div className="text-center space-y-2">
+              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-[#003366] via-indigo-900 to-blue-700 text-white flex items-center justify-center font-black text-2xl mx-auto shadow-xl border-2 border-amber-300">
+                11D5
+              </div>
+              <h2 className="text-xl font-black text-slate-900 tracking-tight pt-1 uppercase">
+                CỔNG KẾT NỐI & BẠN HỌC
+              </h2>
+              <p className="text-xs text-slate-500 font-medium">
+                THPT TRẦN NGUYÊN HÃN • Niên khóa 2024 - 2027
+              </p>
+            </div>
+
+            <form onSubmit={handlePortalLogin} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 block">
+                  Mật khẩu xác thực kết nối:
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Nhập PH11D5 hoặc HS11D5..."
+                  value={portalPasswordInput}
+                  onChange={(e) => setPortalPasswordInput(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-2xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#003366] focus:bg-white text-slate-900 font-bold"
+                />
+                <p className="text-[11px] text-slate-400">
+                  Mật khẩu do Giáo viên chủ nhiệm cung cấp.
+                </p>
+              </div>
+
+              {portalLoginError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                  <span>⚠️</span>
+                  <span>{portalLoginError}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#003366] via-indigo-900 to-[#001A33] hover:from-[#002244] hover:to-[#001122] text-white font-black text-sm shadow-xl transition-all cursor-pointer active:scale-98"
+              >
+                Đăng Nhập Kết Nối
+              </button>
+            </form>
+
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-[11px] text-slate-600 space-y-1">
+              <div className="font-bold text-slate-800">💡 Hướng dẫn mật khẩu kết nối:</div>
+              <ul className="space-y-0.5 pl-3 list-disc text-slate-500">
+                <li>Phụ huynh: Mật khẩu <strong className="text-emerald-700 font-mono">PH11D5</strong> (Vào Diễn Đàn Phụ Huynh)</li>
+                <li>Học sinh: Mật khẩu <strong className="text-blue-700 font-mono">HS11D5</strong> (Kênh Chung, Kênh Tổ, Chat 1-1)</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+        <header className="bg-gradient-to-r from-[#003366] via-indigo-900 to-[#001A33] text-white px-4 py-3 shadow-md flex items-center justify-between z-30">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-400 text-slate-950 font-black flex items-center justify-center text-sm shadow-sm border border-amber-300">
+              11D5
+            </div>
+            <div>
+              <h1 className="text-sm md:text-base font-bold text-white leading-tight">
+                CỔNG KẾT NỐI & BẠN HỌC • THPT TRẦN NGUYÊN HÃN
+              </h1>
+              <p className="text-[11px] text-blue-200">
+                Vai trò: <span className="font-bold text-amber-300 uppercase">{connectPortalRole === 'parent' ? 'Phụ Huynh' : 'Học Sinh'}</span>
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              sessionStorage.removeItem('tnh_connect_portal_role');
+              setConnectPortalRole(null);
+            }}
+            className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-rose-600 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer border border-white/20"
+          >
+            <span>Đăng Xuất</span>
+          </button>
+        </header>
+
+        <main className="flex-1 p-2 md:p-4 max-w-7xl w-full mx-auto">
+          <ConnectView
+            students={students}
+            role={connectPortalRole === 'parent' ? 'parent' : 'student'}
+            userRole={connectPortalRole}
+            isStandalonePortal={true}
+            onLogoutPortal={() => {
+              sessionStorage.removeItem('tnh_connect_portal_role');
+              setConnectPortalRole(null);
+            }}
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onDeleteMessage={handleDeleteChatMessage}
+            onClearChannelMessages={handleClearChannelMessages}
+            onClearAllMessages={handleClearAllChatMessages}
+            meetings={parentMeetings}
+            onAddMeeting={handleAddParentMeeting}
+            onUpdateMeetingStatus={handleUpdateMeetingStatus}
+            onDeleteMeeting={handleDeleteParentMeeting}
+            onClearCompletedMeetings={handleClearCompletedMeetings}
+            studyPairs={studyPairs}
+            onAddStudyPair={handleAddStudyPair}
+            onDeleteStudyPair={handleDeleteStudyPair}
+            onClearAllStudyPairs={handleClearAllStudyPairs}
+            classInfo={classInfo}
+            teacherInfo={teacherInfo}
+          />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F4F6F9] flex flex-col antialiased text-slate-800">
