@@ -93,6 +93,7 @@ interface HomeroomBookFullReaderProps {
     academicYear: string;
   }) => void;
   onSelectStudent?: (student: Student) => void;
+  onOpenAddDiscipline?: (studentId?: string) => void;
   onOpenPreviewExport?: () => void;
   onExportExcel?: () => void;
   onExportWord?: () => void;
@@ -132,6 +133,7 @@ export const HomeroomBookFullReader: React.FC<HomeroomBookFullReaderProps> = ({
   onUpdateInspections,
   onUpdateAdministrative,
   onSelectStudent,
+  onOpenAddDiscipline,
   onOpenPreviewExport,
   onExportExcel,
   onExportWord,
