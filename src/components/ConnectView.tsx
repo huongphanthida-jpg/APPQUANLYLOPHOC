@@ -237,7 +237,7 @@ export const ConnectView: React.FC<ConnectViewProps> = ({
     }, 12000);
 
     return () => clearInterval(interval);
-  }, [hasCloudSync, activeCloudConfig?.sheetUrl]);
+  }, [hasCloudConfig, activeCloudConfig?.sheetUrl, handleManualSyncCloud]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
