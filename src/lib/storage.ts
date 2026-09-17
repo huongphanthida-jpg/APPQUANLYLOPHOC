@@ -451,7 +451,7 @@ export const getStoredSeatingChart = (): SeatingChartData => {
     return INITIAL_SEATING_CHART;
   }
 };
-export const saveSeatingChart = (chart: SeatingChartData) => {
+export const saveSeatingChartDirectlyToLocalStorage = (chart: SeatingChartData) => {
   try {
     const jsonString = JSON.stringify(chart);
     localStorage.setItem('seating_chart_data', jsonString);
@@ -459,6 +459,10 @@ export const saveSeatingChart = (chart: SeatingChartData) => {
   } catch (error) {
     console.warn("Storage save error (seating chart):", error);
   }
+};
+
+export const saveSeatingChart = (chart: SeatingChartData) => {
+  saveSeatingChartDirectlyToLocalStorage(chart);
 };
 
 export const getStoredTimetable = (): TimetableData => {
@@ -652,6 +656,7 @@ export const Storage = {
   saveTeacherInfo,
   getSeatingChart: getStoredSeatingChart,
   saveSeatingChart,
+  saveSeatingChartDirectlyToLocalStorage,
   getTimetable: getStoredTimetable,
   saveTimetable,
   getChatMessages: getStoredChatMessages,
