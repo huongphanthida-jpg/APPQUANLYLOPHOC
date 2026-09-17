@@ -157,9 +157,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const getSubjectColor = (subject: string): { bg: string; text: string; border: string } => {
-    const s = subject.toLowerCase();
-    if (!subject || s === 'trống' || s === 'nghỉ') return { bg: 'bg-[#002244]/5', text: 'text-slate-400', border: 'border-slate-200' };
+  const getSubjectColor = (subject?: string): { bg: string; text: string; border: string } => {
+    if (!subject || typeof subject !== 'string' || !subject.trim()) {
+      return { bg: 'bg-[#002244]/5', text: 'text-slate-400', border: 'border-slate-200' };
+    }
+    const s = subject.toLowerCase().trim();
+    if (s === 'trống' || s === 'nghỉ') return { bg: 'bg-[#002244]/5', text: 'text-slate-400', border: 'border-slate-200' };
     if (s.includes('toán')) return { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' };
     if (s.includes('lý') || s.includes('vật lý')) return { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' };
     if (s.includes('hóa') || s.includes('hóa học')) return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' };
@@ -173,14 +176,20 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     return { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' };
   };
 
+  const safeTimetable = timetable && Array.isArray(timetable.days) ? timetable : INITIAL_TIMETABLE;
+  const safeDays = (safeTimetable && Array.isArray(safeTimetable.days) && safeTimetable.days.length > 0)
+    ? safeTimetable.days
+    : (INITIAL_TIMETABLE?.days || []);
+
   const handleSavePeriod = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingPeriod) return;
 
-    const newDays = timetable.days.map((day) => {
+    const newDays = safeDays.map((day) => {
       if (day.dayKey !== editingPeriod.dayKey) return day;
 
-      const newSessionList = [...day[editingPeriod.session]];
+      const currentList = Array.isArray(day[editingPeriod.session]) ? day[editingPeriod.session] : [];
+      const newSessionList = [...currentList];
       newSessionList[editingPeriod.periodIndex] = editingPeriod.data;
 
       return {
@@ -190,7 +199,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     });
 
     onSaveTimetable({
-      ...timetable,
+      ...safeTimetable,
       days: newDays,
     });
 
@@ -201,10 +210,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   const handleClearSinglePeriod = () => {
     if (!editingPeriod) return;
 
-    const newDays = timetable.days.map((day) => {
+    const newDays = safeDays.map((day) => {
       if (day.dayKey !== editingPeriod.dayKey) return day;
 
-      const newSessionList = [...day[editingPeriod.session]];
+      const currentList = Array.isArray(day[editingPeriod.session]) ? day[editingPeriod.session] : [];
+      const newSessionList = [...currentList];
       newSessionList[editingPeriod.periodIndex] = {
         ...editingPeriod.data,
         subject: '',
@@ -220,7 +230,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     });
 
     onSaveTimetable({
-      ...timetable,
+      ...safeTimetable,
       days: newDays,
     });
 
@@ -229,12 +239,15 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   };
 
   const handleDirectDeletePeriod = (dayKey: string, session: 'morning' | 'afternoon', periodIndex: number) => {
-    const newDays = timetable.days.map((day) => {
+    const newDays = safeDays.map((day) => {
       if (day.dayKey !== dayKey) return day;
 
-      const newSessionList = [...day[session]];
+      const currentList = Array.isArray(day[session]) ? day[session] : [];
+      const newSessionList = [...currentList];
       newSessionList[periodIndex] = {
-        ...newSessionList[periodIndex],
+        ...(newSessionList[periodIndex] || {}),
+        period: session === 'morning' ? periodIndex + 1 : periodIndex + 6,
+        time: getPeriodConfig(session === 'morning' ? periodIndex + 1 : periodIndex + 6).time,
         subject: '',
         teacher: '',
         room: '',
@@ -248,7 +261,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     });
 
     onSaveTimetable({
-      ...timetable,
+      ...safeTimetable,
       days: newDays,
     });
 
@@ -256,14 +269,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
   };
 
   const handleClearAllTimetable = () => {
-    const emptyDays: DaySchedule[] = timetable.days.map((day) => ({
+    const emptyDays: DaySchedule[] = safeDays.map((day) => ({
       ...day,
-      morning: day.morning.map((p) => ({ ...p, subject: '', teacher: '', room: '', note: '' })),
-      afternoon: day.afternoon.map((p) => ({ ...p, subject: '', teacher: '', room: '', note: '' })),
+      morning: (day.morning || []).map((p) => ({ ...p, subject: '', teacher: '', room: '', note: '' })),
+      afternoon: (day.afternoon || []).map((p) => ({ ...p, subject: '', teacher: '', room: '', note: '' })),
     }));
 
     onSaveTimetable({
-      ...timetable,
+      ...safeTimetable,
       days: emptyDays,
     });
 
@@ -408,7 +421,13 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
     window.print();
   };
 
-  const activeDaySchedule = timetable.days.find((d) => d.dayKey === activeTab) || timetable.days[0];
+  const activeDaySchedule = safeDays.find((d) => d && d.dayKey === activeTab) || safeDays[0] || {
+    dayKey: 'mon',
+    dayName: 'Thứ Hai',
+    date: '',
+    morning: [],
+    afternoon: [],
+  };
 
   const daysHeaderList = [
     { key: 'mon', name: 'THỨ HAI' },
@@ -429,54 +448,52 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
         </div>
       )}
 
-      {/* Header & Controls Card */}
-      <div className="bg-white rounded-2xl p-5 md:p-6 shadow-xs border border-slate-200">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#003366] flex items-center justify-center font-bold">
-                <CalendarDays className="w-5 h-5" />
-              </div>
-              <div>
-                <h1 className="text-xl md:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  Thời Khoá Biểu Giảng Dạy & Học Tập
-                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold">
-                    2 Buổi/Ngày • 10 Tiết
-                  </span>
-                </h1>
-                <p className="text-xs md:text-sm text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                  <span>Lớp: <strong className="font-bold text-slate-800">{classInfo?.className || '11D5'}</strong></span>
-                  <span>•</span>
-                  <span className="font-medium text-slate-700">{timetable.academicYear || 'Năm học 2025 - 2026'}</span>
-                  <span>•</span>
-                  <span className="text-slate-600 font-medium">{timetable.appliedDate || 'Áp dụng từ ngày 01/01/2026'}</span>
-                  {(role === 'gvcn' || role === 'bgh') && (
-                    <button
-                      type="button"
-                      onClick={() => setIsEditTimetableModalOpen(true)}
-                      className="ml-1 px-2.5 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
-                      title="Nhấp để điều chỉnh thông tin Năm học, Học kỳ, Ngày áp dụng TKB"
-                    >
-                      <Edit3 className="w-3 h-3 text-amber-700" />
-                      <span>Điều chỉnh</span>
-                    </button>
-                  )}
-                </p>
-              </div>
+      {/* Header & Controls Card - 1 Horizontal Row */}
+      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-xs border border-slate-200">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-[#003366] flex items-center justify-center font-bold shrink-0">
+              <CalendarDays className="w-5 h-5 text-[#003366]" />
+            </div>
+            <div>
+              <h1 className="text-lg md:text-xl font-black text-slate-900 flex items-center gap-2">
+                Thời Khoá Biểu Giảng Dạy & Học Tập
+                <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 font-semibold hidden sm:inline-block">
+                  2 Buổi/Ngày • 10 Tiết
+                </span>
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                <span>Lớp: <strong className="font-bold text-slate-800">{classInfo?.className || '11D5'}</strong></span>
+                <span>•</span>
+                <span className="font-medium text-slate-700">{safeTimetable.academicYear || 'Năm học 2025 - 2026'}</span>
+                <span>•</span>
+                <span className="text-slate-600 font-medium">{safeTimetable.appliedDate || 'Áp dụng từ ngày 01/01/2026'}</span>
+                {(role === 'gvcn' || role === 'bgh') && (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditTimetableModalOpen(true)}
+                    className="ml-1 px-2 py-0.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 font-bold text-[11px] transition-colors flex items-center gap-1 cursor-pointer"
+                    title="Nhấp để điều chỉnh thông tin Năm học, Học kỳ, Ngày áp dụng TKB"
+                  >
+                    <Edit3 className="w-3 h-3 text-amber-700" />
+                    <span>Điều chỉnh</span>
+                  </button>
+                )}
+              </p>
             </div>
           </div>
 
-          {/* Action buttons & View Switcher */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Action buttons & View Switcher in 1 Horizontal Line */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
             {/* Search subject */}
-            <div className="relative min-w-[160px] sm:min-w-[200px]">
+            <div className="relative min-w-[140px] sm:min-w-[180px]">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Lọc môn học / GV..."
+                placeholder="Lọc môn / GV..."
                 value={searchSubject}
                 onChange={(e) => setSearchSubject(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:bg-white transition-all"
+                className="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#003366] focus:bg-white transition-all"
               />
               {searchSubject && (
                 <button
@@ -489,26 +506,26 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+            <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold shrink-0">
               <button
                 onClick={() => setViewMode('weekly')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
                   viewMode === 'weekly'
                     ? 'bg-white text-[#003366] shadow-xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Toàn Cảnh Tuần (6 Ngày)
+                Toàn Cảnh Tuần
               </button>
               <button
                 onClick={() => setViewMode('daily')}
-                className={`px-3 py-1.5 rounded-lg transition-all ${
+                className={`px-2.5 py-1 rounded-lg transition-all whitespace-nowrap ${
                   viewMode === 'daily'
                     ? 'bg-white text-[#003366] shadow-xs font-bold'
                     : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Chi Tiết Theo Ngày
+                Theo Ngày
               </button>
             </div>
 
@@ -516,11 +533,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               <button
                 type="button"
                 onClick={onOpenOnlineClassModal}
-                className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs whitespace-nowrap"
                 title="Mở Cơ sở dữ liệu Lớp học trực tuyến Google Sheets"
               >
-                <Video className="w-4 h-4 text-emerald-200 animate-pulse" />
-                <span>DB Lớp Trực Tuyến</span>
+                <Video className="w-3.5 h-3.5 text-emerald-200 animate-pulse" />
+                <span>DB Trực Tuyến</span>
               </button>
             )}
 
@@ -532,20 +549,20 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                     setTempPeriodsConfig(JSON.parse(JSON.stringify(periodsConfig)));
                     setIsPeriodConfigModalOpen(true);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-purple-500"
+                  className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-purple-500 whitespace-nowrap"
                   title="Chỉnh sửa Tên tiết (Tiết 1, Tiết 6,...) và Khung giờ học"
                 >
-                  <Clock className="w-4 h-4 text-purple-200" />
-                  <span>Cấu Hình Tiết & Khung Giờ</span>
+                  <Clock className="w-3.5 h-3.5 text-purple-200" />
+                  <span>Cấu Hình Giờ</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsEditTimetableModalOpen(true)}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400"
-                  title="Điều chỉnh thông tin Năm học, Học kỳ, Ngày áp dụng, Khung giờ & Tiết học TKB"
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs border border-amber-400 whitespace-nowrap"
+                  title="Điều chỉnh thông tin Năm học, Học kỳ, Ngày áp dụng"
                 >
-                  <Edit3 className="w-4 h-4 text-slate-950" />
-                  <span>Điều Chỉnh Dữ Liệu</span>
+                  <Edit3 className="w-3.5 h-3.5 text-slate-950" />
+                  <span>Sửa Dữ Liệu</span>
                 </button>
                 <button
                   type="button"
@@ -555,41 +572,41 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                     setImportError(null);
                     setIsImportModalOpen(true);
                   }}
-                  className="px-3.5 py-2 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-                  title="Tải thời khóa biểu từ file Excel trên máy tính"
+                  className="px-3 py-1.5 rounded-xl bg-[#003366] hover:bg-[#002244] text-white font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs whitespace-nowrap"
+                  title="Tải thời khóa biểu từ file Excel"
                 >
-                  <UploadCloud className="w-4 h-4 text-cyan-300" />
-                  <span>Tải Từ Máy Tính</span>
+                  <UploadCloud className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Tải Từ Máy</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={downloadSampleTemplate}
-                  className="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                  title="Tải file Excel mẫu (.xlsx) để điền thời khóa biểu"
+                  className="px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  title="Tải file Excel mẫu (.xlsx)"
                 >
-                  <Download className="w-4 h-4 text-emerald-600" />
-                  <span>Tải File Mẫu</span>
+                  <Download className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>File Mẫu</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setIsConfirmClearAllOpen(true)}
-                  className="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                  title="Xóa toàn bộ thời khóa biểu để tự nhập lại từ đầu"
+                  className="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
+                  title="Xóa toàn bộ thời khóa biểu"
                 >
-                  <Trash2 className="w-4 h-4 text-rose-500" />
-                  <span>Xóa Hết TKB</span>
+                  <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                  <span>Xóa Hết</span>
                 </button>
               </>
             )}
 
             <button
               onClick={handlePrint}
-              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer whitespace-nowrap"
               title="In thời khoá biểu A4"
             >
-              <Printer className="w-4 h-4" />
+              <Printer className="w-3.5 h-3.5" />
               <span>In TKB</span>
             </button>
           </div>
@@ -665,14 +682,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
                     {/* Columns for Mon -> Sat */}
                     {daysHeaderList.map((dh) => {
-                      const daySchedule = timetable.days.find((d) => d.dayKey === dh.key);
-                      const period = daySchedule?.morning[periodIdx];
+                      const daySchedule = safeDays.find((d) => d && d.dayKey === dh.key);
+                      const period = Array.isArray(daySchedule?.morning) ? daySchedule.morning[periodIdx] : undefined;
                       if (!period) return <td key={dh.key} className="p-2 border-r border-slate-200" />;
 
                       const isMatch =
-                        searchSubject &&
-                        (period.subject.toLowerCase().includes(searchSubject.toLowerCase()) ||
-                          period.teacher.toLowerCase().includes(searchSubject.toLowerCase()));
+                        Boolean(searchSubject && searchSubject.trim()) &&
+                        (((period.subject || '').toLowerCase().includes(searchSubject.toLowerCase().trim())) ||
+                          ((period.teacher || '').toLowerCase().includes(searchSubject.toLowerCase().trim())));
 
                       const colors = getSubjectColor(period.subject);
                       const hasSubject = Boolean(period.subject && period.subject.trim() !== '' && period.subject !== 'Trống');
@@ -799,14 +816,14 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
 
                     {/* Columns for Mon -> Sat */}
                     {daysHeaderList.map((dh) => {
-                      const daySchedule = timetable.days.find((d) => d.dayKey === dh.key);
-                      const period = daySchedule?.afternoon[periodIdx];
+                      const daySchedule = safeDays.find((d) => d && d.dayKey === dh.key);
+                      const period = Array.isArray(daySchedule?.afternoon) ? daySchedule.afternoon[periodIdx] : undefined;
                       if (!period) return <td key={dh.key} className="p-2 border-r border-slate-200" />;
 
                       const isMatch =
-                        searchSubject &&
-                        (period.subject.toLowerCase().includes(searchSubject.toLowerCase()) ||
-                          period.teacher.toLowerCase().includes(searchSubject.toLowerCase()));
+                        Boolean(searchSubject && searchSubject.trim()) &&
+                        (((period.subject || '').toLowerCase().includes(searchSubject.toLowerCase().trim())) ||
+                          ((period.teacher || '').toLowerCase().includes(searchSubject.toLowerCase().trim())));
 
                       const colors = getSubjectColor(period.subject);
                       const hasSubject = Boolean(period.subject && period.subject.trim() !== '' && period.subject !== 'Trống');
@@ -903,7 +920,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
       {viewMode === 'daily' && (
         <div className="space-y-4">
           <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar">
-            {timetable.days.map((day) => {
+            {safeDays.map((day) => {
               const isActive = day.dayKey === activeTab;
               return (
                 <button
@@ -936,7 +953,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </div>
 
               <div className="space-y-3">
-                {activeDaySchedule.morning.map((period, idx) => {
+                {(activeDaySchedule?.morning || []).map((period, idx) => {
                   const colors = getSubjectColor(period.subject);
                   const hasSubject = Boolean(period.subject && period.subject.trim() !== '' && period.subject !== 'Trống');
                   const pCfg = getPeriodConfig(idx + 1);
@@ -1037,7 +1054,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </div>
 
               <div className="space-y-3">
-                {activeDaySchedule.afternoon.map((period, idx) => {
+                {(activeDaySchedule?.afternoon || []).map((period, idx) => {
                   const colors = getSubjectColor(period.subject);
                   const hasSubject = Boolean(period.subject && period.subject.trim() !== '' && period.subject !== 'Trống');
                   const pCfg = getPeriodConfig(idx + 6);
