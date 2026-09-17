@@ -211,21 +211,19 @@ export const isMockStudentList = (list: Student[]): boolean => {
 };
 
 export function getPersistedStudents(): Student[] | null {
-  const candidateKeys = ['app_students_data', 'students', 'class_students', 'homeroom_book_students', 'TEAMGVCN_students', KEYS.STUDENTS];
-  for (const key of candidateKeys) {
-    try {
-      const raw = localStorage.getItem(key);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length >= 10) {
-          return parsed; // Trả về ngay danh sách 44 học sinh thật
-        }
-      }
-    } catch (e) {
-      console.error("Lỗi đọc key:", key, e);
-    }
-  }
-
+  const candidateKeys = [
+    KEYS.STUDENTS,
+    'app_students_data',
+    'students',
+    'class_students',
+    'homeroom_book_students',
+    'TEAMGVCN_students',
+    'tnh_12a1_students',
+    'gvcn_students',
+    'students_data',
+    'students_v1',
+    'students_backup',
+  ];
   for (const key of candidateKeys) {
     try {
       const raw = localStorage.getItem(key);
@@ -282,20 +280,12 @@ export const getStoredStudents = (): Student[] => {
 export const loadStudents = getStoredStudents;
 
 export const saveStudents = (students: Student[]) => {
-  // Safe Guard 1: Do NOT overwrite existing data with empty array if storage has students!
-  if (!Array.isArray(students) || students.length === 0) {
-    console.warn('Safe Guard: Prevented overwriting existing student list with empty array.');
+  if (!Array.isArray(students)) {
+    console.warn('saveStudents received invalid input.');
     return;
   }
 
-  // Safe Guard 2: Do NOT overwrite existing localStorage if new list has FEWER students than stored data!
-  const currentPersisted = getPersistedStudents();
-  if (currentPersisted && currentPersisted.length > students.length) {
-    console.warn(`Safe Guard: Prevented overwriting ${currentPersisted.length} stored students with ${students.length} students.`);
-    return;
-  }
-
-  // Safe Guard 2: Do NOT overwrite existing REAL user student data with mock student list!
+  // Safe Guard: Do NOT overwrite real user student data with default mock student list!
   if (isMockStudentList(students)) {
     let hasRealUserData = false;
     for (const key of STUDENT_STORAGE_KEYS) {
@@ -313,7 +303,7 @@ export const saveStudents = (students: Student[]) => {
       }
     }
     if (hasRealUserData) {
-      console.warn('Safe Guard: Prevented overwriting real user student list with mock data.');
+      console.warn('Safe Guard: Prevented overwriting real user student list with initial mock data.');
       return;
     }
   }
