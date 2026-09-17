@@ -22,6 +22,7 @@ import {
   RotateCcw,
   ChevronLeft,
   ChevronRight,
+  Award,
 } from 'lucide-react';
 import {
   Student,
