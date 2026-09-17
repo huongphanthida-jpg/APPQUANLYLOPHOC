@@ -295,14 +295,11 @@ export const getStoredStudents = (): Student[] => {
 
 export const loadStudents = getStoredStudents;
 
-export const saveStudentsToStorage = (students: Student[]) => {
-  if (!Array.isArray(students)) {
-    console.warn('saveStudentsToStorage received invalid input.');
-    return;
-  }
+export const syncAllStudentStorageKeys = (updatedStudents: Student[]) => {
+  if (!Array.isArray(updatedStudents)) return;
 
   // Safe Guard: Do NOT overwrite real user student data with default mock student list!
-  if (isMockStudentList(students)) {
+  if (isMockStudentList(updatedStudents)) {
     let hasRealUserData = false;
     for (const key of STUDENT_STORAGE_KEYS) {
       const existing = localStorage.getItem(key);
@@ -324,22 +321,35 @@ export const saveStudentsToStorage = (students: Student[]) => {
     }
   }
 
-  try {
-    const jsonStr = JSON.stringify(students);
-    localStorage.setItem('app_students_data', jsonStr);
-    localStorage.setItem('students', jsonStr);
-    STUDENT_STORAGE_KEYS.forEach((key) => {
-      localStorage.setItem(key, jsonStr);
-    });
-  } catch (error) {
-    console.warn('Storage save error (quota limit):', error);
-  }
+  const payload = JSON.stringify(updatedStudents);
+  const targetKeys = [
+    'app_students_data',
+    'students',
+    'class_students',
+    'homeroom_book_students',
+    'TEAMGVCN_students',
+    KEYS.STUDENTS,
+    'tnh_12a1_students',
+    'gvcn_students',
+    'students_data',
+    'students_v1',
+    'students_backup',
+  ];
+
+  targetKeys.forEach((key) => {
+    try {
+      localStorage.setItem(key, payload);
+    } catch (err) {
+      console.error(`Lỗi ghi key ${key}:`, err);
+    }
+  });
 
   // Synchronously & asynchronously persist all avatars to IndexedDB for 100% durability across 48+ students
-  saveAllAvatarsToIndexedDB(students).catch((err) => console.warn('IndexedDB avatar save error:', err));
+  saveAllAvatarsToIndexedDB(updatedStudents).catch((err) => console.warn('IndexedDB avatar save error:', err));
 };
 
-export const saveStudents = saveStudentsToStorage;
+export const saveStudentsToStorage = syncAllStudentStorageKeys;
+export const saveStudents = syncAllStudentStorageKeys;
 
 const getFirstValidItem = (...keys: string[]): string | null => {
   for (const k of keys) {
