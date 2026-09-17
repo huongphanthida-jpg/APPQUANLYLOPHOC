@@ -751,9 +751,6 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     }
   };
 
-  const handlePrintSeatingChart = () => {
-    window.print();
-  };
 
   return (
     <div className="space-y-6 animate-fadeIn pb-12">
