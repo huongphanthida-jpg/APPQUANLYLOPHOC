@@ -1252,7 +1252,7 @@ export function App() {
             onSendMessage={handleSendMessage}
             onDeleteMessage={handleDeleteChatMessage}
             onClearChannelMessages={handleClearChannelMessages}
-            onClearAllMessages={handleClearAllChatMessages}
+            onClearAllMessages={handleClearAllMessages}
             meetings={parentMeetings}
             onAddMeeting={handleAddParentMeeting}
             onUpdateMeetingStatus={handleUpdateMeetingStatus}
