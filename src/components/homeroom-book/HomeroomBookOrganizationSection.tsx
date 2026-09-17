@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Users,
   ShieldCheck,
@@ -16,6 +16,8 @@ import {
   X,
   Save,
   Check,
+  RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 import { ClassCommitteeRole, ParentsBoardMember, Student, UserRole, ClassInfo, TeacherInfo, BghInfo } from '../../types';
 import { EditCommitteeModal } from './EditCommitteeModal';
@@ -143,7 +145,127 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
   const group3Students = (students || []).filter((s) => s.group === 3);
   const group4Students = (students || []).filter((s) => s.group === 4);
 
-  const canEdit = role === 'gvcn';
+  const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
+
+  const showSyncToast = (msg: string) => {
+    setSyncToastMessage(msg);
+    setTimeout(() => setSyncToastMessage(null), 4000);
+  };
+
+  // Helper for generating standard main duty descriptions based on position title
+  const getMainDutyForRole = (roleName: string): string => {
+    const nameLower = roleName.toLowerCase();
+    if (nameLower.includes('lớp trưởng')) {
+      return 'Quản lý chung các hoạt động của lớp, điều hành nề nếp kỷ luật & phối hợp trực tiếp với GVCN';
+    }
+    if (nameLower.includes('phó học tập') || nameLower.includes('học tập')) {
+      return 'Theo dõi phong trào học tập, kiểm tra bài cũ, quản lý 15 phút đầu giờ & các nhóm đôi bạn cùng tiến';
+    }
+    if (nameLower.includes('kỷ luật') || nameLower.includes('nề nếp')) {
+      return 'Phụ trách điểm danh, kiểm tra trang phục đồng phục, thẻ học sinh & thi đua nề nếp tuần';
+    }
+    if (nameLower.includes('phong trào') || nameLower.includes('văn thể')) {
+      return 'Phụ trách các hoạt động văn hóa, nghệ thuật, thể dục thể thao, báo tường & phong trào Chi đoàn';
+    }
+    if (nameLower.includes('bí thư') || nameLower.includes('chi đoàn')) {
+      return 'Quản lý công tác Đoàn thanh niên, duy trì sinh hoạt Chi đoàn & tổ chức các phong trào thanh niên xung kích';
+    }
+    if (nameLower.includes('thủ quỹ')) {
+      return 'Quản lý quỹ lớp, công khai thu chi minh bạch & phục vụ các hoạt động học tập, sinh hoạt tập thể';
+    }
+    if (nameLower.includes('tổ trưởng')) {
+      return `Quản lý thành viên ${roleName}, theo dõi điểm thi đua tổ, phân công trực nhật & điều hành sinh hoạt tổ`;
+    }
+    if (nameLower.includes('cán sự')) {
+      return `Cán sự phụ trách môn học, hỗ trợ giáo viên bộ môn thu phát bài tập & thiết bị học tập`;
+    }
+    return `Đảm nhiệm chức vụ ${roleName}, phối hợp cùng Ban cán sự lớp hoàn thành nhiệm vụ được giao`;
+  };
+
+  // Filter students who have a valid class position assigned in "Hồ Sơ Học Sinh"
+  const officerStudentsFromProfile = useMemo(() => {
+    return (students || []).filter((s) => {
+      const pos = (s.position || '').trim();
+      return pos && pos !== 'Thành viên' && pos !== 'Học sinh (Thành viên)' && pos !== 'Học sinh';
+    });
+  }, [students]);
+
+  // Merge committee prop with any officer students assigned from Student Profiles
+  const effectiveCommittee = useMemo(() => {
+    const currentList = [...(committee || [])];
+    officerStudentsFromProfile.forEach((student) => {
+      const pos = student.position!.trim();
+      const existing = currentList.find(
+        (c) => c.studentId === student.id || c.roleName.toLowerCase() === pos.toLowerCase()
+      );
+      if (!existing) {
+        currentList.push({
+          roleName: pos,
+          studentId: student.id,
+          studentName: student.name,
+          phone: student.phone || student.emergencyContact?.phone || '',
+          mainDuty: getMainDutyForRole(pos),
+        });
+      }
+    });
+    return currentList;
+  }, [committee, officerStudentsFromProfile]);
+
+  // Dynamically detect Group Leaders for 4 teams from student profiles if assigned
+  const effectiveGroupLeaders = useMemo(() => {
+    const leaders = { ...groupLeaders };
+    [1, 2, 3, 4].forEach((gNum) => {
+      const studentOfficer = (students || []).find(
+        (s) => s.group === gNum && s.position && s.position.toLowerCase().includes('tổ trưởng')
+      );
+      if (studentOfficer) {
+        leaders[gNum] = studentOfficer.name;
+      }
+    });
+    return leaders;
+  }, [groupLeaders, students]);
+
+  // Sync Action: Sync all officer positions from Student Profiles into Committee state
+  const handleSyncFromStudents = () => {
+    if (!students || students.length === 0) {
+      alert('Không tìm thấy danh sách học sinh để đồng bộ!');
+      return;
+    }
+
+    if (officerStudentsFromProfile.length === 0) {
+      alert('Hiện chưa có học sinh nào được gán chức vụ trong phân hệ "Hồ Sơ Học Sinh". Vui lòng mở "Hồ Sơ Học Sinh" -> Nhấp Sửa thông tin -> Chọn "Chức Vụ Trong Lớp" cho học sinh.');
+      return;
+    }
+
+    let updatedCommittee = [...(committee || [])];
+
+    officerStudentsFromProfile.forEach((student) => {
+      const pos = student.position!.trim();
+      const existingIdx = updatedCommittee.findIndex(
+        (c) => c.studentId === student.id || c.roleName.toLowerCase() === pos.toLowerCase()
+      );
+
+      const newRoleObj: ClassCommitteeRole = {
+        roleName: pos,
+        studentId: student.id,
+        studentName: student.name,
+        phone: student.phone || student.emergencyContact?.phone || '',
+        mainDuty: getMainDutyForRole(pos),
+      };
+
+      if (existingIdx >= 0) {
+        updatedCommittee[existingIdx] = newRoleObj;
+      } else {
+        updatedCommittee.push(newRoleObj);
+      }
+    });
+
+    if (onUpdateCommittee) {
+      onUpdateCommittee(updatedCommittee);
+    }
+
+    showSyncToast(`Đã đồng bộ thành công ${officerStudentsFromProfile.length} chức vụ Ban cán sự lớp từ Hồ Sơ Học Sinh!`);
+  };
 
   // Committee handlers
   const handleOpenAddCommittee = () => {
@@ -204,6 +326,14 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {syncToastMessage && (
+        <div className="fixed top-5 right-5 z-50 bg-[#003366] text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-bounce text-sm font-semibold border border-amber-400">
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>{syncToastMessage}</span>
+        </div>
+      )}
+
       {/* Section Header */}
       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
@@ -229,25 +359,36 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
             1. Danh Sách Ban Cán Sự Lớp & BCH Chi Đoàn {className || '12A1'}
           </h4>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-800 text-xs font-bold border border-blue-200">
-              {(committee || []).length} Thành viên nòng cốt
+              {effectiveCommittee.length} Thành viên nòng cốt
             </span>
             {canEdit && (
-              <button
-                type="button"
-                onClick={handleOpenAddCommittee}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Thêm Cán Sự</span>
-              </button>
+              <>
+                <button
+                  type="button"
+                  onClick={handleSyncFromStudents}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all border border-amber-400"
+                  title="Đồng bộ tự động danh sách chức vụ học sinh từ phân hiệu Hồ Sơ Học Sinh"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-slate-950" />
+                  <span>Đồng Bộ Từ Hồ Sơ HS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleOpenAddCommittee}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold shadow-xs cursor-pointer active:scale-95 transition-all"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Thêm Cán Sự</span>
+                </button>
+              </>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
-          {(committee || []).map((c, idx) => (
+          {effectiveCommittee.map((c, idx) => (
             <div
               key={idx}
               className="p-4 rounded-xl bg-slate-50 hover:bg-blue-50/50 border border-slate-200 hover:border-blue-300 transition-all space-y-2 relative group"
@@ -470,7 +611,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-blue-700">{group1Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-blue-900 font-black">{groupLeaders[1] || 'Nguyễn Hoàng Long'}</span>
+              Tổ trưởng: <span className="text-blue-900 font-black">{effectiveGroupLeaders[1] || 'Nguyễn Hoàng Long'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group1Students.map((s, i) => (
@@ -489,7 +630,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-emerald-700">{group2Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-emerald-900 font-black">{groupLeaders[2] || 'Đỗ Hải Đăng'}</span>
+              Tổ trưởng: <span className="text-emerald-900 font-black">{effectiveGroupLeaders[2] || 'Đỗ Hải Đăng'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group2Students.map((s, i) => (
@@ -508,7 +649,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-purple-700">{group3Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-purple-900 font-black">{groupLeaders[3] || 'Vũ Đức Trọng'}</span>
+              Tổ trưởng: <span className="text-purple-900 font-black">{effectiveGroupLeaders[3] || 'Vũ Đức Trọng'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group3Students.map((s, i) => (
@@ -527,7 +668,7 @@ export const HomeroomBookOrganizationSection: React.FC<HomeroomBookOrganizationS
               <span className="text-xs font-bold text-amber-700">{group4Students.length} HS</span>
             </div>
             <p className="text-[11px] font-bold text-slate-700">
-              Tổ trưởng: <span className="text-amber-900 font-black">{groupLeaders[4] || 'Hoàng Nhật Minh'}</span>
+              Tổ trưởng: <span className="text-amber-900 font-black">{effectiveGroupLeaders[4] || 'Hoàng Nhật Minh'}</span>
             </p>
             <ul className="space-y-1.5 text-xs text-slate-700 max-h-56 overflow-y-auto pr-1">
               {group4Students.map((s, i) => (
