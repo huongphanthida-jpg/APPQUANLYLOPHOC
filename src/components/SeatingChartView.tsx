@@ -66,6 +66,31 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
   const [isAutoArrangeOpen, setIsAutoArrangeOpen] = useState<boolean>(false);
   const autoArrangeRef = useRef<HTMLDivElement>(null);
 
+  // Helper to persist seating chart directly to localStorage with key 'seating_chart_data' and notify parent
+  const saveChartToLocalStorage = (chart: SeatingChartData) => {
+    try {
+      localStorage.setItem('seating_chart_data', JSON.stringify(chart));
+    } catch (e) {
+      console.warn('Failed to save seating_chart_data to localStorage:', e);
+    }
+    onSaveSeatingChart(chart);
+  };
+
+  // Automatically read from localStorage ('seating_chart_data') when page/component mounts (useEffect)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('seating_chart_data');
+      if (stored) {
+        const parsed: SeatingChartData = JSON.parse(stored);
+        if (parsed && parsed.columns && Array.isArray(parsed.columns) && parsed.columns.length > 0) {
+          onSaveSeatingChart(parsed);
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to read seating_chart_data from localStorage on mount:', e);
+    }
+  }, []);
+
   // Auto-arrange unassigned students only into remaining empty seats without changing existing seats
   const handleAutoArrangeUnassignedOnly = () => {
     if (unassignedStudents.length === 0) {
@@ -129,7 +154,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       }
     }
 
-    onSaveSeatingChart({
+    saveChartToLocalStorage({
       ...seatingChart,
       assignments: newAssignments,
       updatedAt: new Date().toISOString().split('T')[0],
@@ -187,7 +212,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
     }
 
     newAssignments[targetSeatKey] = student.id;
-    onSaveSeatingChart({
+    saveChartToLocalStorage({
       ...seatingChart,
       assignments: newAssignments,
       updatedAt: new Date().toISOString().split('T')[0],
@@ -316,7 +341,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
       const sourceName = sourceStudentId ? studentMap.get(sourceStudentId)?.name || 'Ghế' : 'Ghế trống';
       const targetName = targetStudentId ? studentMap.get(targetStudentId)?.name || 'Ghế' : 'Ghế trống';
 
-      onSaveSeatingChart({
+      saveChartToLocalStorage({
         ...seatingChart,
         assignments: newAssignments,
         updatedAt: new Date().toISOString().split('T')[0],
@@ -342,7 +367,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
 
     newAssignments[seatKey] = studentId;
 
-    onSaveSeatingChart({
+    saveChartToLocalStorage({
       ...seatingChart,
       assignments: newAssignments,
       updatedAt: new Date().toISOString().split('T')[0],
@@ -382,7 +407,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           }
         }
       });
-      onSaveSeatingChart({
+      saveChartToLocalStorage({
         ...seatingChart,
         assignments: newAssignments,
         updatedAt: new Date().toISOString().split('T')[0],
@@ -410,7 +435,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           }
         }
       }
-      onSaveSeatingChart({
+      saveChartToLocalStorage({
         ...seatingChart,
         assignments: newAssignments,
         updatedAt: new Date().toISOString().split('T')[0],
@@ -440,7 +465,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           }
         }
       }
-      onSaveSeatingChart({
+      saveChartToLocalStorage({
         ...seatingChart,
         assignments: newAssignments,
         updatedAt: new Date().toISOString().split('T')[0],
@@ -468,7 +493,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           }
         }
       }
-      onSaveSeatingChart({
+      saveChartToLocalStorage({
         ...seatingChart,
         assignments: newAssignments,
         updatedAt: new Date().toISOString().split('T')[0],
@@ -487,7 +512,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           }
         }
       }
-      onSaveSeatingChart({
+      saveChartToLocalStorage({
         ...seatingChart,
         assignments: newAssignments,
         updatedAt: new Date().toISOString().split('T')[0],
@@ -920,7 +945,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
                                 ...(seatingChart.aisleGroups || { 1: 1, 2: 2, 3: 3, 4: 4 }),
                                 [columnNum]: newGrp,
                               };
-                              onSaveSeatingChart({
+                              saveChartToLocalStorage({
                                 ...seatingChart,
                                 aisleGroups: newAisleGroups,
                                 updatedAt: new Date().toISOString().split('T')[0],
@@ -1349,7 +1374,7 @@ export const SeatingChartView: React.FC<SeatingChartViewProps> = ({
           seatingChart={seatingChart}
           students={students}
           onSave={(newChart) => {
-            onSaveSeatingChart(newChart);
+            saveChartToLocalStorage(newChart);
             showToast('Đã lưu điều chỉnh dữ liệu sơ đồ lớp thành công!');
           }}
         />
